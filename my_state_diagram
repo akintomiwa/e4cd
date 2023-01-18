@@ -1,0 +1,18 @@
+digraph "State Machine" {
+	graph [color=black directed=true fillcolor=white label="State Machine" rankdir=LR "strict"=false style=solid]
+	node [color=black fillcolor=white peripheries=1 shape=rectangle style="rounded, filled"]
+	edge [color=black]
+	Idle [label="Idle\l" color=red fillcolor=darksalmon peripheries=2]
+	Travel [label="Travel\l"]
+	In_queue [label="In_queue\l"]
+	Charge [label="Charge\l"]
+	Travel_low [label="Travel_low\l"]
+	Idle -> Travel [label=start_travel]
+	Travel -> Travel_low [label=get_low]
+	Travel -> Travel [label=continue_travel]
+	Travel -> Idle [label=end_travel]
+	Travel_low -> In_queue [label=join_charge_queue]
+	In_queue -> Charge [label=start_charge]
+	Charge -> Charge [label=continue_charge]
+	Charge -> Travel [label=end_charge]
+}
