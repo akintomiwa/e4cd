@@ -2,12 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 from mesa import Agent, Model
-from mesa.time import RandomActivation
+from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
 from mesa.datacollection import DataCollector
 from EV.agents import EV, Cpoint
 
-
 # Model Data Extraction Methods
+
 def get_evs_charged(model):
     evs_charged = [ev._was_charged for ev in model.evs]
     no_evs_charged = np.sum(evs_charged)
@@ -17,6 +17,8 @@ def get_evs_charge_level(model):
     evs_levels = [ev.battery for ev in model.evs]
     # no_evs_active = np.sum(evs_active)
     return evs_levels
+
+# rewrite
 
 def get_evs_active(model):
     evs_active = [ev._is_active for ev in model.evs]
@@ -55,6 +57,14 @@ def get_eod_soc(model):
 #     no_evs_charged = np.sum(evs_charged)
 #     return no_evs_charged
 
+
+# Agent Data Extraction Methods
+# def get_ev_distance_covered(ev):
+#     eod_socs = [ev.battery_eod for ev in model.evs]
+#     total_distance = np.sum(eod_socs)
+
+
+# 19 Jan Backup - working
 class EVModel(Model):
     """Simulation Model with EV agents and Charging Points agents.
     
@@ -77,13 +87,15 @@ class EVModel(Model):
     def __init__(self, no_evs, no_cps, ticks):
         super().__init__()
         # init with input args
+        self.running = True
+        self.random = True
         self.ticks = ticks
         self._current_tick = 1
         self.no_evs = no_evs
         self.no_cps = no_cps
         # other key model attr 
-        self.schedule = RandomActivation(self)
-        # self.schedule = SimultaneousActivation(self)
+        # self.schedule = RandomActivation(self)
+        self.schedule = SimultaneousActivation(self)
         # self.schedule = RandomActivationByType(self)
         # Populate model with agents
         self.evs = []
@@ -106,8 +118,16 @@ class EVModel(Model):
                              'EVs Charge Level': get_evs_charge_level,
                              'EVs Currently charging': get_evs_charging,
                              'EVs Not Idle': get_evs_not_idle,
-                             'EOD Battery SOC': get_eod_soc,
-                             })
+                             'EOD Battery SOC': get_eod_evs_socs,
+                             'EVs Destinations': get_evs_destinations,
+                             },
+            # agent_reporters={'Battery': 'battery',
+            #                 'Battery EOD': 'battery_eod',
+            #                 'Destination': 'destination',
+            #                 'State': 'state',
+            #                 }
+                             )
+        print(f"Model initialised. {self.no_evs} EVs and {self.no_cps} Charging Points.")
     
     def step(self):
         """Advance model one step in time"""
