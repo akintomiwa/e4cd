@@ -4,7 +4,7 @@ import random
 from mesa import Agent, Model
 from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
 from mesa.datacollection import DataCollector
-from EV.agents import EV, Cpoint
+from EV.statemachine import EV, Cpoint
 
 # Model Data Extraction Methods
 
@@ -17,8 +17,6 @@ def get_evs_charge_level(model):
     evs_levels = [ev.battery for ev in model.evs]
     # no_evs_active = np.sum(evs_active)
     return evs_levels
-
-# rewrite
 
 def get_evs_active(model):
     evs_active = [ev._is_active for ev in model.evs]
@@ -51,20 +49,16 @@ def get_eod_soc(model):
     eod_soc = [ev.battery_eod for ev in model.evs]
     return eod_soc
 
-# Incomplete
-# def get_evs_charged(model):
-#     evs_charged = [ev._was_charged for ev in model.evs]
-#     no_evs_charged = np.sum(evs_charged)
-#     return no_evs_charged
-
+def get_cpoint_queue_length(model):
+    queue_lengths = len([cpoint.queue for cpoint in model.cpoints])
+    return queue_lengths
 
 # Agent Data Extraction Methods
-# def get_ev_distance_covered(ev):
-#     eod_socs = [ev.battery_eod for ev in model.evs]
-#     total_distance = np.sum(eod_socs)
+def get_ev_distance_covered(ev):
+    eod_socs = [ev.battery_eod for ev in model.evs]
+    total_distance = np.sum(eod_socs)
 
 
-# 19 Jan Backup - working
 class EVModel(Model):
     """Simulation Model with EV agents and Charging Points agents.
     
@@ -131,7 +125,7 @@ class EVModel(Model):
     
     def step(self):
         """Advance model one step in time"""
-        print("Current tick: "+ str(self._current_tick) + ".")
+        print(f"\nCurrent timestep (tick): {self._current_tick}.")
         # print("Active CPs: " + str(get_active_cps(self)))
         # print(self.get_agent_count(self))
         self.schedule.step()
