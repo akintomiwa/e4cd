@@ -329,11 +329,9 @@ class EV(Agent):
             print("Vehicle " + str(self.unique_id + 1) + " has completed its journey and is now " + str(self.machine.state))
         # Transition Case 8: Jouney Complete. travel_low -> idle. JIT                                                       # For V 0.2
         
-        # Record EV battery soc at the end of every 23 steps
-        # Reinitialise agent variables for next day
-        # if (EVmodel.schedule.steps + 1) % 24 == 0:
-        #     print("This is the end of day: " + str((model.schedule.steps + 1) / 24))
-        #     self.add_soc_eod()
-        #     self.choose_journey_type()
-        #     self.choose_destination(self.journey_type)
-        #     self.set_new_day()
+        # logging.basicConfig(level=logging.DEBUG)
+        # logging.debug('This is a debug message')
+        # logging.info('This is an info message')
+        # logging.warning('This is a warning message')
+        # logging.error('This is an error message')
+        # logging.critical('This is a critical message')
