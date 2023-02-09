@@ -21,6 +21,8 @@ from plotly.offline import iplot
 from transitions import Machine
 from transitions.extensions import GraphMachine
 from functools import partial
+# import EV.model as model
+from EV.statemachine import EVSM, states, transitions
 
 class Cpoint(Agent):
     """A charging point agent.
@@ -329,9 +331,9 @@ class EV(Agent):
         
         # Record EV battery soc at the end of every 23 steps
         # Reinitialise agent variables for next day
-        if (model.schedule.steps + 1) % 24 == 0:
-            print("This is the end of day: " + str((model.schedule.steps + 1) / 24))
-            self.add_soc_eod()
-            self.choose_journey_type()
-            self.choose_destination(self.journey_type)
-            self.set_new_day()
+        # if (EVmodel.schedule.steps + 1) % 24 == 0:
+        #     print("This is the end of day: " + str((model.schedule.steps + 1) / 24))
+        #     self.add_soc_eod()
+        #     self.choose_journey_type()
+        #     self.choose_destination(self.journey_type)
+        #     self.set_new_day()

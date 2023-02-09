@@ -1,34 +1,17 @@
-import numpy as np
-import math
-import os
-import random
 from random import choice
 import warnings
-warnings.simplefilter("ignore")
-import pandas as pd
-import numpy as np
-import mesa
-from mesa import Agent, Model
-from mesa.time import RandomActivation, RandomActivationByType, SimultaneousActivation
-from mesa.datacollection import DataCollector
-from matplotlib import pyplot as plt, patches
-import scipy.stats as ss
-import cufflinks as cf
-cf.go_offline()
-from plotly.offline import iplot
 from transitions import Machine
 from transitions.extensions import GraphMachine
-from functools import partial
 
 """A state machine for managing status of EV agent in AB model."""
 
 
-class Model:
+class TModel:
     def clear_state(self, deep=False, force=False):
         print("Clearing State ... ")
         return True
 
-model = Model()
+model = TModel()
 machine = GraphMachine(model=model, states=['Idle', 'Travel', 'In_queue', 'Charge', 'Travel_low'],
                         transitions= [
                         {'trigger': 'start_travel', 'source': 'Idle', 'dest': 'Travel'},

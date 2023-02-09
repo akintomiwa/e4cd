@@ -4,7 +4,8 @@ import random
 from mesa import Agent, Model
 from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
 from mesa.datacollection import DataCollector
-from EV.statemachine import EV, Cpoint
+from EV.agent import EV, Cpoint
+
 
 # Model Data Extraction Methods
 
@@ -44,14 +45,13 @@ def get_active_cpoints(model):
     no_active_cpoints = np.sum(active_cpoints)
     return no_active_cpoints
 
-def get_eod_soc(model):
+def get_eod_evs_socs(model):
     # eod_soc = [ev.battery_eod for ev in model.evs]
     eod_soc = [ev.battery_eod for ev in model.evs]
     return eod_soc
-
-def get_cpoint_queue_length(model):
-    queue_lengths = len([cpoint.queue for cpoint in model.cpoints])
-    return queue_lengths
+def get_evs_destinations(model):
+    evs_destinations = [ev.destination for ev in model.evs]
+    return evs_destinations
 
 # Agent Data Extraction Methods
 def get_ev_distance_covered(ev):
@@ -131,3 +131,11 @@ class EVModel(Model):
         self.schedule.step()
         self._current_tick += 1
         self.datacollector.collect(self)
+        if (self.schedule.steps + 1) % 24 == 0:
+            print("This is the end of day: " + str((self.schedule.steps + 1) / 24))
+            for ev in self.evs:
+                # ev.
+                ev.add_soc_eod()
+                ev.choose_journey_type()
+                ev.choose_destination(ev.journey_type)
+                ev.set_new_day()
