@@ -24,6 +24,7 @@ machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_
                         {'trigger': 'end_charge', 'source': 'Charge', 'dest': 'Travel'},
                         {'trigger': 'continue_travel', 'source': 'Travel', 'dest': 'Travel'},
                         {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
+                        {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
                         ], 
                         initial = 'Idle', show_conditions=True)
 
@@ -47,6 +48,7 @@ Transitions:
     continue_travel: Travel -> Travel
     continue_charge: Charge -> Charge
     end_travel: Travel -> Idle
+    end_travel_low: Travel_low -> Idle
     """
 
 states = ['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead']
@@ -61,6 +63,7 @@ transitions = [
     {'trigger': 'end_charge', 'source': 'Charge', 'dest': 'Travel'},
     {'trigger': 'continue_travel', 'source': 'Travel', 'dest': 'Travel'},
     {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
+    {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
 ]
 
 

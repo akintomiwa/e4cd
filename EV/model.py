@@ -8,12 +8,6 @@ from EV.agent import EV, Cpoint
 
 
 # Model Data Extraction Methods
-
-def get_evs_charged(model):
-    evs_charged = [ev._was_charged for ev in model.evs]
-    no_evs_charged = np.sum(evs_charged)
-    return no_evs_charged
-
 def get_evs_charge_level(model):
     evs_levels = [ev.battery for ev in model.evs]
     # no_evs_active = np.sum(evs_active)
@@ -31,9 +25,19 @@ def get_evs_charging(model):
 
 # State machine based functions
 def get_evs_travel(model):
-    evs_travel = [ev.machine.state == 'Travel' for ev in model.evs]
+    evs_travel = [ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low' for ev in model.evs]
     no_evs_travel = np.sum(evs_travel)
     return no_evs_travel
+
+def get_evs_charge(model):
+    evs_charged = [ev.machine.state == 'Charge' for ev in model.evs]
+    no_evs_charged = np.sum(evs_charged)
+    return no_evs_charged
+
+def get_evs_queue(model):
+    evs_queued = [ev.machine.state == 'In_queue' for ev in model.evs]
+    no_evs_queued = np.sum(evs_queued)
+    return no_evs_queued
 
 def get_evs_not_idle(model):
     evs_not_idle = [ev.machine.state != 'Idle' for ev in model.evs]
@@ -54,7 +58,7 @@ def get_evs_destinations(model):
     return evs_destinations
 
 # Agent Data Extraction Methods
-def get_ev_distance_covered(ev):
+def get_ev_distance_covered(model):
     eod_socs = [ev.battery_eod for ev in model.evs]
     total_distance = np.sum(eod_socs)
 
@@ -117,9 +121,10 @@ class EVModel(Model):
 
 
         self.datacollector = DataCollector(
-            model_reporters={'EVs Charged': get_evs_charged,
+            model_reporters={'EVs Charging': get_evs_charge,
                              'EVs Activated': get_evs_active,
                              'EVs Travelling': get_evs_travel,
+                             'EVs Queued': get_evs_queue,
                              'EVs Charge Level': get_evs_charge_level,
                              'EVs Currently charging': get_evs_charging,
                              'EVs Not Idle': get_evs_not_idle,
