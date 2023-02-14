@@ -78,7 +78,7 @@ class EVModel(Model):
             
     """
   
-    def __init__(self, no_evs, no_cps, ticks):
+    def __init__(self, no_evs, no_cps, ticks) -> None:
         super().__init__()
         # init with input args
         self.running = True
@@ -87,6 +87,8 @@ class EVModel(Model):
         self._current_tick = 1
         self.no_evs = no_evs
         self.no_cps = no_cps
+        # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
+        self.checkpoints = self.compute_checkpoints(self.no_cps+1)
         # other key model attr 
         # self.schedule = RandomActivation(self)
         self.schedule = SimultaneousActivation(self)
@@ -102,9 +104,18 @@ class EVModel(Model):
         # charging points
         for i in range(self.no_cps):
             cp = Cpoint(i + no_evs, self)
-            # cp = Cpoint(i, self)
             self.schedule.add(cp)
             self.cpoints.append(cp)
+
+        # assign checkpoints to charging points
+        for  i, cp in enumerate(self.cpoints):
+            cp._checkpoint_id = self.checkpoints[i]
+            
+        # display Charge stations and their checkpoints
+        for cp in self.cpoints:
+            print(f"CP: {cp.unique_id} is at checkpoint: {cp._checkpoint_id} miles")
+
+
         self.datacollector = DataCollector(
             model_reporters={'EVs Charged': get_evs_charged,
                              'EVs Activated': get_evs_active,
@@ -121,16 +132,24 @@ class EVModel(Model):
             #                 'State': 'state',
             #                 }
                              )
-        print(f"Model initialised. {self.no_evs} EVs and {self.no_cps} Charging Points.")
+        print(f"Model initialised. {self.no_evs} EVs and {self.no_cps} Charging Points. Simulation will run for {self.ticks} ticks.")
+        # print(f"Charging station checkpoints: {self.checkpoints}")
     
-    def step(self):
+    def compute_checkpoints(self,n) -> list:
+        """Compute the checkpoints for the simulation."""
+        start = 40
+        # steps = n
+        interval = 40
+        checkpoints = np.arange(start, interval * n , interval)
+        # print(checkpoints)
+        return checkpoints
+
+    def step(self) -> None:
         """Advance model one step in time"""
         print(f"\nCurrent timestep (tick): {self._current_tick}.")
         # print("Active CPs: " + str(get_active_cps(self)))
         # print(self.get_agent_count(self))
         self.schedule.step()
-        self._current_tick += 1
-        self.datacollector.collect(self)
         if (self.schedule.steps + 1) % 24 == 0:
             print("This is the end of day: " + str((self.schedule.steps + 1) / 24))
             for ev in self.evs:
@@ -139,3 +158,5 @@ class EVModel(Model):
                 ev.choose_journey_type()
                 ev.choose_destination(ev.journey_type)
                 ev.set_new_day()
+        self.datacollector.collect(self)
+        self._current_tick += 1

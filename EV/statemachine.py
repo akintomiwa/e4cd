@@ -12,11 +12,12 @@ class TModel:
         return True
 
 model = TModel()
-machine = GraphMachine(model=model, states=['Idle', 'Travel', 'In_queue', 'Charge', 'Travel_low'],
+machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead'],
                         transitions= [
                         {'trigger': 'start_travel', 'source': 'Idle', 'dest': 'Travel'},
                         {'trigger': 'get_low', 'source': 'Travel', 'dest': 'Travel_low'},
                         {'trigger': 'seek_charge_queue', 'source': 'Travel_low', 'dest': 'Seek_queue'},
+                        {'trigger': 'deplete_battery', 'source': 'Travel_low', 'dest': 'Battery_dead'},
                         {'trigger': 'join_charge_queue', 'source': 'Seek_queue', 'dest': 'In_queue'},
                         {'trigger': 'start_charge', 'source': 'In_queue', 'dest': 'Charge'},
                         {'trigger': 'continue_charge', 'source': 'Charge', 'dest': 'Charge'},
@@ -39,6 +40,7 @@ Transitions:
     start_travel: Idle -> Travel
     get_low: Travel -> Travel_low
     seek_charge_queue: Travel_low -> Seek_queue
+    deplete_battery: Trav`el_low -> Battery_dead
     join_charge_queue: Seek_queue -> In_queue
     start_charge: In Queue -> Charge
     end_charge: Charge -> Travel
@@ -47,11 +49,12 @@ Transitions:
     end_travel: Travel -> Idle
     """
 
-states = ['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low']
+states = ['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead']
 transitions = [
     {'trigger': 'start_travel', 'source': 'Idle', 'dest': 'Travel'},
     {'trigger': 'get_low', 'source': 'Travel', 'dest': 'Travel_low'},
     {'trigger': 'seek_charge_queue', 'source': 'Travel_low', 'dest': 'Seek_queue'},
+    {'trigger': 'deplete_battery', 'source': 'Travel_low', 'dest': 'Battery_dead'},
     {'trigger': 'join_charge_queue', 'source': 'Seek_queue', 'dest': 'In_queue'},
     {'trigger': 'start_charge', 'source': 'In_queue', 'dest': 'Charge'},
     {'trigger': 'continue_charge', 'source': 'Charge', 'dest': 'Charge'},
