@@ -1,13 +1,16 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import random
-from mesa import Agent, Model
-from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
+# import matplotlib.pyplot as plt
+# import random
+import mesa
+from mesa import Model
+# from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
 from mesa.datacollection import DataCollector
 from EV.agent import EV, Cpoint
 
 
 # Model Data Extraction Methods
+
+# Attribute and Flag based functions for EV agents
 def get_evs_charge_level(model):
     evs_levels = [ev.battery for ev in model.evs]
     # no_evs_active = np.sum(evs_active)
@@ -23,7 +26,18 @@ def get_evs_charging(model):
     no_evs_charging = np.sum(evs_charging)
     return no_evs_charging
 
-# State machine based functions
+def get_evs_at_station_flag(model):
+    evs_charging = [ev._at_station is True for ev in model.evs]
+    no_evs_charging = np.sum(evs_charging)
+    return no_evs_charging
+
+def get_ev_distance_covered(model):
+    eod_socs = [ev.battery_eod for ev in model.evs]
+    total_distance = np.sum(eod_socs)
+    return total_distance
+
+
+# State machine based functions for EV agents
 def get_evs_travel(model):
     evs_travel = [ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low' for ev in model.evs]
     no_evs_travel = np.sum(evs_travel)
@@ -33,6 +47,11 @@ def get_evs_charge(model):
     evs_charged = [ev.machine.state == 'Charge' for ev in model.evs]
     no_evs_charged = np.sum(evs_charged)
     return no_evs_charged
+
+def get_evs_at_station_state(model):
+    evs_at_station = [(ev.machine.state == 'Seek_queue' or ev.machine.state == 'In_queue') or (ev.machine.state == 'Charge') for ev in model.evs]
+    no_evs_at_station = np.sum(evs_at_station)
+    return no_evs_at_station
 
 def get_evs_queue(model):
     evs_queued = [ev.machine.state == 'In_queue' for ev in model.evs]
@@ -57,10 +76,30 @@ def get_evs_destinations(model):
     evs_destinations = [ev.destination for ev in model.evs]
     return evs_destinations
 
-# Agent Data Extraction Methods
-def get_ev_distance_covered(model):
-    eod_socs = [ev.battery_eod for ev in model.evs]
-    total_distance = np.sum(eod_socs)
+# Attribute and Flag based functions for Charging station agents
+def get_queue_1_length(model):
+    cpoint_len = [len(cp.queue_1) for cp in model.cpoints]
+    # no_evs_active = np.sum(evs_active)
+    return cpoint_len
+
+def get_queue_2_length(model):  
+    cpoint_len = [len(cp.queue_2) for cp in model.cpoints]
+    # no_evs_active = np.sum(evs_active)
+    return cpoint_len
+
+# def get_evs_active(model):
+#     evs_active = [ev._is_active for ev in model.evs]
+#     no_evs_active = np.sum(evs_active)
+#     return no_evs_active
+
+# def get_evs_charging(model):
+#     evs_charging = [ev._is_charging is True for ev in model.evs]
+#     no_evs_charging = np.sum(evs_charging)
+#     return no_evs_charging
+
+
+
+############################################################################################################
 
 
 class EVModel(Model):
@@ -94,9 +133,10 @@ class EVModel(Model):
         # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
         self.checkpoints = self.compute_checkpoints(self.no_cps+1)
         # other key model attr 
-        # self.schedule = RandomActivation(self)
-        self.schedule = SimultaneousActivation(self)
-        # self.schedule = RandomActivationByType(self)
+        # self.schedule = mesa.time.RandomActivation(self)
+        self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False)
+        # self.schedule = SimultaneousActivation(self)
+        # self.schedule = RandomActivationByType(self) #requires addional args in model.step()
         # Populate model with agents
         self.evs = []
         self.cpoints = []
@@ -118,7 +158,9 @@ class EVModel(Model):
         # display Charge stations and their checkpoints
         for cp in self.cpoints:
             print(f"CP: {cp.unique_id} is at checkpoint: {cp._checkpoint_id} miles")
-
+        
+        # define method for computing EV start time
+        # self.
 
         self.datacollector = DataCollector(
             model_reporters={'EVs Charging': get_evs_charge,
@@ -130,6 +172,11 @@ class EVModel(Model):
                              'EVs Not Idle': get_evs_not_idle,
                              'EOD Battery SOC': get_eod_evs_socs,
                              'EVs Destinations': get_evs_destinations,
+                             'EVs at Charging Station - F': get_evs_at_station_flag,
+                             'EVs at Charging Station - S': get_evs_at_station_state,
+                             'Length of Queue 1 at Charging Stations': get_queue_1_length,
+                             'Length of Queue 2 at Charging Stations': get_queue_2_length,
+
                              },
             # agent_reporters={'Battery': 'battery',
             #                 'Battery EOD': 'battery_eod',
@@ -140,6 +187,13 @@ class EVModel(Model):
         print(f"Model initialised. {self.no_evs} EVs and {self.no_cps} Charging Points. Simulation will run for {self.ticks} ticks.")
         # print(f"Charging station checkpoints: {self.checkpoints}")
     
+    def compute_ev_start_time(self, ev) -> int:
+        """Compute the start time for the EV agent."""
+        start_time = np.random.randint(5, 7)
+        return start_time
+        
+
+
     def compute_checkpoints(self,n) -> list:
         """Compute the checkpoints for the simulation."""
         start = 40
@@ -149,6 +203,7 @@ class EVModel(Model):
         # print(checkpoints)
         return checkpoints
 
+    # def step(self, shuffle_types = True, shuffle_agents = True) -> None:
     def step(self) -> None:
         """Advance model one step in time"""
         print(f"\nCurrent timestep (tick): {self._current_tick}.")

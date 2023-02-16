@@ -84,16 +84,39 @@ class Cpoint(Agent):
             print(f"EV {self.unique_id} is in state; {self.active_ev_1.machine.state}")
             self.active_ev_1.battery += self._charge_rate
             print(f"EV {self.active_ev_1.unique_id} at CP {self.unique_id} is in state: {self.active_ev_1.machine.state}, Battery: {self.active_ev_1.battery}")
+            print(f"The length of the queue 1 is now: {len(self.queue_1)}")
         if self.active_ev_2 is not None:
             self.active_ev_2.battery += self._charge_rate
             print(f"EV {str(self.active_ev_2.unique_id)} at CP {(self.unique_id)} is in state: {self.active_ev_2.machine.state}, Battery: {self.active_ev_2.battery}")
+            print(f"The length of the queue 2 is now: {len(self.queue_2)}")
+    
+    def choose_charge_station(self):
+        # choose station
+
+        pass
+
+    def compare_queues(self):
+        # compare queues
+        pass
+
+    def choose_queue(self):
+        # choose queue
+        pass
+    
+    def join_queue(ev):
+        # join queue
+        pass
+
+    def charge_ev(self):
+        # charge ev
+        pass
 
 
     def step(self):
         if self.active_ev_1 or self.active_ev_2 is None:
             self.dequeue()
-        else:
-            self.charge_ev()
+        # else:
+        #     self.charge_ev()
 
 class EV(Agent):
     """An agent used to model an electric vehicle (EV).
@@ -133,6 +156,7 @@ class EV(Agent):
         self._in_garage = False
         self._is_charging = False
         self._was_charged = False
+        self._at_station = False
         self._is_travelling = False
         self._journey_complete = False
         self.machine = EVSM(initial='Idle', states=states, transitions=transitions)
@@ -287,7 +311,7 @@ class EV(Agent):
             print(f"EV {(self.unique_id)} selected queue 1 at Charge Station {(self._chosen_cp.unique_id)}")
 
     def select_cp(self) -> None:
-        """Selects a CP to charge at. Chooses the CP at the scheckpoint"""
+        """Selects a CP to charge at. Chooses the CP at the checkpoint"""
         for cp in self.model.cpoints:
             if cp._checkpoint_id == self.odometer:
                 self._chosen_cp = cp
@@ -297,7 +321,10 @@ class EV(Agent):
         print(f"Length of q 1: {(len(self._chosen_cp.queue_1))}. Length of q 2: {(len(self._chosen_cp.queue_2))}")
         self.choose_cp_queue()
         print(f"Vehicle {(self.unique_id)} selected Charge Station: {(self._chosen_cp.unique_id)} for charging.")
+    
 
+
+    # Model env functions
     def add_soc_eod(self) -> None:
         """Adds the battery level at the end of the day to a list."""
         self.battery_eod.append(self.battery)
@@ -326,13 +353,18 @@ class EV(Agent):
 
     # Working with issues
     def step(self):
+
+        ############
+        # Travelling #
+        ############
+
         # Block A - Transitions SM:
 
         # Transition Case 1: Start travelling. idle -> travel
         if self.machine.state == 'Idle' and self.odometer < self._distance_goal:
             self.machine.start_travel()
             
-        if self.machine.state == 'Travel':
+        if self.machine.state == 'Travel' and self.odometer < self._distance_goal:
             self.machine.continue_travel()
             self.travel()
             print(f"Vehicle id: {self.unique_id} is {self.machine.state}. This vehicle has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
@@ -344,10 +376,30 @@ class EV(Agent):
             print(f"EV: {self.unique_id}. This vehicle has travelled: {str(self.odometer)} miles and is low on battery. This vehicle's current charge level is: {self.battery} kwh")
 
 
+        ######################
+        # Locating a Station #
+        ######################
+    
+        # EV travelling or travelling low, checking for Charge Station at each checkpoint
+        if self.machine.state == 'Travel' and self.odometer in self.checkpoint_list:
+            print(f"EV {self.unique_id} has arrived at Charge Station but is not yet low on battery")
 
-        ########
-        # focus
-        ########
+        if self.machine.state == 'Travel_low' and self.odometer in self.checkpoint_list:
+            self.machine.seek_charge_queue()
+            self._in_queue = True
+            self._at_station = True
+            print(f"EV {self.unique_id} is low on battery and is at a station. Seeking charge queue. Current EV state: {self.machine.state}")
+            self.select_cp()
+            self.machine.join_charge_queue()
+
+            
+            
+            # # experimental - limit queue size to limit defined in charge station
+            # if (len(self._chosen_cp.queue_1) == self._chosen_cp._max_queue_size) and (len(self._chosen_cp.queue_2) == self._chosen_cp._max_queue_size):
+            #     print("Queue 1 and 2 are full. EV travelling under stress.")
+            # self.machine.join_charge_queue()
+            # # notification handled in charge station step method
+
         
         # Transition Case 3: EV with low battery does not arrive at charge station. Travel_low -> Battery_dead
         # condition self.battery < 10 because 10 is the minimum expenditure of energy to move the vehicle in one timestep
@@ -364,46 +416,40 @@ class EV(Agent):
                 self.machine.deplete_battery()
                 print(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh")
 
-        # EV travelling or travelling low, checking for Charge Station at each checkpoint
-        if self.machine.state == 'Travel' and self.odometer in self.checkpoint_list:
-            print("EV has arrived at Charge Station but is not yet low on battery")
-
-        if self.machine.state == 'Travel_low' and self.odometer in self.checkpoint_list:
-            self.machine.seek_charge_queue()
-            print(f"EV {self.unique_id} is low on battery and is at a station. Seeking charge queue. Current EV state: {self.machine.state}")
-            self.select_cp()
-            self.machine.join_charge_queue()
-            
-            # # experimental - limit queue size to limit defined in charge station
-            # if (len(self._chosen_cp.queue_1) == self._chosen_cp._max_queue_size) and (len(self._chosen_cp.queue_2) == self._chosen_cp._max_queue_size):
-            #     print("Queue 1 and 2 are full. EV travelling under stress.")
-            # self.machine.join_charge_queue()
-            # # notification handled in charge station step method
-
+        
+        
+        ############
+        # Charging #
+        ############
        
         # Transition Case 5: Start charging. in_queue -> charge
         if self.machine.state == 'In_queue':
             self.machine.start_charge()
+            self._in_queue = False
 
         # Transition Case 6: Continue charging. Charge -> charge
         if self.machine.state == 'Charge':
+            self._at_station = True
             if self.battery >= self._soc_charging_thresh:
-                print(f"Charge complete. Vehicle {self.unique_id} is {self.machine.state}. This vehicle has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
+                print(f"Charge complete. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
                 self.machine.end_charge()
+                self._is_charging = False
+                self._at_station = False
             if self.battery < self._soc_charging_thresh:
                 self.machine.continue_charge()
                 self._chosen_cp.charge_ev()
-                print(f"Charging. Vehicle {self.unique_id} is {self.machine.state}. This vehicle has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
+                self._is_charging = True
+                print(f"Charging. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
                 
         # Transition Case 7: Journey Complete. travel -> idle
         if self.machine.state == 'Travel' and self.odometer >= self._distance_goal:
             self.machine.end_travel()
-            print(f"Vehicle {self.unique_id} has completed its journey. State: {self.machine.state}. This vehicle has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
+            print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
 
-        # Transition Case 8: Joutney complete, battery low. travel_low -> idle
+        # Transition Case 8: Journey complete, battery low. travel_low -> idle
         if self.machine.state == 'Travel_low' and self.odometer >= self._distance_goal:
             self.machine.end_travel_low()
-            print(f"Vehicle {self.unique_id} has completed its journey. State: {self.machine.state}. This vehicle has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
+            print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
     
         
         # Block B - Actions SM:
