@@ -68,6 +68,7 @@ class Cpoint(Agent):
             self.active_ev_2 = self.queue_2.pop(0)
             print(f"EV {(self.active_ev_1.unique_id)} dequeued at CP {self.unique_id} at Queue 1 and is in state: {self.active_ev_1.machine.state}")
             print(f"EV {(self.active_ev_2.unique_id)} dequeued at CP {self.unique_id} at Queue 2 and is in state: {self.active_ev_2.machine.state}")
+            print(f"Queue 1 size: {len(self.queue_1)}, Queue 2 size: {len(self.queue_2)}")
         except:
             pass
     
@@ -321,7 +322,9 @@ class EV(Agent):
     # # Approach 2: use a list of checkpoints stored as a list of checkpoints
 
 
+   
 
+    # Working with issues
     def step(self):
         # Block A - Transitions SM:
 
