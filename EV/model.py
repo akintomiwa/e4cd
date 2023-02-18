@@ -5,7 +5,7 @@ import mesa
 from mesa import Model
 # from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
 from mesa.datacollection import DataCollector
-from EV.agent import EV, Cpoint
+from EV.agent import EV, ChargeStation
 
 
 # Model Data Extraction Methods
@@ -63,10 +63,10 @@ def get_evs_not_idle(model):
     no_evs_not_idle = np.sum(evs_not_idle)
     return no_evs_not_idle
 
-def get_active_cpoints(model):
-    active_cpoints = [cp._is_active for cp in model.cpoints]
-    no_active_cpoints = np.sum(active_cpoints)
-    return no_active_cpoints
+def get_active_chargestations(model):
+    active_Chargestations = [cs._is_active for cs in model.Chargestations]
+    no_active_Chargestations = np.sum(active_Chargestations)
+    return no_active_Chargestations
 
 def get_eod_evs_socs(model):
     # eod_soc = [ev.battery_eod for ev in model.evs]
@@ -78,12 +78,12 @@ def get_evs_destinations(model):
 
 # Attribute and Flag based functions for Charging station agents
 def get_queue_1_length(model):
-    cpoint_len = [len(cp.queue_1) for cp in model.cpoints]
+    cpoint_len = [len(cs.queue_1) for cs in model.chargestations]
     # no_evs_active = np.sum(evs_active)
     return cpoint_len
 
 def get_queue_2_length(model):  
-    cpoint_len = [len(cp.queue_2) for cp in model.cpoints]
+    cpoint_len = [len(cs.queue_2) for cs in model.chargestations]
     # no_evs_active = np.sum(evs_active)
     return cpoint_len
 
@@ -107,21 +107,21 @@ class EVModel(Model):
     
     Args:
         no_evs (int): Number of EV agents to create.
-        no_cps (int): Number of Charging Point agents to create.
+        no_css (int): Number of Charging Point agents to create.
         ticks (int): Number of ticks to run the simulation for.
         
     Attributes: 
         ticks (int): Number of ticks to run the simulation for.
         _current_tick (int): Current tick of the simulation.
         no_evs (int): Number of EV agents to create.
-        no_cps (int): Number of Charging Point agents to create.
+        no_css (int): Number of Charging Point agents to create.
         schedule (RandomActivation): Schedule for the model.
         evs (list): List of EV agents.
-        cpoints (list): List of Charging Point agents.
+        chargestations (list): List of Charging Point agents.
             
     """
   
-    def __init__(self, no_evs, no_cps, ticks) -> None:
+    def __init__(self, no_evs, no_css, ticks) -> None:
         super().__init__()
         # init with input args
         self.running = True
@@ -129,9 +129,9 @@ class EVModel(Model):
         self.ticks = ticks
         self._current_tick = 1
         self.no_evs = no_evs
-        self.no_cps = no_cps
+        self.no_css = no_css
         # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
-        self.checkpoints = self.compute_checkpoints(self.no_cps+1)
+        self.checkpoints = self.compute_checkpoints(self.no_css+1)
         # other key model attr 
         # self.schedule = mesa.time.RandomActivation(self)
         self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False)
@@ -139,25 +139,25 @@ class EVModel(Model):
         # self.schedule = RandomActivationByType(self) #requires addional args in model.step()
         # Populate model with agents
         self.evs = []
-        self.cpoints = []
+        self.chargestations = []
         # evs
         for i in range(self.no_evs):
             ev = EV(i,self)
             self.schedule.add(ev)
             self.evs.append(ev)
         # charging points
-        for i in range(self.no_cps):
-            cp = Cpoint(i + no_evs, self)
-            self.schedule.add(cp)
-            self.cpoints.append(cp)
+        for i in range(self.no_css):
+            cs = ChargeStation(i + no_evs, self)
+            self.schedule.add(cs)
+            self.chargestations.append(cs)
 
         # assign checkpoints to charging points
-        for  i, cp in enumerate(self.cpoints):
-            cp._checkpoint_id = self.checkpoints[i]
+        for  i, cs in enumerate(self.chargestations):
+            cs._checkpoint_id = self.checkpoints[i]
             
         # display Charge stations and their checkpoints
-        for cp in self.cpoints:
-            print(f"CP: {cp.unique_id} is at checkpoint: {cp._checkpoint_id} miles")
+        for cs in self.chargestations:
+            print(f"Charging Station: {cs.unique_id} is at checkpoint: {cs._checkpoint_id} miles")
         
         # define method for computing EV start time
         # self.
@@ -184,7 +184,7 @@ class EVModel(Model):
             #                 'State': 'state',
             #                 }
                              )
-        print(f"Model initialised. {self.no_evs} EVs and {self.no_cps} Charging Points. Simulation will run for {self.ticks} ticks.")
+        print(f"Model initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks.")
         # print(f"Charging station checkpoints: {self.checkpoints}")
     
     def compute_ev_start_time(self, ev) -> int:
@@ -192,7 +192,6 @@ class EVModel(Model):
         start_time = np.random.randint(5, 7)
         return start_time
         
-
 
     def compute_checkpoints(self,n) -> list:
         """Compute the checkpoints for the simulation."""
@@ -207,7 +206,7 @@ class EVModel(Model):
     def step(self) -> None:
         """Advance model one step in time"""
         print(f"\nCurrent timestep (tick): {self._current_tick}.")
-        # print("Active CPs: " + str(get_active_cps(self)))
+        # print("Active Css: " + str(get_active_css(self)))
         # print(self.get_agent_count(self))
         self.schedule.step()
         if (self.schedule.steps + 1) % 24 == 0:
