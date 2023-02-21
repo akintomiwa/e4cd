@@ -134,7 +134,7 @@ class EVModel(Model):
         self.checkpoints = self.compute_checkpoints(self.no_css+1)
         # other key model attr 
         # self.schedule = mesa.time.RandomActivation(self)
-        self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False)
+        self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False, stage_list=['stage_1','stage_2'])
         # self.schedule = SimultaneousActivation(self)
         # self.schedule = RandomActivationByType(self) #requires addional args in model.step()
         # Populate model with agents
@@ -209,8 +209,8 @@ class EVModel(Model):
         # print("Active Css: " + str(get_active_css(self)))
         # print(self.get_agent_count(self))
         self.schedule.step()
-        if (self.schedule.steps + 1) % 24 == 0:
-            print("This is the end of day: " + str((self.schedule.steps + 1) / 24))
+        if self.schedule.steps % 24 == 0:
+            print(f"This is the end of day:{(self.schedule.steps + 1) / 24} ")
             for ev in self.evs:
                 # ev.
                 ev.add_soc_eod()

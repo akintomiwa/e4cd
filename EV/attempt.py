@@ -77,4 +77,24 @@
 #                 self.machine.continue_charge()
 #                 self._chosen_cp.charge_ev()
 #                 print(f"Charging. Vehicle {self.unique_id} is {self.machine.state}. This vehicle has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-                
+        
+
+# 21/02/23
+# logic for 'Stay in queue'
+
+# if self._in_queue == True:
+#     if self._chosen_cs.active_ev_1 == self:
+#         self.machine.charge()
+#         self._charging = True
+#         self._in_queue = False
+#         print(f"EV {self.unique_id} is now charging at Charge Station {self._chosen_cs.unique_id}. Current charge: {self.battery} kWh")
+#     elif self._chosen_cs.active_ev_2 == self:
+#         self.machine.charge()
+#         self._charging = True
+#         self._in_queue = False
+#         print(f"EV {self.unique_id} is now charging at Charge Station {self._chosen_cs.unique_id}. Current charge: {self.battery} kWh")
+#     else:
+#         print(f"EV {self.unique_id} is waiting in queue at Charge Station {self._chosen_cs.unique_id}. Current charge: {self.battery} kWh")
+#         self.machine.wait_in_queue()
+#         self._in_queue = True
+#         self._charging = False

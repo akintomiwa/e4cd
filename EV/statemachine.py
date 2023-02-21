@@ -20,6 +20,7 @@ machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_
                         {'trigger': 'deplete_battery', 'source': 'Travel_low', 'dest': 'Battery_dead'},
                         {'trigger': 'join_charge_queue', 'source': 'Seek_queue', 'dest': 'In_queue'},
                         {'trigger': 'start_charge', 'source': 'In_queue', 'dest': 'Charge'},
+                        {'trigger': 'wait_in_queue', 'source': 'In_queue', 'dest': 'In_queue'},
                         {'trigger': 'continue_charge', 'source': 'Charge', 'dest': 'Charge'},
                         {'trigger': 'end_charge', 'source': 'Charge', 'dest': 'Travel'},
                         {'trigger': 'continue_travel', 'source': 'Travel', 'dest': 'Travel'},
@@ -43,6 +44,7 @@ Transitions:
     seek_charge_queue: Travel_low -> Seek_queue
     deplete_battery: Trav`el_low -> Battery_dead
     join_charge_queue: Seek_queue -> In_queue
+    wait_in_queue: In_queue -> In_queue
     start_charge: In Queue -> Charge
     end_charge: Charge -> Travel
     continue_travel: Travel -> Travel
@@ -58,6 +60,7 @@ transitions = [
     {'trigger': 'seek_charge_queue', 'source': 'Travel_low', 'dest': 'Seek_queue'},
     {'trigger': 'deplete_battery', 'source': 'Travel_low', 'dest': 'Battery_dead'},
     {'trigger': 'join_charge_queue', 'source': 'Seek_queue', 'dest': 'In_queue'},
+    {'trigger': 'wait_in_queue', 'source': 'In_queue', 'dest': 'In_queue'},
     {'trigger': 'start_charge', 'source': 'In_queue', 'dest': 'Charge'},
     {'trigger': 'continue_charge', 'source': 'Charge', 'dest': 'Charge'},
     {'trigger': 'end_charge', 'source': 'Charge', 'dest': 'Travel'},
