@@ -173,7 +173,7 @@ class ChargeStation(Agent):
                 self.active_ev_2.charge()
                 self.active_ev_1.machine.continue_charge()
             else:
-                self.active_ev_1.machine.end_charge()
+                # self.active_ev_1.machine.end_charge()
                 self.finish_charge_ev_2()
 
     # def step(self):
