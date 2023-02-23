@@ -132,7 +132,7 @@ class EVModel(Model):
         self.no_css = no_css
         # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
         self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
-
+        self.current_day_count = 0
         self.max_days = 0
         # self.set_max_days()
         # other key model attr 
@@ -210,6 +210,11 @@ class EVModel(Model):
             ev.add_soc_eod()
             ev.finish_day()
 
+    def update_day_count(self) -> None:
+        """Update the day of the simulation."""
+        self.current_day_count += 1
+        print(f"\nCurrent day: {self.current_day_count}.")
+
     def set_max_days(self) -> None:
         """Set the max number of days for the simulation."""
         self.max_days = self.ticks / 24
@@ -220,7 +225,8 @@ class EVModel(Model):
         for ev in self.evs:
             ev.choose_journey_type()
             ev.choose_destination(ev.journey_type)
-            ev.relaunch()
+            ev.relaunch(n = self.current_day_count)
+        
 
     # def step(self, shuffle_types = True, shuffle_agents = True) -> None:
     def step(self) -> None:
@@ -238,12 +244,16 @@ class EVModel(Model):
         #         ev.choose_destination(ev.journey_type)
         #         ev.set_new_day()
         self.datacollector.collect(self)
-        self._current_tick += 1
+
         # if self.schedule.steps % 24 == 0:
         if self._current_tick % 24 == 0:
             # print(f"This is the end of day:{(self.schedule.steps + 1) / 24} ")
-            print(f"This is the end of day: {self.schedule.steps / 24}. ")
             self.model_finish_day()
+            self.update_day_count()
+            # print(f"This is the end of day: {self.schedule.steps / 24}. Or {self.current_day_count} ")
+            print(f"This is the end of day: {self.current_day_count} ")
+        self._current_tick += 1
 
-        if self._current_tick > (self.ticks % 24) and self._current_tick < self.ticks:
-            self.ev_relaunch()
+        # soft reset at beginning of day
+        if self._current_tick > 24 and self._current_tick % 24 == 1:
+            self.ev_relaunch() #current no of days

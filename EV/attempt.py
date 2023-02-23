@@ -446,3 +446,41 @@
     #         self.active_ev_2.charge_ev_2()
     #     else:
     #         self.active_ev_2.finish_charge_ev_2()
+
+
+# Explore for model
+    #  if self.schedule.steps >= self.ticks:
+            # self.running = False
+            # print("Simulation finished.")
+            # print(self.datacollector.get_agent_vars_dataframe())
+            # print(self.datacollector.get_model_vars_dataframe())
+            # print(self.datacollector.get_agent_vars_dataframe().columns)
+            # print(self.datacollector.get_model_vars_dataframe().columns)
+            # print(self.datacollector.get_agent_vars_dataframe().index)
+            # print(self.datacollector.get_model_vars_dataframe().index)
+            # print(self.datacollector.get_agent_vars_dataframe().index.names)
+            # print(self.datacollector.get_model_vars_dataframe().index.names)
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels)
+            # print(self.datacollector.get_model_vars_dataframe().index.levels)
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[0])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[0])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[1])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[1])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[2])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[2])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[3])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[3])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[4])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[4])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[5])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[5])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[6])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[6])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[7])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[7])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[8])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[8])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[9])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[9])
+            # print(self.datacollector.get_agent_vars_dataframe().index.levels[10])
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[10

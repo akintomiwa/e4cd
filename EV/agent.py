@@ -116,7 +116,7 @@ class ChargeStation(Agent):
                 self.active_ev_1.charge()
                 self.active_ev_1.machine.continue_charge()
             else:    
-                print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_1.machine.state}.")                                       #testing
+                # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_1.machine.state}.")                                       #testing
                 self.active_ev_1.machine.end_charge()
                 self.finish_charge_ev_1()
         if self.active_ev_2 is not None:
@@ -124,7 +124,7 @@ class ChargeStation(Agent):
                 self.active_ev_2.charge()
                 self.active_ev_1.machine.continue_charge()
             else:
-                print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
+                # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
                 self.active_ev_2.machine.end_charge()
                 self.finish_charge_ev_2()
                 
@@ -188,7 +188,7 @@ class EV(Agent):
         self.ev_consumption_rate = 0
         self.tick_energy_usage = 0
         self.battery_eod = []
-        self.day_count = 0
+        self.current_day_count = 1
         self.start_time = 0
         # choose journey type
         self.journey_type = self.choose_journey_type()
@@ -207,14 +207,19 @@ class EV(Agent):
         self.set_start_time()
 
         # Initialisation Report
-
-        print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, speed: {self._speed}, State: {self.machine.state}.")
-        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate {self.ev_consumption_rate}.")
+        self.initalization_report()
+        # print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, speed: {self._speed}, State: {self.machine.state}.")
+        # print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate {self.ev_consumption_rate}.")
         # End initialisation report
     
     def __str__(self) -> str:
         """Return the agent's unique id as a string, not zero indexed."""
         return str(self.unique_id + 1)
+    
+    def initalization_report(self) -> None:
+        """Prints the EV's initialisation report."""
+        print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, speed: {self._speed}, State: {self.machine.state}.")
+        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate {self.ev_consumption_rate}.")
 
     # Internal functions
     def choose_journey_type(self) -> str:
@@ -372,13 +377,25 @@ class EV(Agent):
         Increments day_count and resets the odometer to 0.
         """
         self.battery = self.battery_eod[-1]
-        self.day_count += 1
+        self.current_day_count += 1
         self.odometer = 0
 
-    def ev_relaunch(self) -> None:
-
-        self.set_start_time() #???
-        
+    def relaunch(self,n) -> None:
+        if self.machine.state == "Idle":
+            self.set_start_time() #???
+            # self.start_time = self.model._current_tick - (n * 24) # use model.schedule.time?
+            # self.start_time += self.model._current_tick - (n * 24)
+            marker = (n * 24)
+            self.start_time += marker
+            print(f"EV {self.unique_id} relaunch successful. New start time: {self.start_time}")
+            self.initalization_report()
+            # if self.start_time > marker:
+            #     print(f"EV {self.unique_id} restart successful. New start time: {self.start_time}")
+            #     self.initalization_report()
+            # else:
+            #     print(f"EV {self.unique_id} restart unsuccessful. New start time: {self.start_time}")
+        elif self.machine.state != "Idle":
+            print(f"EV {self.unique_id} is not in Idle state. Cannot relaunch for new day.")
 
     def start_travel(self) -> None:
         if self.model.schedule.time == self.start_time:
@@ -395,9 +412,19 @@ class EV(Agent):
 
         # Transition Case 1: Start travelling. idle -> travel
         # Depending on start time, EV will start travelling, transitioning from Idle to Travel.
-        self.start_travel()
+        if self.machine.state == 'Battery_dead':
+            pass
+        else:
+            self.start_travel() 
 
-        
+        # # approach 2
+        # try:
+        #     self.start_travel()
+        # except:
+        #     MachineError
+
+
+    
         # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
         if self.machine.state == 'Travel' and self.battery <= self._soc_usage_thresh:
             self.machine.get_low()
