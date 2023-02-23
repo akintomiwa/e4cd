@@ -291,7 +291,7 @@ class EV(Agent):
         # destination = random.choices(list(choices.keys()), weights=list(choices.values()), k=1)
         # return destination
         # destinations_distances = {'City A': 210, 'City B': 140, 'City C': 245} # miles . Initial
-        destinations_distances = {'City A': 150, 'City B': 80, 'City C': 185} # miles. Updated
+        destinations_distances = {'City A': 120, 'City B': 80, 'City C': 150} # miles. Updated
         destination = random.choice(list(destinations_distances))
         self.destination = destination
         self._distance_goal = destinations_distances.get(destination)
@@ -318,7 +318,7 @@ class EV(Agent):
         # self.start_time = random.randint(6, 12)
 
         if self._distance_goal < 90:
-            self.start_time = random.randint(12, 15)
+            self.start_time = random.randint(10, 14)
 
         elif self._distance_goal >= 90:
             self.start_time = random.randint(6, 9)
