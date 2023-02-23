@@ -33,6 +33,8 @@ class ChargeStation(Agent):
         _is_charging: A boolean value indicating whether the CP is currently charging an EV.
         _active_ev: The EV currently charging at the CP.
         _charge_rate: The rate at which the CP charges an EV.
+        _checkpoint_id: The ID of the checkpoint the CP is associated with. Initialised to 0.
+        max_queue_size: The maximum number of EVs that can be queued at the CP.
 
     """
     def __init__(self, unique_id, model):
@@ -53,7 +55,7 @@ class ChargeStation(Agent):
         self.max_queue_size = 10
 
 
-        print(f"CP info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
+        print(f"\nCP info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
 
         # End initialisation
 
@@ -61,16 +63,6 @@ class ChargeStation(Agent):
         """Return the agent's unique id."""
         return str(self.unique_id + 1)
     
-    # def dequeue(self) -> None:
-    #     """Remove the first EV from each queue. FIFO fom queue."""
-    #     try:
-    #         self.active_ev_1 = self.queue_1.pop(0)
-    #         self.active_ev_2 = self.queue_2.pop(0)
-    #         print(f"EV {(self.active_ev_1.unique_id)} dequeued at CP {self.unique_id} at Queue 1 and is in state: {self.active_ev_1.machine.state}")
-    #         print(f"EV {(self.active_ev_2.unique_id)} dequeued at CP {self.unique_id} at Queue 2 and is in state: {self.active_ev_2.machine.state}")
-    #         print(f"Queue 1 size: {len(self.queue_1)}, Queue 2 size: {len(self.queue_2)}")
-    #     except:
-    #         pass
     
     def dequeue_1(self) -> None:
         """Remove the first EV from each queue. FIFO fom queue."""
@@ -90,67 +82,18 @@ class ChargeStation(Agent):
             print(f"Queue 2 size after dequeuing: {len(self.queue_2)}")
         except:
             pass
-
-    # def charge_ev_1(self):
-    #     """Charge the EV at the Charge Station.
-    #     The EV is charged at the Chargepoint's charge rate.
-    #     """
-    #     # Transition Case: EV is charging at CP.
-    #     if self.active_ev_1 is not None:
-    #         print(f"EV {self.unique_id} is in state; {self.active_ev_1.machine.state}")
-    #         self.active_ev_1.battery += self._charge_rate
-    #         print(f"EV {self.active_ev_1.unique_id} at CP {self.unique_id} is in state: {self.active_ev_1.machine.state}, Battery: {self.active_ev_1.battery}")
-    
-    # def charge_ev_2(self):
-    #     """Charge the EV at the Charge Station.
-    #     The EV is charged at the Chargepoint's charge rate.
-    #     """
-    #     # Transition Case: EV is charging at CP.
-    #     if self.active_ev_2 is not None:
-    #         print(f"EV {self.unique_id} is in state; {self.active_ev_2.machine.state}")
-    #         self.active_ev_2.battery += self._charge_rate
-    #         print(f"EV {self.active_ev_2.unique_id} at CP {self.unique_id} is in state: {self.active_ev_2.machine.state}, Battery: {self.active_ev_2.battery}")
-    
-    # def charge_evs(self):
-    #     self.charge_ev_1()
-    #     self.charge_ev_2()
-
-    # def charge_ev(self):
-    #     """Charge the EV at the Charge Station.
-    #     The EV is charged at the Chargepoint's charge rate.
-    #     """
-    #     # Transition Case: EV is charging at CP.
-    #     if self.active_ev_1:
-    #         print(f"EV {self.unique_id} is in state; {self.active_ev_1.machine.state}")
-    #         self.active_ev_1.battery += self._charge_rate
-    #         print(f"EV {self.active_ev_1.unique_id} at CP {self.unique_id} is in state: {self.active_ev_1.machine.state}, Battery: {self.active_ev_1.battery}")
-
-    #     if self.active_ev_2:
-    #         self.active_ev_2.battery += self._charge_rate
-    #         print(f"EV {str(self.active_ev_2.unique_id)} at CP {(self.unique_id)} is in state: {self.active_ev_2.machine.state}, Battery: {self.active_ev_2.battery}")
-       
-    #     # # problem zone
-    #     # if self.active_ev_1 is not None:
-    #     #     print(f"EV {self.unique_id} is in state; {self.active_ev_1.machine.state}")
-    #     #     self.active_ev_1.battery += self._charge_rate
-    #     #     print(f"EV {self.active_ev_1.unique_id} at CP {self.unique_id} is in state: {self.active_ev_1.machine.state}, Battery: {self.active_ev_1.battery}")
-    #     #     # print(f"The length of the queue 1 is now: {len(self.queue_1)}")
-    #     # if self.active_ev_2 is not None:
-    #     #     self.active_ev_2.battery += self._charge_rate
-    #     #     print(f"EV {str(self.active_ev_2.unique_id)} at CP {(self.unique_id)} is in state: {self.active_ev_2.machine.state}, Battery: {self.active_ev_2.battery}")
-    #     #     # print(f"The length of the queue 2 is now: {len(self.queue_2)}")
     
     def finish_charge_ev_1(self):
         """Finish charging the EV at CP1 at the Charge Station."""
         if self.active_ev_1 is not None:
-            # self.active_ev_1.machine.end_charge()
+            # self.active_ev_1.machine.end_charge() # this is a toggle
             self.active_ev_1 = None
             print(f"EV at Charge Station {self.unique_id}, CP 1 has exited.")
 
     def finish_charge_ev_2(self):
         """Finish charging the EV at CP2 at the Charge Station."""
         if self.active_ev_2 is not None:
-            # self.active_ev_2.machine.end_charge()
+            # self.active_ev_2.machine.end_charge() # this is another toggle
             self.active_ev_2 = None
             print(f"EV at Charge Station {self.unique_id}, CP 2 has exited.")
 
@@ -166,7 +109,7 @@ class ChargeStation(Agent):
                 self.active_ev_1.charge()
                 self.active_ev_1.machine.continue_charge()
             else:
-                self.active_ev_1.machine.end_charge()
+                # self.active_ev_1.machine.end_charge()
                 self.finish_charge_ev_1()
         if self.active_ev_2 is not None:
             if self.active_ev_2.battery < self.active_ev_2._soc_charging_thresh:
@@ -175,31 +118,6 @@ class ChargeStation(Agent):
             else:
                 # self.active_ev_1.machine.end_charge()
                 self.finish_charge_ev_2()
-
-    # def step(self):
-    #     # if self.active_ev_1 or self.active_ev_2 is None:
-    #     #     self.dequeue()
-    #     # # else:
-    #     #     self.charge_ev()
-    #     # step_1
-    #     if self.active_ev_1 is None:
-    #         self.dequeue_1()
-    #     if self.active_ev_2 is None:
-    #         self.dequeue_2()
-    #     # pass
-
-    #     # step2
-    #     # for CS in self.model.chargestations:
-    #     # active_ev 2
-    #     if self.active_ev_1.battery < self.active_ev_1._soc_usage_thresh:
-    #         self.active_ev_1.charge_ev_1()
-    #     else:
-    #         self.active_ev_1.finish_charge_ev_1()
-    #     # active_ev 2
-    #     if self.active_ev_2.battery < self.active_ev_2._soc_usage_thresh:
-    #         self.active_ev_2.charge_ev_2()
-    #     else:
-    #         self.active_ev_2.finish_charge_ev_2()
                 
 
 class EV(Agent):
@@ -262,7 +180,7 @@ class EV(Agent):
         self.tick_energy_usage = 0
         self.battery_eod = []
         self.day_count = 0
-
+        self.start_time = 0
         # choose journey type
         self.journey_type = self.choose_journey_type()
         # set EV speed
@@ -275,11 +193,14 @@ class EV(Agent):
         # self._chosen_cp_idx = 0 #in selected_cp
         self._chosen_cs = 0 #in selected_cp correct
         self.checkpoint_list = model.checkpoints
+        
+        # set EV start time
+        self.set_start_time()
 
         # Initialisation Report
 
-        print(f"EV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, distance goal: {self._distance_goal}, max_battery: {self.max_battery}, speed: {self._speed}, energy consumption rate {self.ev_consumption_rate}. State: {self.machine.state}")
-
+        print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, speed: {self._speed}, State: {self.machine.state}.")
+        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate {self.ev_consumption_rate}.")
         # End initialisation report
     
     def __str__(self) -> str:
@@ -339,7 +260,8 @@ class EV(Agent):
         """
 
         # Option 2: use values directly to determine destination
-        destinations_distances = {'work': 50, 'market': 80, 'friend_1': 45, 'friend_2': 135, 'autoshop': 70} #miles
+        # destinations_distances = {'work': 50, 'market': 80, 'friend_1': 45, 'friend_2': 135, 'autoshop': 70} #miles. Initial
+        destinations_distances = {'work': 50, 'market': 40, 'friend_1': 30, 'friend_2': 90, 'autoshop': 60} #miles. Updated
         destination = random.choice(list(destinations_distances))
         self.destination = destination
         self._distance_goal = destinations_distances.get(destination)
@@ -354,7 +276,8 @@ class EV(Agent):
         # choices = {'City A': 210, 'City B': 140, 'City C': 245}
         # destination = random.choices(list(choices.keys()), weights=list(choices.values()), k=1)
         # return destination
-        destinations_distances = {'City A': 210, 'City B': 140, 'City C': 245} # miles
+        # destinations_distances = {'City A': 210, 'City B': 140, 'City C': 245} # miles . Initial
+        destinations_distances = {'City A': 150, 'City B': 80, 'City C': 185} # miles. Updated
         destination = random.choice(list(destinations_distances))
         self.destination = destination
         self._distance_goal = destinations_distances.get(destination)
@@ -373,6 +296,18 @@ class EV(Agent):
         """ Marginal negative change in battery level per tick."""
         delta = (self.tick_energy_usage / self.max_battery)
         return delta
+    
+    def set_start_time(self) -> None:
+        """Sets the start time for the EV to travel. 
+        Sets start time based on distance goal - if distance goal is greater than or equal to 90 miles, start time is earlier
+        """
+        # self.start_time = random.randint(6, 12)
+
+        if self._distance_goal < 90:
+            self.start_time = random.randint(12, 15)
+
+        elif self._distance_goal >= 90:
+            self.start_time = random.randint(6, 9)
   
     # Core EV Functions
     def travel(self) -> None:
@@ -387,7 +322,8 @@ class EV(Agent):
         """
     
         print(f"EV {self.unique_id} is in state; {self.machine.state}")
-        self.battery += self._charge_rate
+        # self.battery += self._charge_rate
+        self.battery += self._chosen_cs._charge_rate
         print(f"EV {self.unique_id} at CP {self._chosen_cs.unique_id} is in state: {self.machine.state}, Battery: {self.battery}")
     
     # 16 Feb charge flow redo - new methods
@@ -414,21 +350,13 @@ class EV(Agent):
         elif len(self._chosen_cs.queue_1) == len(self._chosen_cs.queue_2):
             self._chosen_cs.queue_1.append(self)
             print(f"EV {(self.unique_id)} selected queue 1 at Charge Station {(self._chosen_cs.unique_id)}")
-    
-    # def exit_charge_station(self) -> None:
-    #     """EV exits the charge station. Removes EV from queue and sets charge station to inactive."""
-    #     if self._chosen_cs.active_ev_1 == self:
-    #         self._chosen_cs = None
-    #     elif self._chosen_cs.active_ev_2 == self:
-    #         self._chosen_cs = None
-    #     print(f"EV {(self.unique_id)} exited charge point at Charge Station {(self._chosen_cs.unique_id)}")
         
   
     # Model env functions
     def add_soc_eod(self) -> None:
         """Adds the battery level at the end of the day to a list."""
         self.battery_eod.append(self.battery)
-        print(f"Battery level at end of day: {self.battery_eod[-1]}")
+        print(f"EV {self.unique_id} Battery level at end of day: {self.battery_eod[-1]}")
 
     
     def set_new_day(self) -> None:
@@ -440,20 +368,23 @@ class EV(Agent):
         self.day_count += 1
         self.odometer = 0
 
-    # # Approach 1: use a link, index calculated by journey goal/by distance tick
-    # def _set_checkpoint(self, factor) -> float:
-    #     distance = self._distance_goal * factor
-    #     return distance
-    # # next step, do checkpointing using a link, index calculated by journey goal/by distance tick
-    
- 
+    def start_travel(self) -> None:
+        if self.model.schedule.time == self.start_time:
+            self.machine.start_travel()
+            # print(f"EV {self.unique_id} has started travelling at {self.model.schedule.time}")
+            print(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
+
 
     # staged step 
     def stage_1(self):
         """Stage 1: EV selects a charge station to charge at."""
         # Transition Case 1: Start travelling. idle -> travel
-        if self.machine.state == 'Idle' and self.odometer < self._distance_goal:
-            self.machine.start_travel()
+        # base for function to start evs at different times
+
+        # if self.machine.state == 'Idle' and self.odometer < self._distance_goal:
+        #     self.machine.start_travel()
+
+        self.start_travel()
 
         
         # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
@@ -461,12 +392,9 @@ class EV(Agent):
             self.machine.get_low()
             # print(f"EV: {self.unique_id} has travelled: {str(self.odometer)} miles and is now {self.machine.state}. Current charge level is: {self.battery} kwh")
 
-
-        ######################
         # Locating a Station #
-        ######################
-        # 21/02/23 - new flow for locating a station
-        # Combo of 1b and 4
+
+        # 21/02/23 - new flow for locating a station. Combo of 1b and 4
 
         if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and self.odometer < self._distance_goal:
             if self.machine.state == 'Travel':
@@ -518,245 +446,6 @@ class EV(Agent):
             print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
     
 
-
-
-    # Working with issues
-    # def step(self):
-
-    #     ############
-    #     # Travelling #
-    #     ############
-
-    #     # Block A - Transitions SM:
-
-    #     # Transition Case 1: Start travelling. idle -> travel
-    #     if self.machine.state == 'Idle' and self.odometer < self._distance_goal:
-    #         self.machine.start_travel()
-
-    #     # # 1b    
-    #     # if self.machine.state == 'Travel' and self.odometer < self._distance_goal:
-    #     #     self.machine.continue_travel()
-    #     #     self.travel()
-    #     #     print(f"Vehicle id: {self.unique_id} is {self.machine.state}. This vehicle has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-        
-    #     # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
-    #     if self.machine.state == 'Travel' and self.battery <= self._soc_usage_thresh:
-    #         self.machine.get_low()
-    #         # print(f"EV: {self.unique_id} has travelled: {str(self.odometer)} miles and is now {self.machine.state}. Current charge level is: {self.battery} kwh")
-
-
-    #     ######################
-    #     # Locating a Station #
-    #     ######################
-    #     # 21/02/23 - new flow for locating a station
-    #     # Combo of 1b and 4
-
-    #     if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and self.odometer < self._distance_goal:
-    #         if self.machine.state == 'Travel':
-    #             self.travel()
-    #             self.machine.continue_travel()
-    #             print(f"EV {self.unique_id}  has travelled: {self.odometer} miles. State: {self.machine.state}. Battery: {self.battery} kWh")
-    #         elif self.machine.state == 'Travel_low':
-    #             if self.battery > 0:
-    #                 print(f"EV {self.unique_id} is low on charge and is seeking a charge station. Current charge: {self.battery} kWh")
-    #                 self.travel()
-    #             elif self.battery <= 0:
-    #                 self.machine.deplete_battery()
-    #                 print(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh")
-
-        
-
-    #     # # Transition Case 4: EV with low battery is on lookout for Charge station. Notification.
-    #     # if self.machine.state == 'Travel_low' and self.odometer < self._distance_goal:
-    #     #     if self.battery > 0:
-    #     #         print(f"EV {self.unique_id} is low on charge and is seeking a charge station. Current charge: {self.battery} kWh")
-    #     #         self.travel()
-    #     #     elif self.battery <= 0:
-    #     #         self.machine.deplete_battery()
-    #     #         print(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh")
-        
-    #     # 21/02/23 - new flow for recognising a charge station (CS), choosing a CS and charge queue.
-    #     # combine both below for stopping at charge station:
-    #     if self.odometer in self.checkpoint_list:
-    #         if self.machine.state == 'Travel':
-    #             print(f"EV {self.unique_id} has arrived at Charge Station but is in state: {self.machine.state}. Not travelling low.")
-    #         elif self.machine.state == 'Travel_low':
-    #             self._at_station = True
-    #             print(f"EV {self.unique_id} is low on battery and is at a station. Seeking charge queue. Current EV state: {self.machine.state}")
-    #             # self.select_cp()
-    #             self.choose_charge_station()
-    #             self.machine.seek_charge_queue()
-    #             self.choose_cs_queue()
-    #             # at this point EV has arrived at CS, joined one of the two queues and is waiting to become the active ev, and get charged.
-    #             self.machine.join_charge_queue()
-    #             self._in_queue = True
-
-    #             # # experimental - limit queue size to limit defined in charge station
-    #             # if (len(self._chosen_cs.queue_1) + len(self._chosen_cs.queue_2)) >= self._chosen_cs.queue_limit:
-    #             #     print(f"EV {self.unique_id} has arrived at Charge Station but the queue is full. EV is not in queue.")
-    #             #     self._in_queue = False
-    #             # else:
-    #             #     self.choose_cs_queue()
-    #             #     self.machine.join_charge_queue()
-    #             #     self._in_queue = True
-
-    #     # Transition Case 3: EV with low battery does not arrive at charge station. Travel_low -> Battery_dead
-    #     # condition self.battery < 10 because 10 is the minimum expenditure of energy to move the vehicle in one timestep
-    #     if self.machine.state == 'Travel_low' and self.battery < 10:
-    #         self.machine.deplete_battery()
-    #         print(f"EV {self.unique_id} is now in state: {self.machine.state} and is out of charge.")
-
-    #     # # old flow for recognising a charge station (CS), choosing a CS and charge queue.
-    #     # # EV travelling or travelling low, checking for Charge Station at each checkpoint
-    #     # if self.machine.state == 'Travel' and self.odometer in self.checkpoint_list:
-    #     #     print(f"EV {self.unique_id} has arrived at Charge Station but is in state: {self.machine.state}. Not travelling low.")
-
-    #     # if self.machine.state == 'Travel_low' and self.odometer in self.checkpoint_list:
-    #     #     self._at_station = True
-    #     #     print(f"EV {self.unique_id} is low on battery and is at a station. Seeking charge queue. Current EV state: {self.machine.state}")
-    #     #     # self.select_cp()
-    #     #     self.choose_charge_station()
-    #     #     self.machine.seek_charge_queue()
-    #     #     self.choose_cs_queue()
-    #     #     self.machine.join_charge_queue()
-    #     #     self._in_queue = True
-
-    #     #     # # experimental - limit queue size to limit defined in charge station
-    #     #     # if (len(self._chosen_cs.queue_1) == self._chosen_cs._max_queue_size) and (len(self._chosen_cs.queue_2) == self._chosen_cs._max_queue_size):
-    #     #     #     print("Queue 1 and 2 are full. EV travelling under stress.")
-    #     #     # self.machine.join_charge_queue()
-    #     #     # # notification handled in charge station step method
-
-        
-
-        
-        
-
-    #     ############
-    #     # Charging #
-    #     ############
-
-    #     # # Transition Case 6: Continue charging. Charge -> charge
-    #     # if self.machine.state == 'Charge':
-    #     #     self._at_station = True
-    #     #     if self.battery >= self._soc_charging_thresh:
-    #     #         print(f"Charge complete. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-    #     #         self.machine.end_charge()
-    #     #         self._is_charging = False
-    #     #         self._at_station = False
-    #     #         self._chosen_cs.finish_charge_ev() #??? untested, may break things
-    #     #     if self.battery < self._soc_charging_thresh:
-    #     #         # self.machine.continue_charge() # this is a redundant state, but it's here for completeness. may be responsible for some of the re-charging in same timestep issues
-    #     #         self._chosen_cs.charge_evs()
-    #     #         # self._chosen_cs.charge_ev_1()
-    #     #         self._is_charging = True
-    #     #         print(f"Charging. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-        
-
-    #     for ev in self.model.evs:
-    #         if ev.machine.state == 'In_queue' and (ev == ev._chosen_cs.active_ev_1 or ev == ev._chosen_cs.active_ev_2):
-    #             if ev.battery < ev._soc_charging_thresh:
-    #                 try:
-    #                     self.machine.start_charge()
-    #                     self._chosen_cs.charge_evs()
-    #                 except MachineError:
-    #                     print(f"EV {self.unique_id} is in state: {self.machine.state}. Cannot start charging.")
-    #         if ev.machine.state == 'Charge' and (ev == ev._chosen_cs.active_ev_1 or ev == ev._chosen_cs.active_ev_2):
-    #             if ev.battery < ev._soc_charging_thresh:
-    #                 self.machine.continue_charge()
-    #                 self._chosen_cs.charge_evs()
-
-    #                 # if this causes multiple charges in Timestep, move to separate elif block.
-    #         if ev.machine.state == 'In_queue' and (ev != ev._chosen_cs.active_ev_1 or ev != ev._chosen_cs.active_ev_2):
-    #             self.machine.wait_in_queue()
-    #             print(f"EV {self.unique_id} is in state: {self.machine.state}. Waiting in queue.")
-
-        
-
-        
-    #     # under work
-
-    #     # # For chosen CS, if EV is active_ev at CS, start charging. If EV is not active_ev, wait in queue.
-    #     # # Transition Case 5: Start charging. in_queue -> charge
-    #     # if self.machine.state == 'In_queue' and self.ev == self._chosen_cs.active_ev:
-    #     #     if self._chosen_cs.active_ev_1.battery >= self._chosen_cs.active_ev_1._soc_charging_thresh:
-    #     #         print(f"Charge complete. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-    #     #         self._chosen_cs.active_ev_1.machine.end_charge()
-    #     #         self._is_charging = False
-    #     #         self._at_station = False
-    #     #         self._chosen_cs.finish_charge_ev() #??? untested, may break things
-    #     #     if self.battery < self._soc_charging_thresh:
-    #     #         # self.machine.continue_charge() # this is a redundant state, but it's here for completeness. may be responsible for some of the re-charging in same timestep issues
-    #     #         self._chosen_cs.charge_evs()
-    #     #         # self._chosen_cs.charge_ev_1()
-    #     #         self._is_charging = True
-    #     #         print(f"Charging. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-    #     #     self.machine.start_charge()
-    #     #     self._chosen_cs.charge_evs()
-    #     #     # self._in_queue = False
-
-    #     # # Transition Case 6: Continue charging. Charge -> charge
-    #     # if self.machine.state == 'Charge':
-    #     #     self._at_station = True
-    #     #     if self.battery >= self._soc_charging_thresh:
-    #     #         print(f"Charge complete. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-    #     #         self.machine.end_charge()
-    #     #         self._is_charging = False
-    #     #         self._at_station = False
-    #     #         self._chosen_cs.finish_charge_ev() #??? untested, may break things
-    #     #     if self.battery < self._soc_charging_thresh:
-    #     #         # self.machine.continue_charge() # this is a redundant state, but it's here for completeness. may be responsible for some of the re-charging in same timestep issues
-    #     #         self._chosen_cs.charge_evs()
-    #     #         # self._chosen_cs.charge_ev_1()
-    #     #         self._is_charging = True
-    #     #         print(f"Charging. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-                
-    #     # Transition Case 7: Journey Complete. travel -> idle
-    #     if self.machine.state == 'Travel' and self.odometer >= self._distance_goal:
-    #         self.machine.end_travel()
-    #         print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-
-    #     # Transition Case 8: Journey complete, battery low. travel_low -> idle
-    #     if self.machine.state == 'Travel_low' and self.odometer >= self._distance_goal:
-    #         self.machine.end_travel_low()
-    #         print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-    
-
-
-
-
-
-    #     # # Transition Case 5: Start charging. in_queue -> charge
-    #     # if self.machine.state == 'In_queue':
-    #     #     self.machine.start_charge()
-    #     #     # self._in_queue = False
-
-    #     # # Transition Case 6: Continue charging. Charge -> charge
-    #     # if self.machine.state == 'Charge':
-    #     #     self._at_station = True
-    #     #     if self.battery >= self._soc_charging_thresh:
-    #     #         print(f"Charge complete. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-    #     #         self.machine.end_charge()
-    #     #         self._is_charging = False
-    #     #         self._at_station = False
-    #     #         self._chosen_cs.finish_charge_ev() #??? untested, may break things
-    #     #     if self.battery < self._soc_charging_thresh:
-    #     #         # self.machine.continue_charge() # this is a redundant state, but it's here for completeness. may be responsible for some of the re-charging in same timestep issues
-    #     #         self._chosen_cs.charge_evs()
-    #     #         # self._chosen_cs.charge_ev_1()
-    #     #         self._is_charging = True
-    #     #         print(f"Charging. EV {self.unique_id} is {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-                
-    #     # # Transition Case 7: Journey Complete. travel -> idle
-    #     # if self.machine.state == 'Travel' and self.odometer >= self._distance_goal:
-    #     #     self.machine.end_travel()
-    #     #     print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-
-    #     # # Transition Case 8: Journey complete, battery low. travel_low -> idle
-    #     # if self.machine.state == 'Travel_low' and self.odometer >= self._distance_goal:
-    #     #     self.machine.end_travel_low()
-    #     #     print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-    
 
 
         #########

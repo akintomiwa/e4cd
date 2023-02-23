@@ -131,7 +131,7 @@ class EVModel(Model):
         self.no_evs = no_evs
         self.no_css = no_css
         # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
-        self.checkpoints = self.compute_checkpoints(self.no_css+1)
+        self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
         # other key model attr 
         # self.schedule = mesa.time.RandomActivation(self)
         self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False, stage_list=['stage_1','stage_2'])
@@ -140,6 +140,8 @@ class EVModel(Model):
         # Populate model with agents
         self.evs = []
         self.chargestations = []
+        
+        # Setup
         # evs
         for i in range(self.no_evs):
             ev = EV(i,self)
@@ -150,14 +152,12 @@ class EVModel(Model):
             cs = ChargeStation(i + no_evs, self)
             self.schedule.add(cs)
             self.chargestations.append(cs)
-
         # assign checkpoints to charging points
         for  i, cs in enumerate(self.chargestations):
-            cs._checkpoint_id = self.checkpoints[i]
-            
+            cs._checkpoint_id = self.checkpoints[i]        
         # display Charge stations and their checkpoints
         for cs in self.chargestations:
-            print(f"Charging Station: {cs.unique_id} is at checkpoint: {cs._checkpoint_id} miles")
+            print(f"Charging Station: {cs.unique_id} is at checkpoint: {cs._checkpoint_id} miles.")
         
         # define method for computing EV start time
         # self.
@@ -184,7 +184,7 @@ class EVModel(Model):
             #                 'State': 'state',
             #                 }
                              )
-        print(f"Model initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks.")
+        print(f"\nModel initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks.")
         # print(f"Charging station checkpoints: {self.checkpoints}")
     
     def compute_ev_start_time(self, ev) -> int:
@@ -199,7 +199,6 @@ class EVModel(Model):
         # steps = n
         interval = 40
         checkpoints = np.arange(start, interval * n , interval)
-        # print(checkpoints)
         return checkpoints
 
     # def step(self, shuffle_types = True, shuffle_agents = True) -> None:
@@ -209,13 +208,21 @@ class EVModel(Model):
         # print("Active Css: " + str(get_active_css(self)))
         # print(self.get_agent_count(self))
         self.schedule.step()
+        # if self.schedule.steps % 24 == 0:
+        #     # print(f"This is the end of day:{(self.schedule.steps + 1) / 24} ")
+        #     print(f"This is the end of day: {self.schedule.steps / 24}. ")
+        #     for ev in self.evs:
+        #         ev.add_soc_eod()
+        #         ev.choose_journey_type()
+        #         ev.choose_destination(ev.journey_type)
+        #         ev.set_new_day()
+        self.datacollector.collect(self)
+        self._current_tick += 1
         if self.schedule.steps % 24 == 0:
-            print(f"This is the end of day:{(self.schedule.steps + 1) / 24} ")
+            # print(f"This is the end of day:{(self.schedule.steps + 1) / 24} ")
+            print(f"This is the end of day: {self.schedule.steps / 24}. ")
             for ev in self.evs:
-                # ev.
                 ev.add_soc_eod()
                 ev.choose_journey_type()
                 ev.choose_destination(ev.journey_type)
                 ev.set_new_day()
-        self.datacollector.collect(self)
-        self._current_tick += 1
