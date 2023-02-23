@@ -132,6 +132,9 @@ class EVModel(Model):
         self.no_css = no_css
         # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
         self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
+
+        self.max_days = 0
+        # self.set_max_days()
         # other key model attr 
         # self.schedule = mesa.time.RandomActivation(self)
         self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False, stage_list=['stage_1','stage_2'])
@@ -184,13 +187,13 @@ class EVModel(Model):
             #                 'State': 'state',
             #                 }
                              )
-        print(f"\nModel initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks.")
+        print(f"\nModel initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks or {self.max_days}")
         # print(f"Charging station checkpoints: {self.checkpoints}")
     
-    def compute_ev_start_time(self, ev) -> int:
-        """Compute the start time for the EV agent."""
-        start_time = np.random.randint(5, 7)
-        return start_time
+    # def compute_ev_start_time(self, ev) -> int:
+    #     """Compute the start time for the EV agent."""
+    #     start_time = np.random.randint(5, 7)
+    #     return start_time
         
 
     def compute_checkpoints(self,n) -> list:
@@ -200,6 +203,24 @@ class EVModel(Model):
         interval = 40
         checkpoints = np.arange(start, interval * n , interval)
         return checkpoints
+    
+    def model_finish_day(self) -> None: 
+        """Reset the EVs at the end of the day."""
+        for ev in self.evs:
+            ev.add_soc_eod()
+            ev.finish_day()
+
+    def set_max_days(self) -> None:
+        """Set the max number of days for the simulation."""
+        self.max_days = self.ticks / 24
+        # print(f"Max days: {self.max_days}")
+
+    def ev_relaunch(self) -> None:
+        """Relaunch EVs at the end of the day."""
+        for ev in self.evs:
+            ev.choose_journey_type()
+            ev.choose_destination(ev.journey_type)
+            ev.relaunch()
 
     # def step(self, shuffle_types = True, shuffle_agents = True) -> None:
     def step(self) -> None:
@@ -218,11 +239,11 @@ class EVModel(Model):
         #         ev.set_new_day()
         self.datacollector.collect(self)
         self._current_tick += 1
-        if self.schedule.steps % 24 == 0:
+        # if self.schedule.steps % 24 == 0:
+        if self._current_tick % 24 == 0:
             # print(f"This is the end of day:{(self.schedule.steps + 1) / 24} ")
             print(f"This is the end of day: {self.schedule.steps / 24}. ")
-            for ev in self.evs:
-                ev.add_soc_eod()
-                ev.choose_journey_type()
-                ev.choose_destination(ev.journey_type)
-                ev.set_new_day()
+            self.model_finish_day()
+
+        if self._current_tick > (self.ticks % 24) and self._current_tick < self.ticks:
+            self.ev_relaunch()
