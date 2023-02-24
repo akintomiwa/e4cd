@@ -49,7 +49,7 @@ def is_digit(n):
         return False
 
 def get_params():
-    print("Please input custom parameters for the ec4d EV ABM Simulator v 0.3.5-alpha.\n Please respond with 'q' to quit")
+    print("Please input custom parameters for the ec4d EV ABM Simulator v 0.3.5-alpha.\n Please note that the no of Charging stations should be 5. \n Please respond with 'q' to quit.")
     global u_input 
     u_input = ''
     global evcount
@@ -62,14 +62,14 @@ def get_params():
         u_input = input("How many EVs do you want to simulate? \t")
         if is_digit(u_input) == True:
             evcount = int(u_input)
-            u_input = input("How many charging points do you want to simulate? \t")
+            u_input = input("How many charging stations do you want to simulate? \t")
             if is_digit(u_input) == True:
                 cscount = int(u_input)
                 u_input = input("How many timesteps do you want to simulate? \t")
                 if is_digit(u_input) == True:
                     timestep = int(u_input)
         break
-    print(f"Model parameters: \n EVs: {evcount}, Charging Points: {cscount}, Timesteps: {timestep} \n")
+    print(f"Model parameters: \n EVs: {evcount}, Charging Stations: {cscount}, Timesteps: {timestep} \n")
     # return evcount, cpcount, timestep
 
 def run_model():
