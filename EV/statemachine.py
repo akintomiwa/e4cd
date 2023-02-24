@@ -29,7 +29,7 @@ machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_
                         ], 
                         initial = 'Idle', show_conditions=True)
 
-# model.get_graph().draw('my_state_diagram.png', prog = 'dot')
+model.get_graph().draw('my_state_diagram_nu.png', prog = 'dot')
 
 
 class EVSM(Machine):
