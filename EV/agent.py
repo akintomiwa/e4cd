@@ -122,7 +122,7 @@ class ChargeStation(Agent):
         if self.active_ev_2 is not None:
             if self.active_ev_2.battery < self.active_ev_2._soc_charging_thresh:
                 self.active_ev_2.charge()
-                self.active_ev_1.machine.continue_charge()
+                self.active_ev_2.machine.continue_charge()
             else:
                 # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
                 self.active_ev_2.machine.end_charge()
