@@ -29,12 +29,12 @@ class ChargeStation(Agent):
     Attributes:
         unique_id: Unique identifier for the agent.
         model: The model the agent is running in.
-        queue: A list of EVs waiting to charge at the CP.
-        _is_charging: A boolean value indicating whether the CP is currently charging an EV.
-        _active_ev: The EV currently charging at the CP.
-        _charge_rate: The rate at which the CP charges an EV.
-        _checkpoint_id: The ID of the checkpoint the CP is associated with. Initialised to 0.
-        max_queue_size: The maximum number of EVs that can be queued at the CP.
+        queue: A list of EVs waiting to charge at the CS.
+        _is_charging: A boolean value indicating whether the CS is currently charging an EV.
+        _active_ev: The EV currently charging at the CS.
+        _charge_rate: The rate at which the CS charges an EV.
+        _checkpoint_id: The ID of the checkpoint the CS is associated with. Initialised to 0.
+        max_queue_size: The maximum number of EVs that can be queued at the CS.
 
     """
     def __init__(self, unique_id, model):
@@ -346,6 +346,7 @@ class EV(Agent):
     def charge_overnight(self):
         """Charge the EV at the Home Charge Station, at the Home Charge Station's charge rate."""
         # self.machine.set_state("Charging")
+        self.machine
         self.battery += self.home_cs_rate
         print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
     
@@ -358,7 +359,7 @@ class EV(Agent):
                 self._chosen_cs._is_active = True
         print(f"EV {(self.unique_id)} selected Charge Station: {(self._chosen_cs.unique_id)} for charging.")
 
-    # new select cp
+    # new select queue for charging
     def choose_cs_queue(self) -> None:
         """Chooses a queue at the charge station to charge at. Chooses the queue with the shortest queue."""
         print(f"Length of q1: {(len(self._chosen_cs.queue_1))}. Length of q2: {(len(self._chosen_cs.queue_2))}")
@@ -429,8 +430,6 @@ class EV(Agent):
         #     self.start_travel()
         # except:
         #     MachineError
-
-
     
         # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
         if self.machine.state == 'Travel' and self.battery <= self._soc_usage_thresh:
@@ -466,7 +465,7 @@ class EV(Agent):
                 self.choose_charge_station()
                 self.machine.seek_charge_queue()
                 self.choose_cs_queue()
-                # at this point EV has arrived at CS, joined one of the two queues and is waiting to become the active ev, and get charged.
+                # Here, EV has arrived at CS, joined one of the two queues and is waiting to become the active ev, and get charged.
                 self.machine.join_charge_queue()
                 self._in_queue = True
 
@@ -474,7 +473,7 @@ class EV(Agent):
     
     def stage_2(self):
         """Stage 2: EV waits in queue until it is the active EV."""
-         # Transition Case 3: EV with low battery does not arrive at charge station. Travel_low -> Battery_dead
+        # Transition Case 3: EV with low battery does not arrive at charge station. Travel_low -> Battery_dead
         # condition self.battery < 10 because 10 is the minimum expenditure of energy to move the vehicle in one timestep
         if self.machine.state == 'Travel_low' and self.battery < 10:
             self.machine.deplete_battery()
@@ -482,6 +481,8 @@ class EV(Agent):
         # Transition Case 7: Journey Complete. travel -> idle
         if self.machine.state == 'Travel' and self.odometer >= self._distance_goal:
             self.machine.end_travel()
+            self._in_garage = True
+            self._journey_complete = False
             print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
 
         # Transition Case 8: Journey complete, battery low. travel_low -> idle
@@ -489,7 +490,12 @@ class EV(Agent):
             self.machine.end_travel_low()
             print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
     
-
+        # 27 Feb
+        # if (self.machine.state == 'Idle' and self._in_garage == True) and model.schedule.time 
+        #     if self.battery < self.max_battery:
+        #         # self.machine.return_to_garage()
+        #         self.charge_overnight()
+                # print(f"EV {self.unique_id} is in state: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
 
 
         #########

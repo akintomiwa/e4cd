@@ -226,7 +226,12 @@ class EVModel(Model):
             ev.choose_journey_type()
             ev.choose_destination(ev.journey_type)
             ev.relaunch(n = self.current_day_count)
-        
+            # ev.update_home_charge_prop()
+    
+    def overnight_charge_evs(self) -> None:
+        """Overnight charge of EVs."""
+        for ev in self.evs:
+            ev.charge_overnight()
 
     # def step(self, shuffle_types = True, shuffle_agents = True) -> None:
     def step(self) -> None:
@@ -257,3 +262,7 @@ class EVModel(Model):
         # soft reset at beginning of day
         if self._current_tick > 24 and self._current_tick % 24 == 1:
             self.ev_relaunch() #current no of days
+
+        # overnight charging 
+        if self._current_tick > 24 and self._current_tick % 24 == 2:
+            self.overnight_charge_evs()
