@@ -262,7 +262,8 @@ class EVModel(Model):
         # soft reset at beginning of day
         if self._current_tick > 24 and self._current_tick % 24 == 1:
             self.ev_relaunch() #current no of days
-
-        # overnight charging 
-        if self._current_tick > 24 and self._current_tick % 24 == 2:
-            self.overnight_charge_evs()
+        
+        # overnight charging. integraition with relaunch??
+        # # overnight charging. Every day at 02:00
+        # if self._current_tick > 24 and self._current_tick % 24 == 2:
+        #     self.overnight_charge_evs()

@@ -346,9 +346,13 @@ class EV(Agent):
     def charge_overnight(self):
         """Charge the EV at the Home Charge Station, at the Home Charge Station's charge rate."""
         # self.machine.set_state("Charging")
-        self.machine
-        self.battery += self.home_cs_rate
-        print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
+        self.machine.start_home_charge()
+        if self.battery < self._soc_charging_thresh:
+            self.battery += self.home_cs_rate
+            print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
+        else:
+            self.machine.end_home_charge()
+            print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
     
    # 16 Feb charge flow redo - new methods
     def choose_charge_station(self):
