@@ -202,16 +202,25 @@ class EV(Agent):
         # self._chosen_cp_idx = 0 #in selected_cp
         self._chosen_cs = 0 #in selected_cp correct
         self.checkpoint_list = model.checkpoints
-        
         # set EV start time
         self.set_start_time()
 
+        # Home Station 
+        self.home_cs_rate = 20 #kW
+        self.home_charge_prop = 0.5    #propensity to charge at home
+        self.main_charge_prop = 0.5    #propensity to charge at main station #1 - self.home_charge_prop 
+
+        # self._home_cs = ChargeStation(0, model)
+
         # Initialisation Report
         self.initalization_report()
-        # print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, speed: {self._speed}, State: {self.machine.state}.")
-        # print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate {self.ev_consumption_rate}.")
-        # End initialisation report
     
+    def update_home_charge_prop(self, new_prop):
+        self.home_charge_prop = new_prop
+    
+    def update_main_charge_prop(self, new_prop):
+        self.main_charge_prop = new_prop
+
     def __str__(self) -> str:
         """Return the agent's unique id as a string, not zero indexed."""
         return str(self.unique_id + 1)
@@ -251,7 +260,7 @@ class EV(Agent):
         else:
             self.ev_consumption_rate = 0.5 # 500 Wh/mile OR 50 kWh/100 miles
     
-    def choose_destination(self, journey_type) -> str:
+    def choose_destination(self, journey_type:str) -> str:
         """Chooses a destination for the EV driver.
         Args:
             journey_type: Choice of journey type the EV driver makes.
@@ -266,10 +275,9 @@ class EV(Agent):
 
     def choose_destination_urban(self) -> None:
         """Chooses a destination for the EV driver. Urban destination from destinations distances dictionary.
-        
         Returns:     
-            destination: Choice of destination for the EV driver. (imp)
-            distance_goal: Distance goal for the EV driver. (imp)
+            destination: Choice of destination for the EV driver. (implicit)
+            distance_goal: Distance goal for the EV driver. (implicit)
             
         """
 
@@ -331,24 +339,23 @@ class EV(Agent):
         print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
     
     def charge(self):
-        """Charge the EV at the Charge Station.
-        The EV is charged at the Chargepoint's charge rate.
-        """
-    
-        print(f"EV {self.unique_id} is in state; {self.machine.state}")
-        # self.battery += self._charge_rate
+        """Charge the EV at the Charge Station. The EV is charged at the Charge Station's charge rate."""
         self.battery += self._chosen_cs._charge_rate
-        print(f"EV {self.unique_id} at CP {self._chosen_cs.unique_id} is in state: {self.machine.state}, Battery: {self.battery}")
+        print(f"EV {self.unique_id} at CS {self._chosen_cs.unique_id} is in state: {self.machine.state}, Battery: {self.battery}")
+
+    def charge_overnight(self):
+        """Charge the EV at the Home Charge Station, at the Home Charge Station's charge rate."""
+        # self.machine.set_state("Charging")
+        self.battery += self.home_cs_rate
+        print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
     
-    # 16 Feb charge flow redo - new methods
+   # 16 Feb charge flow redo - new methods
     def choose_charge_station(self):
         # choose station
         for cs in self.model.chargestations:
             if cs._checkpoint_id == self.odometer:
                 self._chosen_cs = cs
                 self._chosen_cs._is_active = True
-
-        # print(f"Charge Station selected: {(self._chosen_cs.unique_id)}")
         print(f"EV {(self.unique_id)} selected Charge Station: {(self._chosen_cs.unique_id)} for charging.")
 
     # new select cp
@@ -505,5 +512,8 @@ class EV(Agent):
         # EV initialisation time drawn from probability distribution
         # State Machine for managing CP charging status. Charging/NCharging
         
+        # import logging
+        # logging.basicConfig(level=logging.DEBUG)
+        # logging.getLogger('transitions').setLevel(logging.INFO)
 
         
