@@ -73,3 +73,17 @@ transitions = [
     {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
     {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
     ]
+
+
+class LSM(Machine):
+    """A state machine for managing location status of EV agent in AB model."""
+
+states = ['City_A', 'City_B', 'City_C']
+transitions = [
+    {'trigger': 'city_a_2_b', 'source': 'City_A', 'dest': 'City_B'},
+    {'trigger': 'city_b_2_c', 'source': 'City_B', 'dest': 'City_C'},
+    {'trigger': 'city_c_2_a', 'source': 'City_C', 'dest': 'City_A'},
+    {'trigger': 'city_b_2_a', 'source': 'City_B', 'dest': 'City_A'},
+    {'trigger': 'city_c_2_b', 'source': 'City_C', 'dest': 'City_B'},
+    {'trigger': 'city_a_2_c', 'source': 'City_A', 'dest': 'City_C'},
+    ]

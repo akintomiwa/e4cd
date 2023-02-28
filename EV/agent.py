@@ -22,7 +22,8 @@ from transitions import Machine, MachineError
 from transitions.extensions import GraphMachine
 from functools import partial
 # import EV.model as model
-from EV.statemachine import EVSM, states, transitions
+# from EV.statemachine import EVSM, states, transitions
+from EV.statemachine import EVSM, LSM, states, transitions
 
 class ChargeStation(Agent):
     """A charging point agent.
@@ -171,6 +172,7 @@ class EV(Agent):
         self._is_travelling = False
         self._journey_complete = False
         self.machine = EVSM(initial='Idle', states=states, transitions=transitions)
+        # self.location.machine = LSM(initial='City_A', states=states, transitions=transitions)
         self._is_active = True
         self.odometer = 0
         self._distance_goal = 0
