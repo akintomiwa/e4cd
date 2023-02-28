@@ -3,36 +3,7 @@ import warnings
 from transitions import Machine
 from transitions.extensions import GraphMachine
 
-"""A state machine for managing status of EV agent in AB model."""
-
-
-class TModel():
-    def clear_state(self, deep=False, force=False):
-        print("Clearing State ... ")
-        return True
-
-model = TModel()
-machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead', 'Home_Charge'],
-                        transitions= [
-                        {'trigger': 'start_home_charge', 'source': 'Idle', 'dest': 'Home_Charge'},
-                        {'trigger': 'end_home_charge', 'source': 'Home_Charge', 'dest': 'Idle'},
-                        {'trigger': 'start_travel', 'source': 'Idle', 'dest': 'Travel'},
-                        {'trigger': 'get_low', 'source': 'Travel', 'dest': 'Travel_low'},
-                        {'trigger': 'seek_charge_queue', 'source': 'Travel_low', 'dest': 'Seek_queue'},
-                        {'trigger': 'deplete_battery', 'source': 'Travel_low', 'dest': 'Battery_dead'},
-                        {'trigger': 'join_charge_queue', 'source': 'Seek_queue', 'dest': 'In_queue'},
-                        {'trigger': 'start_charge', 'source': 'In_queue', 'dest': 'Charge'},
-                        {'trigger': 'wait_in_queue', 'source': 'In_queue', 'dest': 'In_queue'},
-                        {'trigger': 'continue_charge', 'source': 'Charge', 'dest': 'Charge'},
-                        {'trigger': 'end_charge', 'source': 'Charge', 'dest': 'Travel'},
-                        {'trigger': 'continue_travel', 'source': 'Travel', 'dest': 'Travel'},
-                        {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
-                        {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
-                        ], 
-                        initial = 'Idle', show_conditions=True)
-
-# Render the state machine as a graph. Requires pygraphviz and graphviz to be installed.
-model.get_graph().draw('EV_state_diagram_v2.png', prog = 'dot')
+"""State machines for managing status and city-level location of EV agent in AB model."""
 
 
 class EVSM(Machine):
@@ -76,14 +47,71 @@ transitions = [
 
 
 class LSM(Machine):
-    """A state machine for managing location status of EV agent in AB model."""
+    """A state machine for managing location status of EV agent in AB model.
+    
+    States: City_A, City_B, City_C, City_D
+    Transitions:
+    city_d_2_a: City_D -> City_A
+    city_d_2_b: City_D -> City_B
+    city_d_2_c: City_D -> City_C
+    
+    """
 
-states = ['City_A', 'City_B', 'City_C']
+states = ['City_A', 'City_B', 'City_C', 'City_D']
 transitions = [
-    {'trigger': 'city_a_2_b', 'source': 'City_A', 'dest': 'City_B'},
-    {'trigger': 'city_b_2_c', 'source': 'City_B', 'dest': 'City_C'},
-    {'trigger': 'city_c_2_a', 'source': 'City_C', 'dest': 'City_A'},
-    {'trigger': 'city_b_2_a', 'source': 'City_B', 'dest': 'City_A'},
-    {'trigger': 'city_c_2_b', 'source': 'City_C', 'dest': 'City_B'},
-    {'trigger': 'city_a_2_c', 'source': 'City_A', 'dest': 'City_C'},
+    {'trigger': 'city_d_2_a', 'source': 'City_D', 'dest': 'City_A'},
+    {'trigger': 'city_d_2_b', 'source': 'City_D', 'dest': 'City_B'},
+    {'trigger': 'city_d_2_c', 'source': 'City_D', 'dest': 'City_C'},  
     ]
+
+# Visualizing the state machines
+
+# EVSM
+
+class TModel():
+    def clear_state(self, deep=False, force=False):
+        print("Clearing State ... ")
+        return True
+
+model = TModel()
+machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead', 'Home_Charge'],
+                        transitions= [
+                        {'trigger': 'start_home_charge', 'source': 'Idle', 'dest': 'Home_Charge'},
+                        {'trigger': 'end_home_charge', 'source': 'Home_Charge', 'dest': 'Idle'},
+                        {'trigger': 'start_travel', 'source': 'Idle', 'dest': 'Travel'},
+                        {'trigger': 'get_low', 'source': 'Travel', 'dest': 'Travel_low'},
+                        {'trigger': 'seek_charge_queue', 'source': 'Travel_low', 'dest': 'Seek_queue'},
+                        {'trigger': 'deplete_battery', 'source': 'Travel_low', 'dest': 'Battery_dead'},
+                        {'trigger': 'join_charge_queue', 'source': 'Seek_queue', 'dest': 'In_queue'},
+                        {'trigger': 'start_charge', 'source': 'In_queue', 'dest': 'Charge'},
+                        {'trigger': 'wait_in_queue', 'source': 'In_queue', 'dest': 'In_queue'},
+                        {'trigger': 'continue_charge', 'source': 'Charge', 'dest': 'Charge'},
+                        {'trigger': 'end_charge', 'source': 'Charge', 'dest': 'Travel'},
+                        {'trigger': 'continue_travel', 'source': 'Travel', 'dest': 'Travel'},
+                        {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
+                        {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
+                        ], 
+                        initial = 'Idle', show_conditions=True)
+
+# Render the state machine as a graph. Requires pygraphviz and graphviz to be installed.
+# model.get_graph().draw('EV_state_diagram_v2.png', prog = 'dot')
+
+class LModel():
+    def clear_state(self, deep=False, force=False):
+        print("Clearing State ... ")
+        return True
+
+model2 = LModel()
+
+machine2 = GraphMachine(model=model2, 
+               states=['City_A', 'City_B', 'City_C'], 
+               transitions=[
+                           {'trigger': 'city_d_2_a', 'source': 'City_D', 'dest': 'City_A'},
+                            {'trigger': 'city_d_2_b', 'source': 'City_D', 'dest': 'City_B'},
+                            {'trigger': 'city_d_2_c', 'source': 'City_D', 'dest': 'City_C'}, 
+               ], 
+               initial='City_D', 
+               show_conditions=True)
+
+# Render the state machine as a graph. Requires pygraphviz and graphviz to be installed.
+model2.get_graph().draw('EV_location_state_diagram_v2.png', prog = 'dot')
