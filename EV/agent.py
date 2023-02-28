@@ -414,7 +414,17 @@ class EV(Agent):
             self.machine.start_travel()
             # print(f"EV {self.unique_id} has started travelling at {self.model.schedule.time}")
             print(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
-
+    
+    def dead_intervention(self) -> None:
+        """Intervention for when the EV runs out of battery. 
+        The EV will be recharged to maximum by emergency services and will be transported to its destination.
+        """
+        self.battery = self.max_battery
+        self.odometer = self._distance_goal
+        self.machine.set_state("Idle")
+        # self.locationmachine.set_state("At_destination")
+        self.main_charge_prop += 0.1
+        print(f"EV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Main charge prop: {self.main_charge_prop}")
 
     # staged step 
     def stage_1(self):
