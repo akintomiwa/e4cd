@@ -240,9 +240,8 @@ class EVModel(Model):
     def ev_relaunch(self) -> None:
         """Relaunch EVs at the end of the day."""
         for ev in self.evs:
-            ev.choose_journey_type()
-            ev.choose_destination(ev.journey_type)
-            ev.relaunch(n = self.current_day_count)
+            ev.dead_intervention()
+            ev.relaunch_idle(n = self.current_day_count)
             # ev.update_home_charge_prop()
     
     def overnight_charge_evs(self) -> None:

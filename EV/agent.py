@@ -22,8 +22,8 @@ from transitions import Machine, MachineError
 from transitions.extensions import GraphMachine
 from functools import partial
 # import EV.model as model
-# from EV.statemachine import EVSM, states, transitions
-from EV.statemachine import EVSM, LSM, states, transitions
+# from EV.statemachine import EVSM, LSM states, transitions
+from EV.statemachine import EVSM, LSM
 
 class ChargeStation(Agent):
     """A charging point agent.
@@ -394,14 +394,16 @@ class EV(Agent):
         self.current_day_count += 1
         self.odometer = 0
 
-    def relaunch(self,n) -> None:
+    def relaunch_idle(self,n) -> None:
         if self.machine.state == "Idle":
             self.set_start_time() #???
             # self.start_time = self.model._current_tick - (n * 24) # use model.schedule.time?
             # self.start_time += self.model._current_tick - (n * 24)
             marker = (n * 24)
             self.start_time += marker
-            print(f"EV {self.unique_id} relaunch successful. New start time: {self.start_time}")
+            self.choose_journey_type()
+            self.choose_destination(self.journey_type)
+            print(f"EV {self.unique_id} relaunch prep successful. New start time: {self.start_time}")
             self.initalization_report()
             # if self.start_time > marker:
             #     print(f"EV {self.unique_id} restart successful. New start time: {self.start_time}")
@@ -421,12 +423,13 @@ class EV(Agent):
         """Intervention for when the EV runs out of battery. 
         The EV will be recharged to maximum by emergency services and will be transported to its destination.
         """
-        self.battery = self.max_battery
-        self.odometer = self._distance_goal
-        self.machine.set_state("Idle")
-        # self.locationmachine.set_state("At_destination")
-        self.main_charge_prop += 0.1
-        print(f"EV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Main charge prop: {self.main_charge_prop}")
+        if self.machine.state == "Battery_dead":
+            self.battery = self.max_battery
+            self.odometer = self._distance_goal
+            self.machine.set_state("Idle")
+            # self.locationmachine.set_state("At_destination")
+            self.main_charge_prop += 0.1
+            print(f"EV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Main charge prop: {self.main_charge_prop}")
 
     # staged step 
     def stage_1(self):
