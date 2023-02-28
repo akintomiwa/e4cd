@@ -87,6 +87,23 @@ def get_queue_2_length(model):
     # no_evs_active = np.sum(evs_active)
     return cpoint_len
 
+# 28/02 Request: Get number of EVs at each charging station
+def get_evs_at_cstation(model):
+    # data = []
+    # for cs in model.chargestations:
+    #     if (cs.active_ev_1 is not None) or (cs.active_ev_2 is not None):
+    #         evs_at_cstation = [cs.active_ev_1==True or cs.active_ev_2==True]
+    #         no_evs_at_cstation = np.sum(evs_at_cstation)
+    #         data.append(no_evs_at_cstation)
+    #     else:
+    #         if cs.active_ev_1 is None and cs.active_ev_2 is not None:
+    #             data.append(1)
+    #         elif cs.active_ev_1 is not None and cs.active_ev_2 is None:
+    #             data.append(1)
+    #         data.append(0)
+    # return data
+    pass
+
 # def get_evs_active(model):
 #     evs_active = [ev._is_active for ev in model.evs]
 #     no_evs_active = np.sum(evs_active)
@@ -175,11 +192,11 @@ class EVModel(Model):
                              'EVs Not Idle': get_evs_not_idle,
                              'EOD Battery SOC': get_eod_evs_socs,
                              'EVs Destinations': get_evs_destinations,
-                             'EVs at Charging Station - F': get_evs_at_station_flag,
+                            #  'EVs at Charging Station - F': get_evs_at_station_flag,
                              'EVs at Charging Station - S': get_evs_at_station_state,
                              'Length of Queue 1 at Charging Stations': get_queue_1_length,
                              'Length of Queue 2 at Charging Stations': get_queue_2_length,
-
+                             'EVs at Charging Stations': get_evs_at_cstation,
                              },
             # agent_reporters={'Battery': 'battery',
             #                 'Battery EOD': 'battery_eod',
