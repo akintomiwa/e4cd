@@ -11,12 +11,12 @@ class EVSM(Machine):
     Can be deployed as EvState object.
 
     States:
-    Idle, Travel, Seek_queue, Travel_low, In_queue, Charge
+    Idle, Travel, Seek_queue, Travel_low, In_queue, Charge, 'Travel_low', 'Battery_dead', 'Home_Charge'
     Transitions:
     start_travel: Idle -> Travel
     get_low: Travel -> Travel_low
     seek_charge_queue: Travel_low -> Seek_queue
-    deplete_battery: Trav`el_low -> Battery_dead
+    deplete_battery: Travel_low -> Battery_dead
     join_charge_queue: Seek_queue -> In_queue
     wait_in_queue: In_queue -> In_queue
     start_charge: In Queue -> Charge
