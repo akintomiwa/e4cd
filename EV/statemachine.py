@@ -43,6 +43,7 @@ transitions = [
     {'trigger': 'continue_travel', 'source': 'Travel', 'dest': 'Travel'},
     {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
     {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
+    {'trigger': 'emergency_intervention', 'source': 'Battery_dead', 'dest': 'Idle'},
     ]
 
 
@@ -57,8 +58,8 @@ class LSM(Machine):
     
     """
 
-states = ['City_A', 'City_B', 'City_C', 'City_D']
-transitions = [
+lstates = ['City_A', 'City_B', 'City_C', 'City_D']
+ltransitions = [
     {'trigger': 'city_d_2_a', 'source': 'City_D', 'dest': 'City_A'},
     {'trigger': 'city_d_2_b', 'source': 'City_D', 'dest': 'City_B'},
     {'trigger': 'city_d_2_c', 'source': 'City_D', 'dest': 'City_C'},  
@@ -90,6 +91,7 @@ machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_
                         {'trigger': 'continue_travel', 'source': 'Travel', 'dest': 'Travel'},
                         {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
                         {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
+                        {'trigger': 'emergency_intervention', 'source': 'Battery_dead', 'dest': 'Idle'},
                         ], 
                         initial = 'Idle', show_conditions=True)
 

@@ -22,8 +22,8 @@ from transitions import Machine, MachineError
 from transitions.extensions import GraphMachine
 from functools import partial
 # import EV.model as model
-# from EV.statemachine import EVSM, LSM states, transitions
-from EV.statemachine import EVSM, LSM
+from EV.statemachine import EVSM, LSM, states, transitions, lstates, ltransitions
+# from EV.statemachine import EVSM, LSM
 
 class ChargeStation(Agent):
     """A charging point agent.
@@ -172,7 +172,7 @@ class EV(Agent):
         self._is_travelling = False
         self._journey_complete = False
         self.machine = EVSM(initial='Idle', states=states, transitions=transitions)
-        # self.location.machine = LSM(initial='City_A', states=states, transitions=transitions)
+        self.loc_machine = LSM(initial='City_D', states=lstates, transitions=ltransitions)
         self._is_active = True
         self.odometer = 0
         self._distance_goal = 0
@@ -183,7 +183,8 @@ class EV(Agent):
         # EV Driver Behaviour
         self._speed = 0
         # battery soc level at which EV driver feels compelled to start charging at station.
-        self._soc_usage_thresh = (0.4 * self.max_battery) 
+        # self._soc_usage_thresh = (0.4 * self.max_battery) 
+        self._soc_usage_thresh = (self.charge_prop * self.max_battery) 
         # battery soc level at which EV driver is comfortable with stopping charging at station.
         self._soc_charging_thresh = (0.8 * self.max_battery) 
         # Newest
@@ -209,19 +210,14 @@ class EV(Agent):
 
         # Home Station 
         self.home_cs_rate = 20 #kW
-        self.home_charge_prop = 0.5    #propensity to charge at home
-        self.main_charge_prop = 0.5    #propensity to charge at main station #1 - self.home_charge_prop 
+        # self.home_charge_prop = 0.7    #propensity to charge at home
+        self.charge_prop = 0.4    #propensity to charge at main station 
 
         # self._home_cs = ChargeStation(0, model)
 
         # Initialisation Report
         self.initalization_report()
     
-    def update_home_charge_prop(self, new_prop):
-        self.home_charge_prop = new_prop
-    
-    def update_main_charge_prop(self, new_prop):
-        self.main_charge_prop = new_prop
 
     def __str__(self) -> str:
         """Return the agent's unique id as a string, not zero indexed."""
@@ -230,7 +226,7 @@ class EV(Agent):
     def initalization_report(self) -> None:
         """Prints the EV's initialisation report."""
         print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, speed: {self._speed}, State: {self.machine.state}.")
-        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate {self.ev_consumption_rate}.")
+        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate: {self.ev_consumption_rate}, location: {self.loc_machine.state}.")
 
     # Internal functions
     def choose_journey_type(self) -> str:
@@ -385,6 +381,19 @@ class EV(Agent):
         """Adds the battery level at the end of the day to a list."""
         self.battery_eod.append(self.battery)
         print(f"EV {self.unique_id} Battery level at end of day: {self.battery_eod[-1]}")
+    
+    def dead_intervention(self) -> None:
+        """Intervention for when the EV runs out of battery. 
+        The EV will be recharged to maximum by emergency services and will be transported to its destination.
+        """
+        if self.machine.state == "Battery_dead":
+            self.battery = self.max_battery
+            self.odometer = self._distance_goal
+            self.increase_charge_prop()
+            # self.machine.set_state("Idle")
+            # self.locationmachine.set_state("At_destination")
+            print(f"EV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.main_charge_prop}")
+    
 
     def finish_day(self) -> None:
         """Finishes the day. Sets the battery level to the end of day level from previous day, for the new day.
@@ -393,6 +402,9 @@ class EV(Agent):
         self.battery = self.battery_eod[-1]
         self.current_day_count += 1
         self.odometer = 0
+    
+    def relaunch_dead(self) -> None:
+        self.relaunch_idle(self, 0)
 
     def relaunch_idle(self,n) -> None:
         if self.machine.state == "Idle":
@@ -419,19 +431,24 @@ class EV(Agent):
             # print(f"EV {self.unique_id} has started travelling at {self.model.schedule.time}")
             print(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
     
-    def dead_intervention(self) -> None:
-        """Intervention for when the EV runs out of battery. 
-        The EV will be recharged to maximum by emergency services and will be transported to its destination.
-        """
-        if self.machine.state == "Battery_dead":
-            self.battery = self.max_battery
-            self.odometer = self._distance_goal
-            self.machine.set_state("Idle")
-            # self.locationmachine.set_state("At_destination")
-            self.main_charge_prop += 0.1
-            print(f"EV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Main charge prop: {self.main_charge_prop}")
+    
+    # def update_home_charge_prop(self, new_prop):
+    #     self.home_charge_prop = new_prop
 
-    # staged step 
+    # Dynamic propensity for charging behavior
+    def increase_charge_prop(self):
+        margin = 0.1
+        self.charge_prop += margin
+
+    def decrease_charge_prop(self):
+        margin = 0.1
+        self.charge_prop -= margin
+
+    # def update_soc_usage_thresh(self):
+    #     new_thresh = self.max_battery * self.charge_prop
+    #     self._soc_usage_thresh = new_thresh
+
+    # staged step functions
     def stage_1(self):
         """Stage 1: EV travels until it reaches the distance goal or runs out of battery. 
         If it needs to charge during the journey, it will transition to Stage 2.

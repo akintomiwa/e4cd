@@ -151,7 +151,7 @@ class EVModel(Model):
         self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
         self.current_day_count = 0
         self.max_days = 0
-        # self.set_max_days()
+        self.set_max_days()
         # other key model attr 
         # self.schedule = mesa.time.RandomActivation(self)
         self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False, stage_list=['stage_1','stage_2'])
@@ -204,7 +204,7 @@ class EVModel(Model):
             #                 'State': 'state',
             #                 }
                              )
-        print(f"\nModel initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks or {self.max_days}")
+        print(f"\nModel initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks or {self.max_days} days.\n")
         # print(f"Charging station checkpoints: {self.checkpoints}")
     
     # def compute_ev_start_time(self, ev) -> int:
@@ -241,6 +241,7 @@ class EVModel(Model):
         """Relaunch EVs at the end of the day."""
         for ev in self.evs:
             ev.dead_intervention()
+            ev.relaunch_dead()
             ev.relaunch_idle(n = self.current_day_count)
             # ev.update_home_charge_prop()
     
