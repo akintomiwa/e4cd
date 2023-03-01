@@ -182,6 +182,7 @@ class EV(Agent):
         self.max_battery = self.battery
         # EV Driver Behaviour
         self._speed = 0
+        self.charge_prop = 0.4    #propensity to charge at main station 
         # battery soc level at which EV driver feels compelled to start charging at station.
         # self._soc_usage_thresh = (0.4 * self.max_battery) 
         self._soc_usage_thresh = (self.charge_prop * self.max_battery) 
@@ -205,13 +206,13 @@ class EV(Agent):
         # self._chosen_cp_idx = 0 #in selected_cp
         self._chosen_cs = 0 #in selected_cp correct
         self.checkpoint_list = model.checkpoints
+        
         # set EV start time
         self.set_start_time()
 
         # Home Station 
         self.home_cs_rate = 20 #kW
         # self.home_charge_prop = 0.7    #propensity to charge at home
-        self.charge_prop = 0.4    #propensity to charge at main station 
 
         # self._home_cs = ChargeStation(0, model)
 
@@ -226,7 +227,7 @@ class EV(Agent):
     def initalization_report(self) -> None:
         """Prints the EV's initialisation report."""
         print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, speed: {self._speed}, State: {self.machine.state}.")
-        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate: {self.ev_consumption_rate}, location: {self.loc_machine.state}.")
+        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate: {self.ev_consumption_rate}, charge prop {self.charge_prop}, location: {self.loc_machine.state}.")
 
     # Internal functions
     def choose_journey_type(self) -> str:
@@ -386,14 +387,13 @@ class EV(Agent):
         """Intervention for when the EV runs out of battery. 
         The EV will be recharged to maximum by emergency services and will be transported to its destination.
         """
-        if self.machine.state == "Battery_dead":
-            self.battery = self.max_battery
-            self.odometer = self._distance_goal
-            self.increase_charge_prop()
-            # self.machine.set_state("Idle")
-            # self.locationmachine.set_state("At_destination")
-            print(f"EV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.main_charge_prop}")
-    
+        self.battery = self.max_battery
+        self.odometer = self._distance_goal
+        self.increase_charge_prop()
+        self.machine.set_state("Idle")
+        # self.locationmachine.set_state("At_destination")
+        print(f"EV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.charge_prop}")
+
 
     def finish_day(self) -> None:
         """Finishes the day. Sets the battery level to the end of day level from previous day, for the new day.
@@ -403,8 +403,12 @@ class EV(Agent):
         self.current_day_count += 1
         self.odometer = 0
     
-    def relaunch_dead(self) -> None:
-        self.relaunch_idle(self, 0)
+    # def relaunch_dead(self) -> None:
+    #     if self.machine.state == "Battery_dead":
+    #         # self.relaunch_idle(self)
+    #         self.dead_intervention()
+    #         self.set_start_time()
+
 
     def relaunch_idle(self,n) -> None:
         if self.machine.state == "Idle":

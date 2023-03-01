@@ -6,6 +6,7 @@ from mesa import Model
 # from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
 from mesa.datacollection import DataCollector
 from EV.agent import EV, ChargeStation
+from transitions import MachineError
 
 
 # Model Data Extraction Methods
@@ -240,9 +241,13 @@ class EVModel(Model):
     def ev_relaunch(self) -> None:
         """Relaunch EVs at the end of the day."""
         for ev in self.evs:
-            ev.dead_intervention()
-            ev.relaunch_dead()
-            ev.relaunch_idle(n = self.current_day_count)
+            if ev.machine.state == 'Battery_Dead':
+                ev.dead_intervention()
+            elif ev.machine.state == 'Idle':
+                ev.relaunch_idle(n = self.current_day_count)
+            elif ev.machine.state == 'Charging':
+                # do nothing
+                pass
             # ev.update_home_charge_prop()
     
     def overnight_charge_evs(self) -> None:
@@ -278,7 +283,12 @@ class EVModel(Model):
 
         # soft reset at beginning of day
         if self._current_tick > 24 and self._current_tick % 24 == 1:
-            self.ev_relaunch() #current no of days
+            try: 
+                self.ev_relaunch() #current no of days
+            except MachineError:
+                print("Error in relaunching EVs. EV is in a state other than Idle or Battery_Dead.")
+            # else:
+            #     print("Some other error.")
         
         # overnight charging. integraition with relaunch??
         # # overnight charging. Every day at 02:00
