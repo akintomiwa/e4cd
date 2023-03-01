@@ -483,4 +483,40 @@
             # print(self.datacollector.get_agent_vars_dataframe().index.levels[9])
             # print(self.datacollector.get_model_vars_dataframe().index.levels[9])
             # print(self.datacollector.get_agent_vars_dataframe().index.levels[10])
-            # print(self.datacollector.get_model_vars_dataframe().index.levels[10
+            # print(self.datacollector.get_model_vars_dataframe().index.levels[10])
+
+
+# def unpack_and_join(df, column_name):
+#     # Get the column values as a list of strings
+#     column_values = df[column_name].tolist()
+
+#     # Strip the square brackets from the strings
+#     column_values = [s.strip("[]") for s in column_values]
+
+#     # Split the strings on commas and create a list of lists
+#     split_values = [s.split(",") for s in column_values]
+
+#     # Get the number of columns needed
+#     num_cols = max([len(row) for row in split_values])
+
+#     # Create the new columns in the output dataframe
+#     column_names = [column_name+"_unpacked_"+str(i) for i in range(num_cols)]
+#     new_df = pd.DataFrame(columns=column_names)
+
+#     # Loop over the original column values and add the unpacked values to the new dataframe
+#     for vals in split_values:
+#         row_data = {}
+#         for i in range(num_cols):
+#             if i < len(vals):
+#                 row_data[column_name+"_unpacked_"+str(i)] = vals[i].strip()
+#             else:
+#                 row_data[column_name+"_unpacked_"+str(i)] = ""
+#         new_df = new_df.append(row_data, ignore_index=True)
+
+#     # Join all values in the same position per row
+#     new_df = new_df.apply(lambda x: ','.join(x.astype(str)), axis=1)
+
+#     # Replace the original column with the unpacked and joined values
+#     df[column_name] = new_df
+
+#     return df
