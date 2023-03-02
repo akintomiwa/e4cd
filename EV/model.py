@@ -22,10 +22,11 @@ def get_evs_active(model):
     no_evs_active = np.sum(evs_active)
     return no_evs_active
 
-def get_evs_charging(model):
-    evs_charging = [ev._is_charging is True for ev in model.evs]
-    no_evs_charging = np.sum(evs_charging)
-    return no_evs_charging
+# due for deletion 
+# def get_evs_charging(model):
+#     evs_charging = [ev._is_charging is True for ev in model.evs]
+#     no_evs_charging = np.sum(evs_charging)
+#     return no_evs_charging
 
 def get_evs_at_station_flag(model):
     evs_charging = [ev._at_station is True for ev in model.evs]
@@ -37,7 +38,6 @@ def get_ev_distance_covered(model):
     total_distance = np.sum(eod_socs)
     return total_distance
 
-
 # State machine based functions for EV agents
 def get_evs_travel(model):
     evs_travel = [ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low' for ev in model.evs]
@@ -48,6 +48,11 @@ def get_evs_charge(model):
     evs_charged = [ev.machine.state == 'Charge' for ev in model.evs]
     no_evs_charged = np.sum(evs_charged)
     return no_evs_charged
+
+def get_evs_dead(model):
+    evs_dead = [ev.machine.state == 'Battery_dead' for ev in model.evs]
+    no_evs_dead = np.sum(evs_dead)
+    return no_evs_dead
 
 def get_evs_at_station_state(model):
     evs_at_station = [(ev.machine.state == 'Seek_queue' or ev.machine.state == 'In_queue') or (ev.machine.state == 'Charge') for ev in model.evs]
@@ -70,14 +75,14 @@ def get_active_chargestations(model):
     return no_active_Chargestations
 
 def get_eod_evs_socs(model):
-    # eod_soc = [ev.battery_eod for ev in model.evs]
     eod_soc = [ev.battery_eod for ev in model.evs]
     return eod_soc
+
 def get_evs_destinations(model):
     evs_destinations = [ev.destination for ev in model.evs]
     return evs_destinations
 
-# Attribute and Flag based functions for Charging station agents
+# Attribute based functions for Charging station agents
 def get_queue_1_length(model):
     cpoint_len = [len(cs.queue_1) for cs in model.chargestations]
     # no_evs_active = np.sum(evs_active)
@@ -179,17 +184,15 @@ class EVModel(Model):
         # display Charge stations and their checkpoints
         for cs in self.chargestations:
             print(f"Charging Station: {cs.unique_id} is at checkpoint: {cs._checkpoint_id} miles.")
-        
-        # define method for computing EV start time
-        # self.
-
+        # data collector
         self.datacollector = DataCollector(
             model_reporters={'EVs Charging': get_evs_charge,
                              'EVs Activated': get_evs_active,
                              'EVs Travelling': get_evs_travel,
                              'EVs Queued': get_evs_queue,
+                             'EVs Dead': get_evs_dead,
                              'EVs Charge Level': get_evs_charge_level,
-                             'EVs Currently charging': get_evs_charging,
+                            #  'EVs Currently charging': get_evs_charging,
                              'EVs Not Idle': get_evs_not_idle,
                              'EOD Battery SOC': get_eod_evs_socs,
                              'EVs Destinations': get_evs_destinations,
@@ -241,10 +244,10 @@ class EVModel(Model):
     def ev_relaunch(self) -> None:
         """Relaunch EVs at the end of the day."""
         for ev in self.evs:
-            if ev.machine.state == 'Battery_Dead':
-                ev.dead_intervention()
+            if ev.machine.state == 'Battery_dead':
+                ev.relaunch_dead()
             elif ev.machine.state == 'Idle':
-                ev.relaunch_idle(n = self.current_day_count)
+                ev.relaunch_idle()
             elif ev.machine.state == 'Charging':
                 # do nothing
                 pass

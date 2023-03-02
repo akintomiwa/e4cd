@@ -329,6 +329,15 @@ class EV(Agent):
 
         elif self._distance_goal >= 90:
             self.start_time = random.randint(6, 9)
+    
+    # Dynamic propensity for charging behavior
+    def increase_charge_prop(self) -> None:
+        margin = 0.1
+        self.charge_prop += margin
+
+    def decrease_charge_prop(self) -> None:
+        margin = 0.1
+        self.charge_prop -= margin
   
     # Core EV Functions
     def travel(self) -> None:
@@ -388,30 +397,22 @@ class EV(Agent):
         The EV will be recharged to maximum by emergency services and will be transported to its destination.
         """
         self.battery = self.max_battery
-        self.odometer = self._distance_goal
+        # self.odometer = self._distance_goal
         self.increase_charge_prop()
-        self.machine.set_state("Idle")
+        self.machine.emergency_intervention()
         # self.locationmachine.set_state("At_destination")
-        print(f"EV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.charge_prop}")
+        print(f"\nEV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.charge_prop}")
 
 
     def finish_day(self) -> None:
         """Finishes the day. Sets the battery level to the end of day level from previous day, for the new day.
         Increments day_count and resets the odometer to 0.
         """
-        self.battery = self.battery_eod[-1]
+        # self.battery = self.battery_eod[-1]
         self.current_day_count += 1
         self.odometer = 0
     
-    # def relaunch_dead(self) -> None:
-    #     if self.machine.state == "Battery_dead":
-    #         # self.relaunch_idle(self)
-    #         self.dead_intervention()
-    #         self.set_start_time()
-
-
-    def relaunch_idle(self,n) -> None:
-        if self.machine.state == "Idle":
+    def relaunch_base(self,n) -> None:
             self.set_start_time() #???
             # self.start_time = self.model._current_tick - (n * 24) # use model.schedule.time?
             # self.start_time += self.model._current_tick - (n * 24)
@@ -419,16 +420,24 @@ class EV(Agent):
             self.start_time += marker
             self.choose_journey_type()
             self.choose_destination(self.journey_type)
-            print(f"EV {self.unique_id} relaunch prep successful. New start time: {self.start_time}")
+            print(f"\nEV {self.unique_id} relaunch prep successful. New start time: {self.start_time}")
             self.initalization_report()
             # if self.start_time > marker:
             #     print(f"EV {self.unique_id} restart successful. New start time: {self.start_time}")
             #     self.initalization_report()
             # else:
             #     print(f"EV {self.unique_id} restart unsuccessful. New start time: {self.start_time}")
-        elif self.machine.state != "Idle":
-            print(f"EV {self.unique_id} is not in Idle state. Cannot relaunch for new day.")
 
+    def relaunch_dead(self) -> None:
+        self.dead_intervention()
+        self.relaunch_base(n = self.model.current_day_count)
+
+    def relaunch_idle(self) -> None:
+        # if self.machine.state == "Idle":
+        #     self.relaunch_base(self,n)
+        # elif self.machine.state != "Idle":
+        #     print(f"EV {self.unique_id} is not in Idle state. Cannot relaunch for new day.")
+        self.relaunch_base(n = self.model.current_day_count)
     def start_travel(self) -> None:
         if self.model.schedule.time == self.start_time:
             self.machine.start_travel()
@@ -439,14 +448,7 @@ class EV(Agent):
     # def update_home_charge_prop(self, new_prop):
     #     self.home_charge_prop = new_prop
 
-    # Dynamic propensity for charging behavior
-    def increase_charge_prop(self):
-        margin = 0.1
-        self.charge_prop += margin
-
-    def decrease_charge_prop(self):
-        margin = 0.1
-        self.charge_prop -= margin
+    
 
     # def update_soc_usage_thresh(self):
     #     new_thresh = self.max_battery * self.charge_prop
