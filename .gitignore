@@ -166,3 +166,5 @@ cython_debug/
 # ./.pytest_cache/
 ./vscode/
 EV/__pycache__/agent.cpython-311.pyc
+EV/__pycache__/model.cpython-311.pyc
+EV/__pycache__/statemachine.cpython-311.pyc
