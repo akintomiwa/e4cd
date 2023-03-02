@@ -96,7 +96,7 @@ machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_
                         initial = 'Idle', show_conditions=True)
 
 # Render the state machine as a graph. Requires pygraphviz and graphviz to be installed.
-# model.get_graph().draw('EV_state_diagram_v2.png', prog = 'dot')
+model.get_graph().draw('EV_state_diagram_v2.png', prog = 'dot')
 
 class LModel():
     def clear_state(self, deep=False, force=False):
@@ -116,4 +116,4 @@ machine2 = GraphMachine(model=model2,
                show_conditions=True)
 
 # Render the state machine as a graph. Requires pygraphviz and graphviz to be installed.
-model2.get_graph().draw('EV_location_state_diagram_v2.png', prog = 'dot')
+# model2.get_graph().draw('EV_location_state_diagram_v2.png', prog = 'dot')
