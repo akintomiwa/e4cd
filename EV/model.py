@@ -82,6 +82,10 @@ def get_evs_destinations(model):
     evs_destinations = [ev.destination for ev in model.evs]
     return evs_destinations
 
+def get_evs_charge_prop(model):
+    ev_cprop = [ev.charge_prop for ev in model.evs]
+    return ev_cprop
+
 # Attribute based functions for Charging station agents
 def get_queue_1_length(model):
     cpoint_len = [len(cs.queue_1) for cs in model.chargestations]
@@ -192,9 +196,9 @@ class EVModel(Model):
                              'EVs Queued': get_evs_queue,
                              'EVs Dead': get_evs_dead,
                              'EVs Charge Level': get_evs_charge_level,
-                            #  'EVs Currently charging': get_evs_charging,
+                             'EVs Charge Propensity': get_evs_charge_prop,
                              'EVs Not Idle': get_evs_not_idle,
-                             'EOD Battery SOC': get_eod_evs_socs,
+                             'EVs EOD Battery SOC': get_eod_evs_socs,
                              'EVs Destinations': get_evs_destinations,
                             #  'EVs at Charging Station - F': get_evs_at_station_flag,
                              'EVs at Charging Station - S': get_evs_at_station_state,

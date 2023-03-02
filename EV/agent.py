@@ -403,7 +403,6 @@ class EV(Agent):
         # self.locationmachine.set_state("At_destination")
         print(f"\nEV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.charge_prop}")
 
-
     def finish_day(self) -> None:
         """Finishes the day. Sets the battery level to the end of day level from previous day, for the new day.
         Increments day_count and resets the odometer to 0.
