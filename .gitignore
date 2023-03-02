@@ -165,6 +165,8 @@ cython_debug/
 ./__pycache__/
 # ./.pytest_cache/
 ./vscode/
+
+# compiled code from python files
 EV/__pycache__/agent.cpython-311.pyc
 EV/__pycache__/model.cpython-311.pyc
 EV/__pycache__/statemachine.cpython-311.pyc
