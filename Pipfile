@@ -11,6 +11,11 @@ matplotlib = "*"
 scipy = "*"
 cufflinks = "*"
 seaborn = "*"
+python-statemachine = "*"
+transitions = "*"
+graphviz = "*"
+pygraphviz = "*"
+transitions[diagrams] = "*"
 
 [dev-packages]
 
