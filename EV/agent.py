@@ -106,12 +106,14 @@ class ChargeStation(Agent):
             print(f"EV at Charge Station {self.unique_id}, CP 2 has exited.")
 
     def stage_1(self):
+        """Stage 1 of the charge station's step function."""
         if self.active_ev_1 is None:
             self.dequeue_1()
         if self.active_ev_2 is None:
             self.dequeue_2()
 
     def stage_2(self):
+        """Stage 2 of the charge station's step function."""
         if self.active_ev_1 is not None:
             if self.active_ev_1.battery < self.active_ev_1._soc_charging_thresh:
                 self.active_ev_1.charge()
@@ -152,6 +154,39 @@ class EV(Agent):
         _journey_choice: Choice of journey the EV driver makes.
         battery: State of charge of the EV.
         max_battery: Maximum state of charge of the EV.
+
+    Methods:
+        __init__: Initialise the EV agent.
+        __str__: Return the agent's unique id.
+        initialization_report: Print the agent's initial state.
+        choose_journey_type: Choose the type of journey the EV will undertake.
+        set_speed: Set the speed of the EV.
+        set_ev_consumption_rate: Set the energy consumption of the EV.
+        choose_destination: Choose the destination of the EV.
+        choose_destintion_urban: Choose the destination of the EV in an urban area.
+        choose_destination_interurban: Choose the destination of the EV in an interurban area.
+        energy_usage_trip: Energy usage of the EV in a trip.
+        energy_usage_tick: Energy usage of the EV in a tick.
+        delta_battery_neg: Calculate the change in state of charge of the EV.
+        dead_intervention: Intervene if the EV is dead. Recharge the EV to max.
+        set_start_time: Set the start time of the EV.
+        increase_charge_prop: Increase the propensity-to-charge of the EV.
+        decrease_charge_prop: Decrease the propensity-to-charge of the EV.
+        travel: Travel function for the EV agent.
+        charge: Charge the EV.
+        charge_overnight: Charge the EV overnight.
+        choose_charge_station: Choose the associated Chargestation to charge the EV.
+        choose_cs_queue: Choose the queue to join at the charge station.
+        add_soc_eod: Add the state of charge of the EV at the end of the day to a list.
+        finish_day: Finish the day for the EV. Increment the day count. Reset the odometer.
+        relaunch_base: Base EV relaunch process.
+        relaunch_dead: Relaunch process for dead EVs.
+        relaunch_idle: Relaunch process for idle EVs.
+        start_travel: Start the travel process for the EV at the allocated start time.
+
+        step functions:
+        stage_1: Stage 1 of the EV's step function. Handles the EV's journey.
+        stage_2: Stage 2 of the EV's step function. Handles the EV's charging.
 
         unused:
 
@@ -318,6 +353,19 @@ class EV(Agent):
         delta = (self.tick_energy_usage / self.max_battery)
         return delta
     
+    def dead_intervention(self) -> None:
+        """
+        Intervention for when the EV runs out of battery. 
+        The EV will be recharged to maximum by emergency services and will be transported to its destination.
+        """
+        self.battery = self.max_battery
+        # self.odometer = self._distance_goal
+        self.increase_charge_prop()
+        self.machine.emergency_intervention()
+        # self.locationmachine.set_state("At_destination")
+        print(f"\nEV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.charge_prop}")
+
+    
     def set_start_time(self) -> None:
         """Sets the start time for the EV to travel. 
         Sets start time based on distance goal - if distance goal is greater than or equal to 90 miles, start time is earlier
@@ -364,6 +412,10 @@ class EV(Agent):
     
    # 16 Feb charge flow redo - new methods
     def choose_charge_station(self):
+        """
+        Chooses a charge station to charge at. 
+        Selects the charge station with the correct checkpoint id.
+        """
         # choose station
         for cs in self.model.chargestations:
             if cs._checkpoint_id == self.odometer:
@@ -392,17 +444,7 @@ class EV(Agent):
         self.battery_eod.append(self.battery)
         print(f"EV {self.unique_id} Battery level at end of day: {self.battery_eod[-1]}")
     
-    def dead_intervention(self) -> None:
-        """Intervention for when the EV runs out of battery. 
-        The EV will be recharged to maximum by emergency services and will be transported to its destination.
-        """
-        self.battery = self.max_battery
-        # self.odometer = self._distance_goal
-        self.increase_charge_prop()
-        self.machine.emergency_intervention()
-        # self.locationmachine.set_state("At_destination")
-        print(f"\nEV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.charge_prop}")
-
+    
     def finish_day(self) -> None:
         """Finishes the day. Sets the battery level to the end of day level from previous day, for the new day.
         Increments day_count and resets the odometer to 0.
@@ -412,20 +454,24 @@ class EV(Agent):
         self.odometer = 0
     
     def relaunch_base(self,n) -> None:
-            self.set_start_time() #???
-            # self.start_time = self.model._current_tick - (n * 24) # use model.schedule.time?
-            # self.start_time += self.model._current_tick - (n * 24)
-            marker = (n * 24)
-            self.start_time += marker
-            self.choose_journey_type()
-            self.choose_destination(self.journey_type)
-            print(f"\nEV {self.unique_id} relaunch prep successful. New start time: {self.start_time}")
-            self.initalization_report()
-            # if self.start_time > marker:
-            #     print(f"EV {self.unique_id} restart successful. New start time: {self.start_time}")
-            #     self.initalization_report()
-            # else:
-            #     print(f"EV {self.unique_id} restart unsuccessful. New start time: {self.start_time}")
+        """
+        Relaunches the EV at the end of the day.
+        Choose a new journey type and destination.
+        """
+        self.set_start_time() #???
+        # self.start_time = self.model._current_tick - (n * 24) # use model.schedule.time?
+        # self.start_time += self.model._current_tick - (n * 24)
+        marker = (n * 24)
+        self.start_time += marker
+        self.choose_journey_type()
+        self.choose_destination(self.journey_type)
+        print(f"\nEV {self.unique_id} relaunch prep successful. New start time: {self.start_time}")
+        self.initalization_report()
+        # if self.start_time > marker:
+        #     print(f"EV {self.unique_id} restart successful. New start time: {self.start_time}")
+        #     self.initalization_report()
+        # else:
+        #     print(f"EV {self.unique_id} restart unsuccessful. New start time: {self.start_time}")
 
     def relaunch_dead(self) -> None:
         self.dead_intervention()
