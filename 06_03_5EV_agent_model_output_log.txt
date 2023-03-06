@@ -1,0 +1,382 @@
+EV info: ID: 0, destination name: City A, journey type: InterUrban, max_battery: 46, speed: 20, State: Idle.
+EV info (Cont'd): Start time: 6, distance goal: 120, energy consumption rate: 0.5, charge prop 0.4, location: City_D.
+
+EV info: ID: 1, destination name: friend_2, journey type: Urban, max_battery: 64, speed: 10, State: Idle.
+EV info (Cont'd): Start time: 9, distance goal: 90, energy consumption rate: 0.2, charge prop 0.4, location: City_D.
+
+EV info: ID: 2, destination name: market, journey type: Urban, max_battery: 66, speed: 10, State: Idle.
+EV info (Cont'd): Start time: 13, distance goal: 40, energy consumption rate: 0.2, charge prop 0.4, location: City_D.
+
+EV info: ID: 3, destination name: City A, journey type: InterUrban, max_battery: 52, speed: 20, State: Idle.
+EV info (Cont'd): Start time: 6, distance goal: 120, energy consumption rate: 0.5, charge prop 0.4, location: City_D.
+
+EV info: ID: 4, destination name: autoshop, journey type: Urban, max_battery: 54, speed: 10, State: Idle.
+EV info (Cont'd): Start time: 12, distance goal: 60, energy consumption rate: 0.2, charge prop 0.4, location: City_D.
+
+CP info: ID: 5, initialized. Charge rate: 7.5 kW.
+
+CP info: ID: 6, initialized. Charge rate: 7.5 kW.
+
+CP info: ID: 7, initialized. Charge rate: 7.5 kW.
+
+CP info: ID: 8, initialized. Charge rate: 7.5 kW.
+
+CP info: ID: 9, initialized. Charge rate: 7.5 kW.
+Charging Station: 5 is at checkpoint: 40 miles.
+Charging Station: 6 is at checkpoint: 80 miles.
+Charging Station: 7 is at checkpoint: 120 miles.
+Charging Station: 8 is at checkpoint: 160 miles.
+Charging Station: 9 is at checkpoint: 200 miles.
+
+Model initialised. 5 EVs and 5 Charging Points. Simulation will run for 48 ticks or 2.0 days.
+
+
+Current timestep (tick): 1.
+
+Current timestep (tick): 2.
+
+Current timestep (tick): 3.
+
+Current timestep (tick): 4.
+
+Current timestep (tick): 5.
+
+Current timestep (tick): 6.
+
+Current timestep (tick): 7.
+EV 0 started travelling at 6 and is in state: Travel
+EV 0 is travelling. Odometer: 20, Battery: 36.0
+EV 0  has travelled: 20 miles. State: Travel. Battery: 36.0 kWh
+EV 3 started travelling at 6 and is in state: Travel
+EV 3 is travelling. Odometer: 20, Battery: 42.0
+EV 3  has travelled: 20 miles. State: Travel. Battery: 42.0 kWh
+
+Current timestep (tick): 8.
+EV 0 is travelling. Odometer: 40, Battery: 26.0
+EV 0  has travelled: 40 miles. State: Travel. Battery: 26.0 kWh
+EV 0 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 3 is travelling. Odometer: 40, Battery: 32.0
+EV 3  has travelled: 40 miles. State: Travel. Battery: 32.0 kWh
+EV 3 has arrived at Charge Station but is in state: Travel. Not travelling low.
+
+Current timestep (tick): 9.
+EV 0 is travelling. Odometer: 60, Battery: 16.0
+EV 0  has travelled: 60 miles. State: Travel. Battery: 16.0 kWh
+EV 3 is travelling. Odometer: 60, Battery: 22.0
+EV 3  has travelled: 60 miles. State: Travel. Battery: 22.0 kWh
+
+Current timestep (tick): 10.
+EV 0 is low on charge and is seeking a charge station. Current charge: 16.0 kWh
+EV 0 is travelling. Odometer: 80, Battery: 6.0
+EV 0 is low on battery and is at a station. Seeking charge queue. Current EV state: Travel_low
+EV 0 selected Charge Station: 6 for charging.
+Length of q1: 0. Length of q2: 0
+EV 0 selected queue 1 at Charge Station 6
+EV 1 started travelling at 9 and is in state: Travel
+EV 1 is travelling. Odometer: 10, Battery: 62.0
+EV 1  has travelled: 10 miles. State: Travel. Battery: 62.0 kWh
+EV 3 is travelling. Odometer: 80, Battery: 12.0
+EV 3  has travelled: 80 miles. State: Travel. Battery: 12.0 kWh
+EV 3 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 0 dequeued at CS 6 at Queue 1 and is in state: Charge
+Queue 1 size after dequeuing: 0
+EV 0 at CS 6 is in state: Charge, Battery: 13.5
+
+Current timestep (tick): 11.
+EV 1 is travelling. Odometer: 20, Battery: 60.0
+EV 1  has travelled: 20 miles. State: Travel. Battery: 60.0 kWh
+EV 3 is low on charge and is seeking a charge station. Current charge: 12.0 kWh
+EV 3 is travelling. Odometer: 100, Battery: 2.0
+EV 3 is now in state: Battery_dead and is out of charge.
+EV 0 at CS 6 is in state: Charge, Battery: 21.0
+
+Current timestep (tick): 12.
+EV 1 is travelling. Odometer: 30, Battery: 58.0
+EV 1  has travelled: 30 miles. State: Travel. Battery: 58.0 kWh
+EV 0 at CS 6 is in state: Charge, Battery: 28.5
+
+Current timestep (tick): 13.
+EV 1 is travelling. Odometer: 40, Battery: 56.0
+EV 1  has travelled: 40 miles. State: Travel. Battery: 56.0 kWh
+EV 1 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 4 started travelling at 12 and is in state: Travel
+EV 4 is travelling. Odometer: 10, Battery: 52.0
+EV 4  has travelled: 10 miles. State: Travel. Battery: 52.0 kWh
+EV 0 at CS 6 is in state: Charge, Battery: 36.0
+
+Current timestep (tick): 14.
+EV 1 is travelling. Odometer: 50, Battery: 54.0
+EV 1  has travelled: 50 miles. State: Travel. Battery: 54.0 kWh
+EV 2 started travelling at 13 and is in state: Travel
+EV 2 is travelling. Odometer: 10, Battery: 64.0
+EV 2  has travelled: 10 miles. State: Travel. Battery: 64.0 kWh
+EV 4 is travelling. Odometer: 20, Battery: 50.0
+EV 4  has travelled: 20 miles. State: Travel. Battery: 50.0 kWh
+EV 0 at CS 6 is in state: Charge, Battery: 43.5
+
+Current timestep (tick): 15.
+EV 1 is travelling. Odometer: 60, Battery: 52.0
+EV 1  has travelled: 60 miles. State: Travel. Battery: 52.0 kWh
+EV 2 is travelling. Odometer: 20, Battery: 62.0
+EV 2  has travelled: 20 miles. State: Travel. Battery: 62.0 kWh
+EV 4 is travelling. Odometer: 30, Battery: 48.0
+EV 4  has travelled: 30 miles. State: Travel. Battery: 48.0 kWh
+EV at Charge Station 6, CP 1 has exited.
+
+Current timestep (tick): 16.
+EV 0 is travelling. Odometer: 100, Battery: 33.5
+EV 0  has travelled: 100 miles. State: Travel. Battery: 33.5 kWh
+EV 1 is travelling. Odometer: 70, Battery: 50.0
+EV 1  has travelled: 70 miles. State: Travel. Battery: 50.0 kWh
+EV 2 is travelling. Odometer: 30, Battery: 60.0
+EV 2  has travelled: 30 miles. State: Travel. Battery: 60.0 kWh
+EV 4 is travelling. Odometer: 40, Battery: 46.0
+EV 4  has travelled: 40 miles. State: Travel. Battery: 46.0 kWh
+EV 4 has arrived at Charge Station but is in state: Travel. Not travelling low.
+
+Current timestep (tick): 17.
+EV 0 is travelling. Odometer: 120, Battery: 23.5
+EV 0  has travelled: 120 miles. State: Travel. Battery: 23.5 kWh
+EV 0 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 1 is travelling. Odometer: 80, Battery: 48.0
+EV 1  has travelled: 80 miles. State: Travel. Battery: 48.0 kWh
+EV 1 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 2 is travelling. Odometer: 40, Battery: 58.0
+EV 2  has travelled: 40 miles. State: Travel. Battery: 58.0 kWh
+EV 2 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 4 is travelling. Odometer: 50, Battery: 44.0
+EV 4  has travelled: 50 miles. State: Travel. Battery: 44.0 kWh
+EV 0 has completed its journey. State: Idle. This EV has travelled: 120 miles. Battery: 23.5 kWh
+EV 2 has completed its journey. State: Idle. This EV has travelled: 40 miles. Battery: 58.0 kWh
+
+Current timestep (tick): 18.
+EV 1 is travelling. Odometer: 90, Battery: 46.0
+EV 1  has travelled: 90 miles. State: Travel. Battery: 46.0 kWh
+EV 4 is travelling. Odometer: 60, Battery: 42.0
+EV 4  has travelled: 60 miles. State: Travel. Battery: 42.0 kWh
+EV 1 has completed its journey. State: Idle. This EV has travelled: 90 miles. Battery: 46.0 kWh
+EV 4 has completed its journey. State: Idle. This EV has travelled: 60 miles. Battery: 42.0 kWh
+
+Current timestep (tick): 19.
+
+Current timestep (tick): 20.
+
+Current timestep (tick): 21.
+
+Current timestep (tick): 22.
+
+Current timestep (tick): 23.
+
+Current timestep (tick): 24.
+EV 0 Battery level at end of day: 23.5
+EV 1 Battery level at end of day: 46.0
+EV 2 Battery level at end of day: 58.0
+EV 3 Battery level at end of day: 2.0
+EV 4 Battery level at end of day: 42.0
+
+Current day: 1.
+This is the end of day: 1 
+
+EV 0 relaunch prep successful. New start time: 32
+
+EV info: ID: 0, destination name: City B, journey type: InterUrban, max_battery: 46, speed: 20, State: Idle.
+EV info (Cont'd): Start time: 32, distance goal: 80, energy consumption rate: 0.5, charge prop 0.4, location: City_D.
+
+EV 1 relaunch prep successful. New start time: 32
+
+EV info: ID: 1, destination name: work, journey type: Urban, max_battery: 64, speed: 10, State: Idle.
+EV info (Cont'd): Start time: 32, distance goal: 50, energy consumption rate: 0.2, charge prop 0.4, location: City_D.
+
+EV 2 relaunch prep successful. New start time: 36
+
+EV info: ID: 2, destination name: work, journey type: Urban, max_battery: 66, speed: 10, State: Idle.
+EV info (Cont'd): Start time: 36, distance goal: 50, energy consumption rate: 0.2, charge prop 0.4, location: City_D.
+
+EV 3 has been recharged to 52 by emergency services and is now in state: Idle. Charge prop: 0.5
+
+EV 3 relaunch prep successful. New start time: 30
+
+EV info: ID: 3, destination name: City C, journey type: InterUrban, max_battery: 52, speed: 20, State: Idle.
+EV info (Cont'd): Start time: 30, distance goal: 150, energy consumption rate: 0.5, charge prop 0.5, location: City_D.
+
+EV 4 relaunch prep successful. New start time: 34
+
+EV info: ID: 4, destination name: City A, journey type: InterUrban, max_battery: 54, speed: 10, State: Idle.
+EV info (Cont'd): Start time: 34, distance goal: 120, energy consumption rate: 0.2, charge prop 0.4, location: City_D.
+
+Current timestep (tick): 25.
+
+Current timestep (tick): 26.
+
+Current timestep (tick): 27.
+
+Current timestep (tick): 28.
+
+Current timestep (tick): 29.
+
+Current timestep (tick): 30.
+
+Current timestep (tick): 31.
+EV 3 started travelling at 30 and is in state: Travel
+EV 3 is travelling. Odometer: 20, Battery: 42.0
+EV 3  has travelled: 20 miles. State: Travel. Battery: 42.0 kWh
+
+Current timestep (tick): 32.
+EV 3 is travelling. Odometer: 40, Battery: 32.0
+EV 3  has travelled: 40 miles. State: Travel. Battery: 32.0 kWh
+EV 3 has arrived at Charge Station but is in state: Travel. Not travelling low.
+
+Current timestep (tick): 33.
+EV 0 started travelling at 32 and is in state: Travel
+EV 0 is travelling. Odometer: 20, Battery: 13.5
+EV 0  has travelled: 20 miles. State: Travel. Battery: 13.5 kWh
+EV 1 started travelling at 32 and is in state: Travel
+EV 1 is travelling. Odometer: 10, Battery: 44.0
+EV 1  has travelled: 10 miles. State: Travel. Battery: 44.0 kWh
+EV 3 is travelling. Odometer: 60, Battery: 22.0
+EV 3  has travelled: 60 miles. State: Travel. Battery: 22.0 kWh
+
+Current timestep (tick): 34.
+EV 0 is low on charge and is seeking a charge station. Current charge: 13.5 kWh
+EV 0 is travelling. Odometer: 40, Battery: 3.5
+EV 0 is low on battery and is at a station. Seeking charge queue. Current EV state: Travel_low
+EV 0 selected Charge Station: 5 for charging.
+Length of q1: 0. Length of q2: 0
+EV 0 selected queue 1 at Charge Station 5
+EV 1 is travelling. Odometer: 20, Battery: 42.0
+EV 1  has travelled: 20 miles. State: Travel. Battery: 42.0 kWh
+EV 3 is travelling. Odometer: 80, Battery: 12.0
+EV 3  has travelled: 80 miles. State: Travel. Battery: 12.0 kWh
+EV 3 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 0 dequeued at CS 5 at Queue 1 and is in state: Charge
+Queue 1 size after dequeuing: 0
+EV 0 at CS 5 is in state: Charge, Battery: 11.0
+
+Current timestep (tick): 35.
+EV 1 is travelling. Odometer: 30, Battery: 40.0
+EV 1  has travelled: 30 miles. State: Travel. Battery: 40.0 kWh
+EV 3 is low on charge and is seeking a charge station. Current charge: 12.0 kWh
+EV 3 is travelling. Odometer: 100, Battery: 2.0
+EV 4 started travelling at 34 and is in state: Travel
+EV 4 is travelling. Odometer: 10, Battery: 40.0
+EV 4  has travelled: 10 miles. State: Travel. Battery: 40.0 kWh
+EV 3 is now in state: Battery_dead and is out of charge.
+EV 0 at CS 5 is in state: Charge, Battery: 18.5
+
+Current timestep (tick): 36.
+EV 1 is travelling. Odometer: 40, Battery: 38.0
+EV 1  has travelled: 40 miles. State: Travel. Battery: 38.0 kWh
+EV 1 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 4 is travelling. Odometer: 20, Battery: 38.0
+EV 4  has travelled: 20 miles. State: Travel. Battery: 38.0 kWh
+EV 0 at CS 5 is in state: Charge, Battery: 26.0
+
+Current timestep (tick): 37.
+EV 1 is travelling. Odometer: 50, Battery: 36.0
+EV 1  has travelled: 50 miles. State: Travel. Battery: 36.0 kWh
+EV 2 started travelling at 36 and is in state: Travel
+EV 2 is travelling. Odometer: 10, Battery: 56.0
+EV 2  has travelled: 10 miles. State: Travel. Battery: 56.0 kWh
+EV 4 is travelling. Odometer: 30, Battery: 36.0
+EV 4  has travelled: 30 miles. State: Travel. Battery: 36.0 kWh
+EV 1 has completed its journey. State: Idle. This EV has travelled: 50 miles. Battery: 36.0 kWh
+EV 0 at CS 5 is in state: Charge, Battery: 33.5
+
+Current timestep (tick): 38.
+EV 2 is travelling. Odometer: 20, Battery: 54.0
+EV 2  has travelled: 20 miles. State: Travel. Battery: 54.0 kWh
+EV 4 is travelling. Odometer: 40, Battery: 34.0
+EV 4  has travelled: 40 miles. State: Travel. Battery: 34.0 kWh
+EV 4 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 0 at CS 5 is in state: Charge, Battery: 41.0
+
+Current timestep (tick): 39.
+EV 2 is travelling. Odometer: 30, Battery: 52.0
+EV 2  has travelled: 30 miles. State: Travel. Battery: 52.0 kWh
+EV 4 is travelling. Odometer: 50, Battery: 32.0
+EV 4  has travelled: 50 miles. State: Travel. Battery: 32.0 kWh
+EV at Charge Station 5, CP 1 has exited.
+
+Current timestep (tick): 40.
+EV 0 is travelling. Odometer: 60, Battery: 31.0
+EV 0  has travelled: 60 miles. State: Travel. Battery: 31.0 kWh
+EV 2 is travelling. Odometer: 40, Battery: 50.0
+EV 2  has travelled: 40 miles. State: Travel. Battery: 50.0 kWh
+EV 2 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 4 is travelling. Odometer: 60, Battery: 30.0
+EV 4  has travelled: 60 miles. State: Travel. Battery: 30.0 kWh
+
+Current timestep (tick): 41.
+EV 0 is travelling. Odometer: 80, Battery: 21.0
+EV 0  has travelled: 80 miles. State: Travel. Battery: 21.0 kWh
+EV 0 has arrived at Charge Station but is in state: Travel. Not travelling low.
+EV 2 is travelling. Odometer: 50, Battery: 48.0
+EV 2  has travelled: 50 miles. State: Travel. Battery: 48.0 kWh
+EV 4 is travelling. Odometer: 70, Battery: 28.0
+EV 4  has travelled: 70 miles. State: Travel. Battery: 28.0 kWh
+EV 0 has completed its journey. State: Idle. This EV has travelled: 80 miles. Battery: 21.0 kWh
+EV 2 has completed its journey. State: Idle. This EV has travelled: 50 miles. Battery: 48.0 kWh
+
+Current timestep (tick): 42.
+EV 4 is travelling. Odometer: 80, Battery: 26.0
+EV 4  has travelled: 80 miles. State: Travel. Battery: 26.0 kWh
+EV 4 has arrived at Charge Station but is in state: Travel. Not travelling low.
+
+Current timestep (tick): 43.
+EV 4 is travelling. Odometer: 90, Battery: 24.0
+EV 4  has travelled: 90 miles. State: Travel. Battery: 24.0 kWh
+
+Current timestep (tick): 44.
+EV 4 is travelling. Odometer: 100, Battery: 22.0
+EV 4  has travelled: 100 miles. State: Travel. Battery: 22.0 kWh
+
+Current timestep (tick): 45.
+EV 4 is travelling. Odometer: 110, Battery: 20.0
+EV 4  has travelled: 110 miles. State: Travel. Battery: 20.0 kWh
+
+Current timestep (tick): 46.
+EV 4 is low on charge and is seeking a charge station. Current charge: 20.0 kWh
+EV 4 is travelling. Odometer: 120, Battery: 18.0
+EV 4 is low on battery and is at a station. Seeking charge queue. Current EV state: Travel_low
+EV 4 selected Charge Station: 7 for charging.
+Length of q1: 0. Length of q2: 0
+EV 4 selected queue 1 at Charge Station 7
+EV 4 dequeued at CS 7 at Queue 1 and is in state: Charge
+Queue 1 size after dequeuing: 0
+EV 4 at CS 7 is in state: Charge, Battery: 25.5
+
+Current timestep (tick): 47.
+EV 4 at CS 7 is in state: Charge, Battery: 33.0
+
+Current timestep (tick): 48.
+EV 4 at CS 7 is in state: Charge, Battery: 40.5
+EV 0 Battery level at end of day: 21.0
+EV 1 Battery level at end of day: 36.0
+EV 2 Battery level at end of day: 48.0
+EV 3 Battery level at end of day: 2.0
+EV 4 Battery level at end of day: 40.5
+
+Current day: 2.
+This is the end of day: 2 
+
+EV 0 relaunch prep successful. New start time: 58
+
+EV info: ID: 0, destination name: City B, journey type: InterUrban, max_battery: 46, speed: 20, State: Idle.
+EV info (Cont'd): Start time: 58, distance goal: 80, energy consumption rate: 0.5, charge prop 0.4, location: City_D.
+
+EV 1 relaunch prep successful. New start time: 62
+
+EV info: ID: 1, destination name: City C, journey type: InterUrban, max_battery: 64, speed: 10, State: Idle.
+EV info (Cont'd): Start time: 62, distance goal: 150, energy consumption rate: 0.2, charge prop 0.4, location: City_D.
+
+EV 2 relaunch prep successful. New start time: 62
+
+EV info: ID: 2, destination name: City B, journey type: InterUrban, max_battery: 66, speed: 10, State: Idle.
+EV info (Cont'd): Start time: 62, distance goal: 80, energy consumption rate: 0.2, charge prop 0.4, location: City_D.
+
+EV 3 has been recharged to 52 by emergency services and is now in state: Idle. Charge prop: 0.6
+
+EV 3 relaunch prep successful. New start time: 55
+
+EV info: ID: 3, destination name: friend_2, journey type: Urban, max_battery: 52, speed: 20, State: Idle.
+EV info (Cont'd): Start time: 55, distance goal: 90, energy consumption rate: 0.5, charge prop 0.6, location: City_D.
