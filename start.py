@@ -30,7 +30,7 @@ def select_mode():
             print("Running model..\n")
             for i in range(72):
                 model_run.step()
-            print("Model run complete.\nPlease check the log file in the output folder for the results.")
+            print("Model run complete.\nPlease check the log file in the model directory for the results.")
             break
         elif u_input == 'n':
             print("Running model with custom parameters.\n")

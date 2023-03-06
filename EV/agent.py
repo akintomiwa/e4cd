@@ -26,16 +26,27 @@ from EV.statemachine import EVSM, LSM, states, transitions, lstates, ltransition
 # from EV.statemachine import EVSM, LSM
 
 class ChargeStation(Agent):
-    """A charging point agent.
+    """A charging station (CS) agent.
     Attributes:
         unique_id: Unique identifier for the agent.
         model: The model the agent is running in.
-        queue: A list of EVs waiting to charge at the CS.
-        _is_charging: A boolean value indicating whether the CS is currently charging an EV.
-        _active_ev: The EV currently charging at the CS.
+        queue_1: A list of EVs waiting to charge at the CS.
+        queue_2: A list of EVs waiting to charge at the CS.
+        _active_ev_1: The first EV currently charging at the CS.
+        _active_ev_2: The second EV currently charging at the CS.
         _charge_rate: The rate at which the CS charges an EV.
         _checkpoint_id: The ID of the checkpoint the CS is associated with. Initialised to 0.
         max_queue_size: The maximum number of EVs that can be queued at the CS.
+
+    Methods:
+        __init__: Initialises the agent.
+        __str__: Returns the agent's unique id.
+        dequeue_1: Removes the first EV from queue_1.
+        dequeue_2: Removes the first EV from queue_2.
+        finish_charge_ev_1: Finish charging the EV at CP1 at the Charge Station.
+        finish_charge_ev_2: Finish charging the EV at CP2 at the Charge Station.
+        stage_1: Stage 1 of the agent's step function.
+        stage_2: Stage 2 of the agent's step function.
 
     """
     def __init__(self, unique_id, model):
@@ -185,8 +196,8 @@ class EV(Agent):
         start_travel: Start the travel process for the EV at the allocated start time.
 
         step functions:
-        stage_1: Stage 1 of the EV's step function. Handles the EV's journey.
-        stage_2: Stage 2 of the EV's step function. Handles the EV's charging.
+        stage_1: Stage 1 of the agent step function. Handles the EV's journey.
+        stage_2: Stage 2 of the agent step function. Handles the EV's charging.
 
         unused:
 
