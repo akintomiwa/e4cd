@@ -155,7 +155,8 @@ class EV(Agent):
         _was_charged: Boolean value indicating whether the EV was charged.
         _is_travelling: Boolean value indicating whether the EV is travelling.
         _journey_complete: Boolean value indicating whether the EV's journey is complete.
-        machine: EV State Machine.
+        machine: Primary EV State Machine.
+        loc_machine: Secondary EV State Machine.
         _is_active: Boolean value indicating whether the EV is active.
         odometer: Odometer of the EV.
         _distance_goal: Distance goal of the EV.
@@ -163,13 +164,13 @@ class EV(Agent):
         _soc_usage_thresh: State of charge at which EV driver feels compelled to start charging at station.
         _soc_charging_thresh: State of charge at which EV driver is comfortable with stopping charging at station.
         _journey_choice: Choice of journey the EV driver makes.
-        battery: State of charge of the EV.
+        battery: State of charge of the EV battery.
         max_battery: Maximum state of charge of the EV.
 
     Methods:
         __init__: Initialise the EV agent.
         __str__: Return the agent's unique id.
-        initialization_report: Print the agent's initial state.
+        initialization_report: Print the details of the agent's initial state.
         choose_journey_type: Choose the type of journey the EV will undertake.
         set_speed: Set the speed of the EV.
         set_ev_consumption_rate: Set the energy consumption of the EV.
