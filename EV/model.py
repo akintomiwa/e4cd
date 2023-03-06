@@ -1,6 +1,4 @@
 import numpy as np
-# import matplotlib.pyplot as plt
-# import random
 import mesa
 from mesa import Model
 # from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType

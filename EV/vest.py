@@ -520,3 +520,20 @@
 #     df[column_name] = new_df
 
 #     return df
+
+
+
+# 06/03/2023
+
+# # imports
+# import seaborn as sns
+# from random import choice
+# import warnings
+# warnings.simplefilter("ignore")
+# from plotly.offline import iplot
+# # from statemachine import StateMachine, State
+# from transitions import Machine
+# import random
+# from transitions.extensions import GraphMachine
+
+# import EV.agent as agent
