@@ -14,7 +14,9 @@ seaborn = "*"
 python-statemachine = "*"
 transitions = "*"
 graphviz = "*"
-pygraphviz = "*"
+plotly = "*"
+ipython = "*"
+ipywidgets = "*"
 
 [dev-packages]
 
