@@ -147,6 +147,15 @@ class EVModel(Model):
     """
   
     def __init__(self, no_evs, no_css, ticks) -> None:
+        """
+        Initialise the model.
+        
+        Args:
+            no_evs (int): Number of EV agents to create.
+            no_css (int): Number of Charging Point agents to create.
+            ticks (int): Number of ticks to run the simulation for.
+
+        """
         super().__init__()
         # init with input args
         self.running = True
@@ -220,7 +229,13 @@ class EVModel(Model):
         
 
     def compute_checkpoints(self,n) -> list:
-        """Compute the checkpoints for the simulation."""
+        """Compute the checkpoints for the simulation.
+        Args:
+            n (int): Number of charging points.
+        
+        Returns:
+            checkpoints (list): List of checkpoints.
+        """
         start = 40
         # steps = n
         interval = 40
@@ -228,13 +243,15 @@ class EVModel(Model):
         return checkpoints
     
     def model_finish_day(self) -> None: 
-        """Reset the EVs at the end of the day."""
+        """
+        Reset the EVs at the end of the day. Calls the EV.add_soc_eod() and EV.finish_day() methods.
+        """
         for ev in self.evs:
             ev.add_soc_eod()
             ev.finish_day()
 
     def update_day_count(self) -> None:
-        """Update the day of the simulation."""
+        """Increments the day count of the simulation. Called at the end of each day."""
         self.current_day_count += 1
         print(f"\nCurrent day: {self.current_day_count}.")
 
@@ -244,7 +261,9 @@ class EVModel(Model):
         # print(f"Max days: {self.max_days}")
 
     def ev_relaunch(self) -> None:
-        """Relaunch EVs at the end of the day."""
+        """
+        Relaunches EVs that are dead or idle at the end of the day. Ignores EVs that are charging or travelling.
+        """
         for ev in self.evs:
             if ev.machine.state == 'Battery_dead':
                 ev.relaunch_dead()
@@ -256,7 +275,7 @@ class EVModel(Model):
             # ev.update_home_charge_prop()
     
     def overnight_charge_evs(self) -> None:
-        """Overnight charge of EVs."""
+        """Calls the EV.charge_overnight() method for all EVs in the model."""
         for ev in self.evs:
             ev.charge_overnight()
 

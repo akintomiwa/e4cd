@@ -324,7 +324,6 @@ class EV(Agent):
         Returns:     
             destination: Choice of destination for the EV driver. (implicit)
             distance_goal: Distance goal for the EV driver. (implicit)
-            
         """
 
         # Option 2: use values directly to determine destination
@@ -351,24 +350,35 @@ class EV(Agent):
         self._distance_goal = destinations_distances.get(destination)
 
     def energy_usage_trip(self) -> float:
-        """Energy consumption (EC) for the entire trip. EC from distance covered"""
+        """Energy consumption (EC) for the entire trip. EC is the product of distance covered and energy consumption rate.
+        
+        Returns:
+            usage: Energy consumption for the entire trip.
+        """
         usage = (self.ev_consumption_rate * self.odometer)
         return usage
 
     def energy_usage_tick(self) -> float:
-        """Energy consumption (EC) for each tick. EC from distance covered"""
+        """Energy consumption (EC) for each tick. EC is the product of distance covered and energy consumption rate per timestep.
+        
+        Returns:
+            usage: Energy consumption for each tick.
+        """
         usage = (self.ev_consumption_rate * self._speed)
         return usage
 
     def delta_battery_neg(self) -> float:
-        """ Marginal negative change in battery level per tick."""
+        """ Marginal negative change in battery level per tick.
+        
+        Returns:
+            delta: Marginal negative change in battery level per tick.
+        """
         delta = (self.tick_energy_usage / self.max_battery)
         return delta
     
     def dead_intervention(self) -> None:
         """
-        Intervention for when the EV runs out of battery. 
-        The EV will be recharged to maximum by emergency services and will be transported to its destination.
+        Intervention for when the EV runs out of battery. The EV is recharged to the maximum by emergency services and will be transported to its destination.
         """
         self.battery = self.max_battery
         # self.odometer = self._distance_goal
@@ -379,8 +389,7 @@ class EV(Agent):
 
     
     def set_start_time(self) -> None:
-        """Sets the start time for the EV to travel. 
-        Sets start time based on distance goal - if distance goal is greater than or equal to 90 miles, start time is earlier
+        """Sets the start time for the EV to travel. Sets start time based on distance goal - if distance goal is greater than or equal to 90 miles, start time is earlier.
         """
         # self.start_time = random.randint(6, 12)
 
@@ -392,27 +401,55 @@ class EV(Agent):
     
     # Dynamic propensity for charging behavior
     def increase_charge_prop(self) -> None:
+        """Increases the propensity for charging. Higher propensity for charging means that the EV is more likely to charge at a Charge Station, due to having a higher soc_usage threshold.
+        
+        Returns:
+            charge_prop: Propensity for charging behavior.
+        """
         margin = 0.1
         self.charge_prop += margin
 
     def decrease_charge_prop(self) -> None:
+        """
+        Decreases the propensity for charging. Lower propensity for charging means that the EV is less likely to charge at a Charge Station, due to having a lower soc_usage threshold.
+        
+        Returns:
+            charge_prop: Propensity for charging behavior.
+        """
         margin = 0.1
         self.charge_prop -= margin
   
     # Core EV Functions
     def travel(self) -> None:
-        """Travel function. Moves EV along the road. Updates odometer and battery level."""
+        """
+        Travel function. Moves EV along the road. Updates odometer and battery level.
+        
+        Returns:
+            odometer: Odometer reading for the EV.
+            battery: Battery level for the EV.
+        """
         self.odometer += self._speed
         self.battery -= self.energy_usage_tick()
         print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+
+        # use station selection process instead
     
     def charge(self):
-        """Charge the EV at the Charge Station. The EV is charged at the Charge Station's charge rate."""
+        """Charge the EV at the Charge Station. The EV is charged at the Charge Station's charge rate.
+        
+        Returns:
+            battery: Battery level for the EV.
+        """
         self.battery += self._chosen_cs._charge_rate
         print(f"EV {self.unique_id} at CS {self._chosen_cs.unique_id} is in state: {self.machine.state}, Battery: {self.battery}")
 
     def charge_overnight(self):
-        """Charge the EV at the Home Charge Station, at the Home Charge Station's charge rate."""
+        """
+        Charge the EV at the Home Charge Station, at the Home Charge Station's charge rate.
+        
+        Returns:
+            battery: Battery level for the EV.
+        """
         # self.machine.set_state("Charging")
         self.machine.start_home_charge()
         if self.battery < self._soc_charging_thresh:
@@ -425,8 +462,10 @@ class EV(Agent):
    # 16 Feb charge flow redo - new methods
     def choose_charge_station(self):
         """
-        Chooses a charge station to charge at. 
-        Selects the charge station with the correct checkpoint id.
+        Chooses a charge station to charge at. Selects the charge station with the correct checkpoint id.
+        Returns:
+            _chosen_cs: Charge Station chosen for charging.
+
         """
         # choose station
         for cs in self.model.chargestations:
@@ -434,6 +473,21 @@ class EV(Agent):
                 self._chosen_cs = cs
                 self._chosen_cs._is_active = True
         print(f"EV {(self.unique_id)} selected Charge Station: {(self._chosen_cs.unique_id)} for charging.")
+        
+        # # choose station 2 way
+        # if self.direction == 1:
+        #     for cs in self.model.chargestations:
+        #         if cs._checkpoint_id == self.odometer:
+        #             self._chosen_cs = cs
+        #             self._chosen_cs._is_active = True
+        #     print(f"EV {(self.unique_id)} selected Charge Station: {(self._chosen_cs.unique_id)} for charging.")
+        # elif self.direction == 2:
+        #     rev_list = self.model.chargestations[::-1]
+        #     for cs in rev_list:
+        #         if cs._checkpoint_id == self.odometer:
+        #             self._chosen_cs = cs
+        #             self._chosen_cs._is_active = True
+
 
     # new select queue for charging
     def choose_cs_queue(self) -> None:
@@ -458,8 +512,8 @@ class EV(Agent):
     
     
     def finish_day(self) -> None:
-        """Finishes the day. Sets the battery level to the end of day level from previous day, for the new day.
-        Increments day_count and resets the odometer to 0.
+        """
+        Finishes the day for the EV. Increments current_day_count by 1 and resets the EV odometer to 0.
         """
         # self.battery = self.battery_eod[-1]
         self.current_day_count += 1
@@ -467,12 +521,17 @@ class EV(Agent):
     
     def relaunch_base(self,n) -> None:
         """
-        Relaunches the EV at the end of the day.
-        Choose a new journey type and destination.
+        Relaunches the EV at the end of the day. Sets the start time to the next day, and chooses a new journey type and destination. Finally, generates an initialization report.
+
+        Args:
+            n (int): Day number.
+
+        Returns:
+            start_time: Start time for the EV.
+            journey_type: Journey type for the EV.
+            destination: Destination for the EV.
         """
-        self.set_start_time() #???
-        # self.start_time = self.model._current_tick - (n * 24) # use model.schedule.time?
-        # self.start_time += self.model._current_tick - (n * 24)
+        self.set_start_time() 
         marker = (n * 24)
         self.start_time += marker
         self.choose_journey_type()
@@ -486,16 +545,26 @@ class EV(Agent):
         #     print(f"EV {self.unique_id} restart unsuccessful. New start time: {self.start_time}")
 
     def relaunch_dead(self) -> None:
+        """
+        Relaunches dead EVs by calling the dead_intervention method, followed by the relaunch_base method.
+        """
         self.dead_intervention()
         self.relaunch_base(n = self.model.current_day_count)
 
     def relaunch_idle(self) -> None:
+        """
+        Relaunches idle EVs by calling the relaunch_base method.
+        """
         # if self.machine.state == "Idle":
         #     self.relaunch_base(self,n)
         # elif self.machine.state != "Idle":
         #     print(f"EV {self.unique_id} is not in Idle state. Cannot relaunch for new day.")
         self.relaunch_base(n = self.model.current_day_count)
+
     def start_travel(self) -> None:
+        """
+        Starts the EV travelling at the assigned start time.
+        """
         if self.model.schedule.time == self.start_time:
             self.machine.start_travel()
             # print(f"EV {self.unique_id} has started travelling at {self.model.schedule.time}")
@@ -519,10 +588,21 @@ class EV(Agent):
 
         # Transition Case 1: Start travelling. idle -> travel
         # Depending on start time, EV will start travelling, transitioning from Idle to Travel.
-        if self.machine.state == 'Battery_dead':
-            pass
-        else:
-            self.start_travel() 
+
+        # This is the reason for charging stopping at the change into the new day. Need to fix this.
+
+        # if self.machine.state == 'Battery_dead':
+        #     pass
+        # else:
+        #     self.start_travel() 
+        
+        #another approach
+        if self.machine.state == 'Idle':
+            try:
+                self.start_travel()
+            except:
+                MachineError
+        # elif self.machine.state == ''
 
         # # approach 2
         # try:
