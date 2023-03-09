@@ -229,7 +229,7 @@ class EV(Agent):
         self.max_battery = self.battery
         # EV Driver Behaviour
         self._speed = 0
-        self.charge_prop = 0.4    #propensity to charge at main station 
+        self.charge_prop = 0.5    #propensity to charge at main station 
         # battery soc level at which EV driver feels compelled to start charging at station.
         # self._soc_usage_thresh = (0.4 * self.max_battery) 
         self._soc_usage_thresh = (self.charge_prop * self.max_battery) 
@@ -273,8 +273,8 @@ class EV(Agent):
     
     def initalization_report(self) -> None:
         """Prints the EV's initialisation report."""
-        print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, speed: {self._speed}, State: {self.machine.state}.")
-        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, energy consumption rate: {self.ev_consumption_rate}, charge prop {self.charge_prop}, location: {self.loc_machine.state}.")
+        print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
+        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, soc usage threshold: {self._soc_usage_thresh}, charge prop {self.charge_prop}, location: {self.loc_machine.state}.")
 
     # Internal functions
     def choose_journey_type(self) -> str:
@@ -387,7 +387,22 @@ class EV(Agent):
         # self.locationmachine.set_state("At_destination")
         print(f"\nEV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.charge_prop}")
 
-    
+    def travel_intervention(self) -> None:
+        """Intervention for when the EV is traveling. The EV is set to Idle and will be transported to its destination.
+        """
+        self.machine.end_travel()
+        print(f"EV {self.unique_id} was forced to end its stip due to overrun. It is now in state: {self.machine.state}. ")
+        # assumes EV overruning is doing interuban trip
+        # self.loc_machine.set_state(f"{self.destination}")
+    def charge_intervention(self) -> None:
+        """Intervention for when the EV is charging. The EV is set to Idle and will be transported to its destination.
+        """
+        self.machine.end_charge_abrupt()
+        print(f"EV {self.unique_id} was forced to end its charge due to overrun. It is now in state: {self.machine.state}. ")
+        # assumes EV overruning is doing interuban trip
+        # self.loc_machine.set_state(f"{self.destination}")
+
+
     def set_start_time(self) -> None:
         """Sets the start time for the EV to travel. Sets start time based on distance goal - if distance goal is greater than or equal to 90 miles, start time is earlier.
         """
@@ -543,6 +558,17 @@ class EV(Agent):
         #     self.initalization_report()
         # else:
         #     print(f"EV {self.unique_id} restart unsuccessful. New start time: {self.start_time}")
+    
+    def relaunch_travel(self)-> None:
+        self.travel_intervention()
+        self.relaunch_base(n = self.model.current_day_count)
+
+    def relaunch_charge(self) -> None:
+        """
+        Relaunches charging EVs by calling the charge_intervention method, followed by the relaunch_base method.
+        """
+        self.charge_intervention()
+        self.relaunch_base(n = self.model.current_day_count)
 
     def relaunch_dead(self) -> None:
         """
@@ -570,6 +596,32 @@ class EV(Agent):
             # print(f"EV {self.unique_id} has started travelling at {self.model.schedule.time}")
             print(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
     
+    def update_lsm(self) -> None:
+        if self.journey_type == 'Urban':
+            self.loc_machine.city_d_2_d()
+        elif self.journey_type == 'InterUrban':
+            if self.destination == 'City A':
+                self.loc_machine.city_d_2_a()
+            elif self.destination == 'City B':
+                self.loc_machine.city_d_2_b()
+            elif self.destination == 'City C':
+                self.loc_machine.city_d_2_c()
+        print(f"EV {self.unique_id} is at location: {self.loc_machine.state}")
+
+    # def ev_overrun(self) -> None:
+    #     """
+    #     Handles the case where the EV is still travelling by the relaunch time.
+    #     """
+    #     if self.model.schedule.time == 
+        # if self.machine.state == "Travel":
+        #     if self.battery <= 0:
+        #         self.machine.battery_dead()
+        #         print(f"EV {self.unique_id} has run out of battery at {self.model.schedule.time}")
+        #         print(f"EV {self.unique_id} is in state: {self.machine.state}")
+        #         print(f"EV {self.unique_id} is at location: {self.loc_machine.state}")
+        #         self.relaunch_dead()
+        #     else:
+        #         pass
     
     # def update_home_charge_prop(self, new_prop):
     #     self.home_charge_prop = new_prop
@@ -589,20 +641,21 @@ class EV(Agent):
         # Transition Case 1: Start travelling. idle -> travel
         # Depending on start time, EV will start travelling, transitioning from Idle to Travel.
 
-        # This is the reason for charging stopping at the change into the new day. Need to fix this.
-
-        # if self.machine.state == 'Battery_dead':
-        #     pass
-        # else:
-        #     self.start_travel() 
+        # # This is the reason for charging stopping at the change into the new day. Need to fix this.
+        if self.machine.state == 'Battery_dead':
+            pass
+        else:
+            self.start_travel() 
         
-        #another approach
-        if self.machine.state == 'Idle':
-            try:
-                self.start_travel()
-            except:
-                MachineError
-        # elif self.machine.state == ''
+        # # another approach
+        # if self.machine.state == 'Idle':
+        #     try:
+        #         self.start_travel()
+        #     except:
+        #         MachineError
+        #     else:
+        #         self.machine.state == 'Battery_dead'
+        #         pass
 
         # # approach 2
         # try:
@@ -654,15 +707,18 @@ class EV(Agent):
         """Stage 2: EV waits in queue until it is the active EV."""
         # Transition Case 3: EV with low battery does not arrive at charge station. Travel_low -> Battery_dead
         # condition self.battery < 10 because 10 is the minimum expenditure of energy to move the vehicle in one timestep
-        if self.machine.state == 'Travel_low' and self.battery < 10:
-            self.machine.deplete_battery()
-            print(f"EV {self.unique_id} is now in state: {self.machine.state} and is out of charge.")
+        # if self.machine.state == 'Travel_low' and self.battery < 10:
+        #     self.machine.deplete_battery()
+        #     print(f"EV {self.unique_id} is now in state: {self.machine.state} and is out of charge.")
+        # removed 07/03
+        
         # Transition Case 7: Journey Complete. travel -> idle
         if self.machine.state == 'Travel' and self.odometer >= self._distance_goal:
             self.machine.end_travel()
             self._in_garage = True
             self._journey_complete = False
             print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
+            self.update_lsm()
 
         # Transition Case 8: Journey complete, battery low. travel_low -> idle
         if self.machine.state == 'Travel_low' and self.odometer >= self._distance_goal:

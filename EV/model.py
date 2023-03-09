@@ -269,8 +269,10 @@ class EVModel(Model):
                 ev.relaunch_dead()
             elif ev.machine.state == 'Idle':
                 ev.relaunch_idle()
+            elif ev.machine.state == 'Travel':
+                ev.relaunch_travel()
             elif ev.machine.state == 'Charging':
-                # do nothing
+                ev.relaunch_charge()
                 pass
             # ev.update_home_charge_prop()
     
