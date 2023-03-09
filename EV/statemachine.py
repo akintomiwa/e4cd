@@ -25,6 +25,8 @@ class EVSM(Machine):
     continue_charge: Charge -> Charge
     end_travel: Travel -> Idle
     end_travel_low: Travel_low -> Idle
+    end_charge_abrupt: Charge -> Idle
+
     """
 
 states = ['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead', 'Home_Charge']
@@ -44,6 +46,7 @@ transitions = [
     {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
     {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
     {'trigger': 'emergency_intervention', 'source': 'Battery_dead', 'dest': 'Idle'},
+    {'trigger': 'end_charge_abrupt', 'source': 'Charge', 'dest': 'Idle'}
     ]
 
 
@@ -62,7 +65,8 @@ lstates = ['City_A', 'City_B', 'City_C', 'City_D']
 ltransitions = [
     {'trigger': 'city_d_2_a', 'source': 'City_D', 'dest': 'City_A'},
     {'trigger': 'city_d_2_b', 'source': 'City_D', 'dest': 'City_B'},
-    {'trigger': 'city_d_2_c', 'source': 'City_D', 'dest': 'City_C'},  
+    {'trigger': 'city_d_2_c', 'source': 'City_D', 'dest': 'City_C'},
+    {'trigger': 'city_d_2_d', 'source': 'City_D', 'dest': 'City_D'},  
     ]
 
 # Visualizing the state machines
@@ -92,6 +96,7 @@ machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_
                         {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
                         {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
                         {'trigger': 'emergency_intervention', 'source': 'Battery_dead', 'dest': 'Idle'},
+                        {'trigger': 'end_charge_abrupt', 'source': 'Charge', 'dest': 'Idle'}
                         ], 
                         initial = 'Idle', show_conditions=True)
 
@@ -106,11 +111,13 @@ class LModel():
 model2 = LModel()
 
 machine2 = GraphMachine(model=model2, 
-               states=['City_A', 'City_B', 'City_C'], 
+               states=['City_A', 'City_B', 'City_C', 'City_D'], 
                transitions=[
                            {'trigger': 'city_d_2_a', 'source': 'City_D', 'dest': 'City_A'},
                             {'trigger': 'city_d_2_b', 'source': 'City_D', 'dest': 'City_B'},
-                            {'trigger': 'city_d_2_c', 'source': 'City_D', 'dest': 'City_C'}, 
+                            {'trigger': 'city_d_2_c', 'source': 'City_D', 'dest': 'City_C'},
+                            {'trigger': 'city_d_2_d', 'source': 'City_D', 'dest': 'City_D'},
+
                ], 
                initial='City_D', 
                show_conditions=True)
