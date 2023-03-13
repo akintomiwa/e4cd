@@ -11,7 +11,7 @@ class EVSM(Machine):
     Can be deployed as EvState object.
 
     States:
-    Idle, Travel, Seek_queue, Travel_low, In_queue, Charge, 'Travel_low', 'Battery_dead', 'Home_Charge'
+    Idle, Travel, Seek_queue, Travel_low, In_queue, Charge, Travel_low, Battery_dead, Home_Charge
     Transitions:
     start_travel: Idle -> Travel
     get_low: Travel -> Travel_low
@@ -26,6 +26,8 @@ class EVSM(Machine):
     end_travel: Travel -> Idle
     end_travel_low: Travel_low -> Idle
     end_charge_abrupt: Charge -> Idle
+    end_queue_abrupt: In_queue -> Idle
+    end_seek_abrupt: Seek_queue -> Idle
 
     """
 
@@ -46,7 +48,9 @@ transitions = [
     {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
     {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
     {'trigger': 'emergency_intervention', 'source': 'Battery_dead', 'dest': 'Idle'},
-    {'trigger': 'end_charge_abrupt', 'source': 'Charge', 'dest': 'Idle'}
+    {'trigger': 'end_charge_abrupt', 'source': 'Charge', 'dest': 'Idle'},
+    {'trigger': 'end_queue_abrupt', 'source': 'In_queue', 'dest': 'Idle'},
+    {'trigger': 'end_seek_abrupt', 'source': 'Seek_queue', 'dest': 'Idle'},
     ]
 
 
@@ -96,7 +100,9 @@ machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_
                         {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
                         {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
                         {'trigger': 'emergency_intervention', 'source': 'Battery_dead', 'dest': 'Idle'},
-                        {'trigger': 'end_charge_abrupt', 'source': 'Charge', 'dest': 'Idle'}
+                        {'trigger': 'end_charge_abrupt', 'source': 'Charge', 'dest': 'Idle'},
+                        {'trigger': 'end_queue_abrupt', 'source': 'In_queue', 'dest': 'Idle'},
+                        {'trigger': 'end_seek_abrupt', 'source': 'Seek_queue', 'dest': 'Idle'},
                         ], 
                         initial = 'Idle', show_conditions=True)
 

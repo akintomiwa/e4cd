@@ -227,6 +227,8 @@ class EV(Agent):
         self.destination = None
         self.battery = random.randint(40, 70) #kWh
         self.max_battery = self.battery
+        # To/ Fro handling
+        self.to_fro = ""
         # EV Driver Behaviour
         self._speed = 0
         self.charge_prop = 0.5    #propensity to charge at main station 
@@ -253,6 +255,8 @@ class EV(Agent):
         # self._chosen_cp_idx = 0 #in selected_cp
         self._chosen_cs = 0 #in selected_cp correct
         self.checkpoint_list = model.checkpoints
+        self.checkpoint_list_reverse = reversed(self.checkpoint_list)
+
         
         # set EV start time
         self.set_start_time()
@@ -266,6 +270,9 @@ class EV(Agent):
         # Initialisation Report
         self.initalization_report()
     
+    # def travel_reverse(self)-> None:
+    #     if self.to_fro == True:
+
 
     def __str__(self) -> str:
         """Return the agent's unique id as a string, not zero indexed."""
@@ -277,18 +284,49 @@ class EV(Agent):
         print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, soc usage threshold: {self._soc_usage_thresh}, charge prop {self.charge_prop}, location: {self.loc_machine.state}.")
 
     # Internal functions
+
+    # works
+    # def choose_journey_type(self) -> str:
+    #     """Chooses a journey type for the EV driver.
+    #     Returns:
+    #         journey_type: Choice of journey the EV driver makes.
+    #     """
+    #     self._journey_choice = choice([True, False]) #True = Urban, False = Highway
+    #     if self._journey_choice == True:
+    #         # self._distance_goal = 100 #miles
+    #         self.journey_type = "Urban"
+    #     else:
+    #         # self._distance_goal = 200 #miles
+    #         self.journey_type = "InterUrban"
+    #     return self.journey_type
+    
+    # experimental 
     def choose_journey_type(self) -> str:
         """Chooses a journey type for the EV driver.
         Returns:
             journey_type: Choice of journey the EV driver makes.
         """
-        self._journey_choice = choice([True, False]) #True = Urban, False = Highway
-        if self._journey_choice == True:
-            # self._distance_goal = 100 #miles
-            self.journey_type = "Urban"
-        else:
-            # self._distance_goal = 200 #miles
-            self.journey_type = "InterUrban"
+        if self.current_day_count == 1:
+            self._journey_choice = choice([True, False]) #True = Urban, False = Highway
+            if self._journey_choice == True:
+                self.journey_type = "Urban"
+            else:
+                self.journey_type = "InterUrban"
+                self.to_fro = "To"
+
+        elif self.current_day_count > 1:
+            if self.to_fro == "To" and self.journey_type == "InterUrban":
+                self.journey_type = "InterUrban"
+                self.to_fro = "Fro"
+            
+            # partially problematic. fix soon. make recursive?
+            elif self.to_fro == "Fro":
+                self._journey_choice = choice([True, False])
+                if self._journey_choice == True:
+                    self.journey_type = "Urban"
+                else:
+                    self.journey_type = "InterUrban"
+                    self.to_fro = "To"
         return self.journey_type
     
     def set_speed(self) -> None:
@@ -397,7 +435,14 @@ class EV(Agent):
     def charge_intervention(self) -> None:
         """Intervention for when the EV is charging. The EV is set to Idle and will be transported to its destination.
         """
-        self.machine.end_charge_abrupt()
+        if self.machine.state == "Charge":
+            self.machine.end_charge_abrupt()
+        elif self.machine.state == "In_queue":
+            self.machine.end_queue_abrupt()
+        elif self.machine.state == "Seek_queue":
+            self.machine.end_seek_queue_abrupt()
+
+        # self.machine.end_charge_abrupt()
         print(f"EV {self.unique_id} was forced to end its charge due to overrun. It is now in state: {self.machine.state}. ")
         # assumes EV overruning is doing interuban trip
         # self.loc_machine.set_state(f"{self.destination}")
@@ -443,9 +488,23 @@ class EV(Agent):
             odometer: Odometer reading for the EV.
             battery: Battery level for the EV.
         """
-        self.odometer += self._speed
-        self.battery -= self.energy_usage_tick()
-        print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+        if self.to_fro == "To":
+            self.odometer += self._speed
+            self.battery -= self.energy_usage_tick()
+            print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+        elif self.to_fro == "Fro":
+            self.odometer -= self._speed
+            self.battery -= self.energy_usage_tick()
+            print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+        # # redundancy condition
+        # elif self.to_fro == "":
+        #     self.odometer += self._speed
+        #     self.battery -= self.energy_usage_tick()
+
+
+        # self.odometer += self._speed
+        # self.battery -= self.energy_usage_tick()
+        # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
 
         # use station selection process instead
     
