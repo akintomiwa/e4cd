@@ -1,17 +1,15 @@
 """This module contains the agent classes for the EV model."""
 
 import numpy as np
+import pandas as pd
 import math
 import os
 import random
 from random import choice
 import warnings
 warnings.simplefilter("ignore")
-import pandas as pd
 import numpy as np
-import mesa
-from mesa import Agent, Model
-from mesa.time import RandomActivation, RandomActivationByType, SimultaneousActivation
+from mesa import Agent
 from mesa.datacollection import DataCollector
 from matplotlib import pyplot as plt, patches
 import scipy.stats as ss
@@ -24,6 +22,19 @@ from functools import partial
 # import EV.model as model
 from EV.statemachine import EVSM, LSM, states, transitions, lstates, ltransitions
 # from EV.statemachine import EVSM, LSM
+
+# class Chargepoint(Agent):
+#     """Charging point for charging stations"""
+    
+#     def __init__(self, unique_id: int, model: Model) -> None:
+#         super().__init__(unique_id, model)
+#         self.active_ev = None
+#         self._charge_rate = 7.5 #kW
+    
+#     def init_report(self):
+#         print(f"\nCP info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
+    
+    
 
 class ChargeStation(Agent):
     """A charging station (CS) agent.
@@ -41,107 +52,273 @@ class ChargeStation(Agent):
     Methods:
         __init__: Initialises the agent.
         __str__: Returns the agent's unique id.
-        dequeue_1: Removes the first EV from queue_1.
-        dequeue_2: Removes the first EV from queue_2.
-        finish_charge_ev_1: Finish charging the EV at CP1 at the Charge Station.
-        finish_charge_ev_2: Finish charging the EV at CP2 at the Charge Station.
+        dequeue_ev: Removes the first EV from queue_1.
+        finish_charge_ev: Finish charging the EV at CP1 at the Charge Station.
         stage_1: Stage 1 of the agent's step function.
         stage_2: Stage 2 of the agent's step function.
 
     """
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, no_cps):
         super().__init__(unique_id, model)
-        self.queue_1 = []
-        self.queue_2 = []
-        self._is_active = False
-        self.active_ev_1 = None
-        self.active_ev_2 = None
-        # can replace with array of 2
-        # self.active_evs = []
+        # Start initialisation
+        self.queue = []
+        self.occupied_cps = set()
+        self.no_cps = no_cps
+        # self._is_active = False
         # self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
-
+        self.base_cp_count = 0
+        self.station_id = unique_id    
+        self.checkpoint_id = 0
+        
         self._charge_rate = 7.5 #kW
-        self._checkpoint_id = 0
 
         # new
         self.max_queue_size = 10
+        
+        self.assign_cp_id()
 
-
-        print(f"\nCP info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
+        self.init_report()
+        
+        # self.cp_report()
 
         # End initialisation
+
+    def assign_cp_id(self):
+        for i in range((self.no_cps)):
+            setattr(self, f'cp_id_{i}', None)
+
+    def init_report(self):
+        print(f"\nCS info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
+        print(f"It has {self.no_cps} charging points.")
+
+    def cp_report(self):
+        for i in range(self.no_cps):
+            print(f"CP_{i} is {(getattr(self, f'cp_id_{i}'))}")
+    
+  
 
     def __str__(self) -> str:
         """Return the agent's unique id."""
         return str(self.unique_id + 1)
     
-    
-    def dequeue_1(self) -> None:
-        """Remove the first EV from each queue. FIFO fom queue.
-        If the queue is empty, do nothing. 
-        If the queue is not empty, remove the first EV from the queue and set as active ev.
-        Transition the EV to the charging state.
 
-        """
+    def dequeue(self) -> bool:
+        """Remove the first EV from queue."""
         try:
-            self.active_ev_1 = self.queue_1.pop(0)
-            self.active_ev_1.machine.start_charge()
-            print(f"EV {(self.active_ev_1.unique_id)} dequeued at CS {self.unique_id} at Queue 1 and is in state: {self.active_ev_1.machine.state}")
-            print(f"Queue 1 size after dequeuing: {len(self.queue_1)}")
+            active = self.queue.pop(0)  # pick first EV in queue
+            if active is None:
+                return False
+
+            for attr_name in [a for a in dir(self) if a.startswith("cp_id_")]:
+                attr_value = getattr(self, attr_name)
+                if attr_value is None and attr_name not in self.occupied_cps:
+                    setattr(self, attr_name, active)
+                    active.machine.start_charge()
+                    self.occupied_cps.add(attr_name)
+                    print(f"EV {active.unique_id} dequeued at CS {self.unique_id} at CP {attr_name} and is in state: {active.machine.state}. Charging started")
+                    return True
+                elif attr_value is not None:
+                    self.occupied_cps.add(attr_name)
+                    print(f"CP: {attr_name} at ChargeStation {self.unique_id} is currently occupied by EV {attr_value}")
+            return False
+        except IndexError:
+            print(f"The queue at ChargeStation {self.unique_id} is empty.")
+            return False
+        except Exception as e:
+            print(f"Error assigning EV to charge point: {e}")
+            return False
+
+
+
+    # def dequeue(self) -> None:
+    #     """Remove the first EV from queue."""
+    #     try:
+    #         active = self.queue.pop(0) #pick first EV in queue
+    #         for attr_name in dir(self):
+    #             if attr_name.startswith("cp_id_"):
+    #                 attr_value = getattr(self, attr_name)
+    #                 if attr_value is None:
+    #                     setattr(self, attr_name, active)
+    #                     active.machine.start_charge()
+    #                     print(f"EV {active.unique_id} dequeued at CS {self.unique_id} at CP {attr_name} and is in state: {active.machine.state}")
+    #                     print("EV started charging.")
+    #                     # print(f"{attr_name} at CP {self.unique_id} is None")
+    #                 else:
+    #                     print(f"CP: {attr_name} at ChargeStation {self.unique_id} is currently occupied by EV {attr_value}")
+    #     except:
+    #         IndexError
+    #         print(f"The queue at ChargeStation {self.unique_id} is empty.")
+        # elif len(self.queue) > self.max_queue_size:
+        #     print("Queue is full.")
+    
+    # March rewrite 1
+    def finish_charge(self) -> None:
+        try:
+            for attr_name in dir(self):
+                if attr_name.startswith("cp_id_"):
+                    attr_value = getattr(self, attr_name)
+                    if attr_value is None:
+                        print(f"This CP, {attr_name} at ChargeStation {self.unique_id} is empty.")
+                    else:
+                        if attr_value.battery < attr_value._soc_charging_thresh:
+                            # attr_value.charge()
+                            attr_value.machine.continue_charge()
+                            print(f"EV {(attr_value.unique_id)} at CS {self.unique_id} at CP {attr_name} is in state: {attr_value.machine.state}. Charging continues.")
+                        elif attr_value.battery >= attr_value._soc_charging_thresh:
+                            attr_value.machine.end_charge()
+                            setattr(self, attr_name, None)
+                            print(f"EV at CS {self.unique_id} at CP {attr_name} has finished charging. CP is now empty.")
         except:
             pass
-    
-    def dequeue_2(self) -> None:
-        """Remove the first EV from each queue. FIFO fom queue. 
-        This is the same as dequeue_1, but for queue 2."""
-        try:
-            self.active_ev_2 = self.queue_2.pop(0)
-            self.active_ev_2.machine.start_charge()
-            print(f"EV {(self.active_ev_2.unique_id)} dequeued at CP {self.unique_id} at Queue 2 and is in state: {self.active_ev_2.machine.state}")
-            print(f"Queue 2 size after dequeuing: {len(self.queue_2)}")
-        except:
-            pass
-    
-    def finish_charge_ev_1(self):
-        """Finish charging the EV at CP1 at the Charge Station."""
-        if self.active_ev_1 is not None:
-            # self.active_ev_1.machine.end_charge() # this is a toggle
-            self.active_ev_1 = None
-            print(f"EV at Charge Station {self.unique_id}, CP 1 has exited.")
 
-    def finish_charge_ev_2(self):
-        """Finish charging the EV at CP2 at the Charge Station."""
-        if self.active_ev_2 is not None:
-            # self.active_ev_2.machine.end_charge() # this is another toggle
-            self.active_ev_2 = None
-            print(f"EV at Charge Station {self.unique_id}, CP 2 has exited.")
 
     def stage_1(self):
         """Stage 1 of the charge station's step function."""
-        if self.active_ev_1 is None:
-            self.dequeue_1()
-        if self.active_ev_2 is None:
-            self.dequeue_2()
+        # if self.active_ev_1 is None:
+        #     self.dequeue_1()
+        # if self.active_ev_2 is None:
+        #     self.dequeue_2()
+        self.dequeue()
+        # self.announce()
 
     def stage_2(self):
         """Stage 2 of the charge station's step function."""
-        if self.active_ev_1 is not None:
-            if self.active_ev_1.battery < self.active_ev_1._soc_charging_thresh:
-                self.active_ev_1.charge()
-                self.active_ev_1.machine.continue_charge()
-            else:    
-                # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_1.machine.state}.")                                       #testing
-                self.active_ev_1.machine.end_charge()
-                self.finish_charge_ev_1()
-        if self.active_ev_2 is not None:
-            if self.active_ev_2.battery < self.active_ev_2._soc_charging_thresh:
-                self.active_ev_2.charge()
-                self.active_ev_2.machine.continue_charge()
-            else:
-                # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
-                self.active_ev_2.machine.end_charge()
-                self.finish_charge_ev_2()
-                
+        self.finish_charge()
+        # if self.active_ev_1 is not None:
+        #     if self.active_ev_1.battery < self.active_ev_1._soc_charging_thresh:
+        #         self.active_ev_1.charge()
+        #         self.active_ev_1.machine.continue_charge()
+        #     else:    
+        #         # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_1.machine.state}.")                                       #testing
+        #         self.active_ev_1.machine.end_charge()
+        #         self.finish_charge_ev_1()
+        # if self.active_ev_2 is not None:
+        #     if self.active_ev_2.battery < self.active_ev_2._soc_charging_thresh:
+        #         self.active_ev_2.charge()
+        #         self.active_ev_2.machine.continue_charge()
+        #     else:
+        #         # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
+        #         self.active_ev_2.machine.end_charge()
+        #         self.finish_charge_ev_2()
+        # pass      
+
+# class ChargeStation(Agent):
+#     """A charging station (CS) agent.
+#     Attributes:
+#         unique_id: Unique identifier for the agent.
+#         model: The model the agent is running in.
+#         queue_1: A list of EVs waiting to charge at the CS.
+#         queue_2: A list of EVs waiting to charge at the CS.
+#         _active_ev_1: The first EV currently charging at the CS.
+#         _active_ev_2: The second EV currently charging at the CS.
+#         _charge_rate: The rate at which the CS charges an EV.
+#         _checkpoint_id: The ID of the checkpoint the CS is associated with. Initialised to 0.
+#         max_queue_size: The maximum number of EVs that can be queued at the CS.
+
+#     Methods:
+#         __init__: Initialises the agent.
+#         __str__: Returns the agent's unique id.
+#         dequeue_1: Removes the first EV from queue_1.
+#         dequeue_2: Removes the first EV from queue_2.
+#         finish_charge_ev_1: Finish charging the EV at CP1 at the Charge Station.
+#         finish_charge_ev_2: Finish charging the EV at CP2 at the Charge Station.
+#         stage_1: Stage 1 of the agent's step function.
+#         stage_2: Stage 2 of the agent's step function.
+
+#     """
+#     def __init__(self, unique_id, model):
+#         super().__init__(unique_id, model)
+#         self.queue_1 = []
+#         self.queue_2 = []
+#         self._is_active = False
+#         self.active_ev_1 = None
+#         self.active_ev_2 = None
+#         # can replace with array of 2
+#         # self.active_evs = []
+#         # self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
+
+#         self._charge_rate = 7.5 #kW
+#         self._checkpoint_id = 0
+
+#         # new
+#         self.max_queue_size = 10
+
+
+#         print(f"\nCP info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
+
+#         # End initialisation
+
+#     def __str__(self) -> str:
+#         """Return the agent's unique id."""
+#         return str(self.unique_id + 1)
+    
+    
+#     def dequeue_1(self) -> None:
+#         """Remove the first EV from each queue. FIFO fom queue.
+#         If the queue is empty, do nothing. 
+#         If the queue is not empty, remove the first EV from the queue and set as active ev.
+#         Transition the EV to the charging state.
+
+#         """
+#         try:
+#             self.active_ev_1 = self.queue_1.pop(0)
+#             self.active_ev_1.machine.start_charge()
+#             print(f"EV {(self.active_ev_1.unique_id)} dequeued at CS {self.unique_id} at Queue 1 and is in state: {self.active_ev_1.machine.state}")
+#             print(f"Queue 1 size after dequeuing: {len(self.queue_1)}")
+#         except:
+#             pass
+    
+#     def dequeue_2(self) -> None:
+#         """Remove the first EV from each queue. FIFO fom queue. 
+#         This is the same as dequeue_1, but for queue 2."""
+#         try:
+#             self.active_ev_2 = self.queue_2.pop(0)
+#             self.active_ev_2.machine.start_charge()
+#             print(f"EV {(self.active_ev_2.unique_id)} dequeued at CP {self.unique_id} at Queue 2 and is in state: {self.active_ev_2.machine.state}")
+#             print(f"Queue 2 size after dequeuing: {len(self.queue_2)}")
+#         except:
+#             pass
+    
+#     def finish_charge_ev_1(self):
+#         """Finish charging the EV at CP1 at the Charge Station."""
+#         if self.active_ev_1 is not None:
+#             # self.active_ev_1.machine.end_charge() # this is a toggle
+#             self.active_ev_1 = None
+#             print(f"EV at Charge Station {self.unique_id}, CP 1 has exited.")
+
+#     def finish_charge_ev_2(self):
+#         """Finish charging the EV at CP2 at the Charge Station."""
+#         if self.active_ev_2 is not None:
+#             # self.active_ev_2.machine.end_charge() # this is another toggle
+#             self.active_ev_2 = None
+#             print(f"EV at Charge Station {self.unique_id}, CP 2 has exited.")
+
+#     def stage_1(self):
+#         """Stage 1 of the charge station's step function."""
+#         if self.active_ev_1 is None:
+#             self.dequeue_1()
+#         if self.active_ev_2 is None:
+#             self.dequeue_2()
+
+#     def stage_2(self):
+#         """Stage 2 of the charge station's step function."""
+#         if self.active_ev_1 is not None:
+#             if self.active_ev_1.battery < self.active_ev_1._soc_charging_thresh:
+#                 self.active_ev_1.charge()
+#                 self.active_ev_1.machine.continue_charge()
+#             else:    
+#                 # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_1.machine.state}.")                                       #testing
+#                 self.active_ev_1.machine.end_charge()
+#                 self.finish_charge_ev_1()
+#         if self.active_ev_2 is not None:
+#             if self.active_ev_2.battery < self.active_ev_2._soc_charging_thresh:
+#                 self.active_ev_2.charge()
+#                 self.active_ev_2.machine.continue_charge()
+#             else:
+#                 # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
+#                 self.active_ev_2.machine.end_charge()
+#                 self.finish_charge_ev_2()
+            
 
 class EV(Agent):
     """An agent used to model an electric vehicle (EV).
@@ -231,10 +408,10 @@ class EV(Agent):
         self.to_fro = ""
         # EV Driver Behaviour
         self._speed = 0
-        self.charge_prop = 0.5    #propensity to charge at main station 
+        self.range_anxiety = 0.5    #propensity to charge at main station 
         # battery soc level at which EV driver feels compelled to start charging at station.
         # self._soc_usage_thresh = (0.4 * self.max_battery) 
-        self._soc_usage_thresh = (self.charge_prop * self.max_battery) 
+        self._soc_usage_thresh = (self.range_anxiety * self.max_battery) 
         # battery soc level at which EV driver is comfortable with stopping charging at station.
         self._soc_charging_thresh = (0.8 * self.max_battery) 
         # Newest
@@ -281,7 +458,7 @@ class EV(Agent):
     def initalization_report(self) -> None:
         """Prints the EV's initialisation report."""
         print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
-        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, soc usage threshold: {self._soc_usage_thresh}, charge prop {self.charge_prop}, location: {self.loc_machine.state}.")
+        print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}, location: {self.loc_machine.state}.")
 
     # Internal functions
 
@@ -338,11 +515,20 @@ class EV(Agent):
             self._speed = (base_speed * 2) #interurban speed (mph). 
         
     def set_ev_consumption_rate(self) -> None:
+        # baselines
+        mu_urban, mu_interurban = 0.2, 0.5 # means
+        sigma = 0.1 # standard deviation
+        # s = np.random.normal(mu, sigma, 1000)
         # set vehicle energy consumption rate
         if self.journey_type == "Urban":
-            self.ev_consumption_rate = 0.2 # 200 Wh/mile OR 20 kWh/100 miles OR 0.2 kWh/mile
+            # self.ev_consumption_rate = 0.2 # 200 Wh/mile OR 20 kWh/100 miles OR 0.2 kWh/mile
+            # self.ev_consumption_rate = np.random.normal(mu_urban, sigma) # opt: size = 1
+            self.ev_consumption_rate = np.random.default_rng().normal(mu_urban, sigma) # opt: size = 1
         else:
-            self.ev_consumption_rate = 0.5 # 500 Wh/mile OR 50 kWh/100 miles
+            # self.ev_consumption_rate = 0.5 # 500 Wh/mile OR 50 kWh/100 miles
+            # self.ev_consumption_rate = np.random.normal(mu_interurban, sigma) # opt: size = 1
+            self.ev_consumption_rate = np.random.default_rng().normal(mu_interurban, sigma) # opt: size = 1
+
     
     def choose_destination(self, journey_type:str) -> str:
         """Chooses a destination for the EV driver.
@@ -420,10 +606,9 @@ class EV(Agent):
         """
         self.battery = self.max_battery
         # self.odometer = self._distance_goal
-        self.increase_charge_prop()
+        self.increase_range_anxiety()
         self.machine.emergency_intervention()
-        # self.locationmachine.set_state("At_destination")
-        print(f"\nEV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Charge prop: {self.charge_prop}")
+        print(f"\nEV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Range anxiety: {self.range_anxiety}")
 
     def travel_intervention(self) -> None:
         """Intervention for when the EV is traveling. The EV is set to Idle and will be transported to its destination.
@@ -460,27 +645,31 @@ class EV(Agent):
             self.start_time = random.randint(6, 9)
     
     # Dynamic propensity for charging behavior
-    def increase_charge_prop(self) -> None:
+    def increase_range_anxiety(self) -> None:
         """Increases the propensity for charging. Higher propensity for charging means that the EV is more likely to charge at a Charge Station, due to having a higher soc_usage threshold.
         
         Returns:
             charge_prop: Propensity for charging behavior.
         """
-        margin = 0.1
-        self.charge_prop += margin
+        mu, sigma = 0.1, 0.01 # mean and standard deviation
+        margin = np.random.default_rng().normal(mu, sigma)
+        # margin = 0.1
+        self.range_anxiety += abs(margin)
 
-    def decrease_charge_prop(self) -> None:
+    def decrease_range_anxiety(self) -> None:
         """
         Decreases the propensity for charging. Lower propensity for charging means that the EV is less likely to charge at a Charge Station, due to having a lower soc_usage threshold.
         
-        Returns:
+        Returns:/
             charge_prop: Propensity for charging behavior.
         """
-        margin = 0.1
-        self.charge_prop -= margin
+        mu, sigma = 0.05, 0.01 # mean and standard deviation
+        margin = np.random.default_rng().normal(mu, sigma)
+        # margin = 0.1
+        self.range_anxiety -= abs(margin)
   
     # Core EV Functions
-    def travel(self) -> None:
+    def travel(self, to_fro:str) -> None:
         """
         Travel function. Moves EV along the road. Updates odometer and battery level.
         
@@ -488,14 +677,22 @@ class EV(Agent):
             odometer: Odometer reading for the EV.
             battery: Battery level for the EV.
         """
+
         if self.to_fro == "To":
             self.odometer += self._speed
             self.battery -= self.energy_usage_tick()
-            print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+            # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+
+        elif self.to_fro == "":
+            self.odometer += self._speed
+            self.battery -= self.energy_usage_tick()
+            # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+
         elif self.to_fro == "Fro":
             self.odometer -= self._speed
             self.battery -= self.energy_usage_tick()
-            print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+            # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+       
         # # redundancy condition
         # elif self.to_fro == "":
         #     self.odometer += self._speed
@@ -515,7 +712,7 @@ class EV(Agent):
             battery: Battery level for the EV.
         """
         self.battery += self._chosen_cs._charge_rate
-        print(f"EV {self.unique_id} at CS {self._chosen_cs.unique_id} is in state: {self.machine.state}, Battery: {self.battery}")
+        # print(f"EV {self.unique_id} at CS {self._chosen_cs.unique_id} is in state: {self.machine.state}, Battery: {self.battery}")
 
     def charge_overnight(self):
         """
@@ -543,7 +740,7 @@ class EV(Agent):
         """
         # choose station
         for cs in self.model.chargestations:
-            if cs._checkpoint_id == self.odometer:
+            if cs.checkpoint_id == self.odometer:
                 self._chosen_cs = cs
                 self._chosen_cs._is_active = True
         print(f"EV {(self.unique_id)} selected Charge Station: {(self._chosen_cs.unique_id)} for charging.")
@@ -563,20 +760,23 @@ class EV(Agent):
         #             self._chosen_cs._is_active = True
 
 
-    # new select queue for charging
-    def choose_cs_queue(self) -> None:
-        """Chooses a queue at the charge station to charge at. Chooses the queue with the shortest queue."""
-        print(f"Length of q1: {(len(self._chosen_cs.queue_1))}. Length of q2: {(len(self._chosen_cs.queue_2))}")
-        if len(self._chosen_cs.queue_1) > len(self._chosen_cs.queue_2):
-            self._chosen_cs.queue_2.append(self)
-            print(f"EV {(self.unique_id)} selected queue 2 at Charge Station {(self._chosen_cs.unique_id)}")
-        elif len(self._chosen_cs.queue_1) < len(self._chosen_cs.queue_2):
-            self._chosen_cs.queue_1.append(self)
-            print(f"EV {(self.unique_id)} selected queue 1 at Charge Station {(self._chosen_cs.unique_id)}")
-        elif len(self._chosen_cs.queue_1) == len(self._chosen_cs.queue_2):
-            self._chosen_cs.queue_1.append(self)
-            print(f"EV {(self.unique_id)} selected queue 1 at Charge Station {(self._chosen_cs.unique_id)}")
-        
+    # # new select queue for charging
+    # def choose_cs_queue(self) -> None:
+    #     """Chooses a queue at the charge station to charge at. Chooses the queue with the shortest queue."""
+    #     print(f"Length of q1: {(len(self._chosen_cs.queue_1))}. Length of q2: {(len(self._chosen_cs.queue_2))}")
+    #     if len(self._chosen_cs.queue_1) > len(self._chosen_cs.queue_2):
+    #         self._chosen_cs.queue_2.append(self)
+    #         print(f"EV {(self.unique_id)} selected queue 2 at Charge Station {(self._chosen_cs.unique_id)}")
+    #     elif len(self._chosen_cs.queue_1) < len(self._chosen_cs.queue_2):
+    #         self._chosen_cs.queue_1.append(self)
+    #         print(f"EV {(self.unique_id)} selected queue 1 at Charge Station {(self._chosen_cs.unique_id)}")
+    #     elif len(self._chosen_cs.queue_1) == len(self._chosen_cs.queue_2):
+    #         self._chosen_cs.queue_1.append(self)
+    #         print(f"EV {(self.unique_id)} selected queue 1 at Charge Station {(self._chosen_cs.unique_id)}")
+    
+    def join_cs_queue(self) -> None:
+        self._chosen_cs.queue.append(self)
+        print(f"EV {(self.unique_id)} joined queue at Charge Station {(self._chosen_cs.unique_id)}")
   
     # Model env functions
     def add_soc_eod(self) -> None:
@@ -688,7 +888,7 @@ class EV(Agent):
     
 
     # def update_soc_usage_thresh(self):
-    #     new_thresh = self.max_battery * self.charge_prop
+    #     new_thresh = self.max_battery * self.rannge_anxiety
     #     self._soc_usage_thresh = new_thresh
 
     # staged step functions
@@ -732,13 +932,13 @@ class EV(Agent):
 
         if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and self.odometer < self._distance_goal:
             if self.machine.state == 'Travel':
-                self.travel()
+                self.travel(to_fro=self.to_fro)
                 self.machine.continue_travel()
                 print(f"EV {self.unique_id}  has travelled: {self.odometer} miles. State: {self.machine.state}. Battery: {self.battery} kWh")
             elif self.machine.state == 'Travel_low':
                 if self.battery > 0:
                     print(f"EV {self.unique_id} is low on charge and is seeking a charge station. Current charge: {self.battery} kWh")
-                    self.travel()
+                    self.travel(to_fro=self.to_fro)
                 elif self.battery <= 0:
                     self.machine.deplete_battery()
                     print(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh")
@@ -755,15 +955,31 @@ class EV(Agent):
                 # self.select_cp()
                 self.choose_charge_station()
                 self.machine.seek_charge_queue()
-                self.choose_cs_queue()
-                # Here, EV has arrived at CS, joined one of the two queues and is waiting to become the active ev, and get charged.
                 self.machine.join_charge_queue()
+                # self.choose_cs_queue()
+                self.join_cs_queue()
+                # Here, EV has arrived at CS, joined one of the two queues and is waiting to become the active ev, and get charged.
+                # self.machine.start_charge()
                 self._in_queue = True
 
        
     
     def stage_2(self):
         """Stage 2: EV waits in queue until it is the active EV."""
+        
+        if self.machine.state == 'Charge':
+            self._in_queue = False
+            self.charge()
+            # print(f"EV {self.unique_id} is charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+            if self.battery >= self._soc_charging_thresh:
+                self.machine.end_charge()
+                print(f"EV {self.unique_id} has finished charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+                self._at_station = False
+            elif self.battery < self._soc_charging_thresh:
+                self.machine.continue_charge()
+                print(f"EV {self.unique_id} is still charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+
+
         # Transition Case 3: EV with low battery does not arrive at charge station. Travel_low -> Battery_dead
         # condition self.battery < 10 because 10 is the minimum expenditure of energy to move the vehicle in one timestep
         # if self.machine.state == 'Travel_low' and self.battery < 10:
@@ -776,13 +992,15 @@ class EV(Agent):
             self.machine.end_travel()
             self._in_garage = True
             self._journey_complete = False
-            print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
+            self.decrease_range_anxiety()
+            print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh. Range anxiety: {self.range_anxiety}")
             self.update_lsm()
 
         # Transition Case 8: Journey complete, battery low. travel_low -> idle
         if self.machine.state == 'Travel_low' and self.odometer >= self._distance_goal:
             self.machine.end_travel_low()
-            print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
+            # decrease range anxiety?
+            print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh. Range anxiety: {self.range_anxiety}")
     
         # 27 Feb
         # if (self.machine.state == 'Idle' and self._in_garage == True) and model.schedule.time 
@@ -816,4 +1034,54 @@ class EV(Agent):
         # logging.basicConfig(level=logging.DEBUG)
         # logging.getLogger('transitions').setLevel(logging.INFO)
 
+# from mesa import Agent, Model
+# from mesa.time import RandomActivation
+# import random
+
+# class ChargingStation(Agent):
+#     def __init__(self, unique_id, model, num_chargepoints):
+#         super().__init__(unique_id, model)
+#         self.queue = []
+#         self.num_chargepoints = num_chargepoints
         
+#     def step(self):
+#         # Check for available chargepoints
+#         while len(self.queue) > 0 and self.num_chargepoints > 0:
+#             # Remove EV from queue
+#             ev = self.queue.pop(0)
+            
+#             # Decrement number of available chargepoints
+#             self.num_chargepoints -= 1
+            
+#             # Schedule charging completion
+#             self.model.schedule_once(ev, "charging_complete")
+            
+#         # Randomly add EV to queue
+#         if random.random() < 0.5:
+#             ev = EV(self.model.next_id(), self.model)
+#             self.queue.append(ev)
+#             self.model.schedule_once(ev, "start_charging")
+            
+# class EV(Agent):
+#     def __init__(self, unique_id, model):
+#         super().__init__(unique_id, model)
+        
+#     def step(self):
+#         pass
+        
+#     def start_charging(self):
+#         # Start charging
+#         self.model.schedule_once(self, "stop_charging", 10)
+        
+#     def stop_charging(self):
+#         # Increment available chargepoints
+#         charging_station = self.model.schedule.agents_by_type[ChargingStation][0]
+#         charging_station.num_chargepoints += 1
+        
+# model = Model()
+# model.schedule = RandomActivation(model)
+
+# charging_station = ChargingStation(1, model, 2)
+# model.schedule.add(charging_station)
+
+# model.run_steps(100)

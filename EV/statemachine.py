@@ -62,7 +62,10 @@ class LSM(Machine):
     city_d_2_a: City_D -> City_A
     city_d_2_b: City_D -> City_B
     city_d_2_c: City_D -> City_C
-    
+    city_d_2_d: City_D -> City_D
+    city_a_2_d: City_A -> City_D
+    city_b_2_d: City_B -> City_D
+    city_c_2_d: City_C -> City_D
     """
 
 lstates = ['City_A', 'City_B', 'City_C', 'City_D']
@@ -70,7 +73,10 @@ ltransitions = [
     {'trigger': 'city_d_2_a', 'source': 'City_D', 'dest': 'City_A'},
     {'trigger': 'city_d_2_b', 'source': 'City_D', 'dest': 'City_B'},
     {'trigger': 'city_d_2_c', 'source': 'City_D', 'dest': 'City_C'},
-    {'trigger': 'city_d_2_d', 'source': 'City_D', 'dest': 'City_D'},  
+    {'trigger': 'city_d_2_d', 'source': 'City_D', 'dest': 'City_D'}, 
+    {'trigger': 'city_a_2_d', 'source': 'City_A', 'dest': 'City_D'},
+    {'trigger': 'city_b_2_d', 'source': 'City_B', 'dest': 'City_D'},
+    {'trigger': 'city_c_2_d', 'source': 'City_C', 'dest': 'City_D'}, 
     ]
 
 # Visualizing the state machines
@@ -123,7 +129,9 @@ machine2 = GraphMachine(model=model2,
                             {'trigger': 'city_d_2_b', 'source': 'City_D', 'dest': 'City_B'},
                             {'trigger': 'city_d_2_c', 'source': 'City_D', 'dest': 'City_C'},
                             {'trigger': 'city_d_2_d', 'source': 'City_D', 'dest': 'City_D'},
-
+                            {'trigger': 'city_a_2_d', 'source': 'City_A', 'dest': 'City_D'},
+                            {'trigger': 'city_b_2_d', 'source': 'City_B', 'dest': 'City_D'},
+                            {'trigger': 'city_c_2_d', 'source': 'City_C', 'dest': 'City_D'},
                ], 
                initial='City_D', 
                show_conditions=True)

@@ -1,3 +1,55 @@
+# 19-03-2023
+
+# try:
+        #     # for i in range(len(self.charge_points)):
+        #     # for i in self.vars():
+        #     #     print(i)
+        #         if getattr(self, self.charge_points[i]) is None:
+        #             setattr(self, self.charge_points[i], self.queue.pop(0))
+        #             print(f"EV {(getattr(self, self.charge_points[i]).unique_id)} dequeued at CS {self.unique_id} at CP {i} and is in state: {getattr(self, self.charge_points[i]).machine.state}")
+        #             setattr(self, self.charge_points[i]).machine.start_charge() #used to be getattr
+        #             # print(f"EV {(getattr(self, self.charge_points[i]).unique_id)} dequeued at CS {self.unique_id} at CP {i} and is in state: {getattr(self, self.charge_points[i]).machine.state}")
+        #             print(f"Queue size after dequeuing: {len(self.queue)}")
+        #         # elif getattr(self, self.charge_points[i]) is not None:
+        # except:
+        #     pass
+
+        # try:
+        #     for attr_name in dir(self):
+        #         attr_value = getattr(self, attr_name)
+        #         if attr_value is None:
+        #             print(f"{attr_name} is None")
+        #         else:
+        #             print(f"{attr_name} is {attr_value}")
+        # except:
+        #     pass   
+
+
+# 15-03-2023 Attempt to dynamically create cps for css
+ #    cs = ChargeStation(i,self, self.no_cps_per_cs.get(str(i)))
+
+
+#  for i in range(self.no_evs):
+#             ev = EV(i,self)
+#             self.schedule.add(ev)
+#             self.evs.append(ev)
+#         # charging stations
+#         for i in range(self.no_css):
+#             cs = ChargeStation(i + no_evs, self, no_cps_per_cs)
+#             self.schedule.add(cs)
+#             self.chargestations.append(cs)
+#         for  i, cs in enumerate(self.chargestations):
+#             cs._checkpoint_id = self.checkpoints[i]  
+#             for j in range(self.no_cps_per_cs):
+#                 cp = ChargePoint(j + (i * self.no_cps_per_cs), self, cs)
+#                 self.schedule.add(cp)
+#                 self.chargepoints.append(cp)
+
+
+
+
+
+
 
 # 15-02-2023 Attempt to nest EV agent step function
 
