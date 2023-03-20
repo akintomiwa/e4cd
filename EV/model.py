@@ -166,6 +166,7 @@ class EVModel(Model):
         self.no_evs = no_evs
         self.no_css = params['no_css']
         # self.no_cps = no_cps
+        self.default_cppcs = params['default_cppcs']
         self.no_cps_per_cs = params['no_cps_per_cs']
         # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
         self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
@@ -185,7 +186,7 @@ class EVModel(Model):
         # charging stations
         for i in range(self.no_css):
             # dynamically create charge station with number of charge points
-            cs = ChargeStation(i,self, self.no_cps_per_cs.get('i', 3))
+            cs = ChargeStation(i, self, self.no_cps_per_cs.get('i', self.default_cppcs))
             # add checkpoint id as a propery of cs
             cs.__setattr__('checkpoint_id', self.checkpoints[i])    
             self.schedule.add(cs)
@@ -285,7 +286,7 @@ class EVModel(Model):
                 ev.relaunch_idle()
             elif ev.machine.state == 'Travel':
                 ev.relaunch_travel()
-            elif ev.machine.state == 'Charging':
+            elif ev.machine.state == 'Charge':
                 ev.relaunch_charge()
                 pass
             # ev.update_home_charge_prop()

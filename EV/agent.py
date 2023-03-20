@@ -69,7 +69,6 @@ class ChargeStation(Agent):
         self.base_cp_count = 0
         self.station_id = unique_id    
         self.checkpoint_id = 0
-        
         self._charge_rate = 7.5 #kW
 
         # new
@@ -119,7 +118,8 @@ class ChargeStation(Agent):
                     return True
                 elif attr_value is not None:
                     self.occupied_cps.add(attr_name)
-                    print(f"CP: {attr_name} at ChargeStation {self.unique_id} is currently occupied by EV {attr_value}")
+                    # print(f"CP: {attr_name} at ChargeStation {self.unique_id} is currently occupied by EV {attr_value} {attr_value.unique_id}")
+                    print(f"CP: {attr_name} at ChargeStation {self.unique_id} is currently occupied by an EV")
             return False
         except IndexError:
             print(f"The queue at ChargeStation {self.unique_id} is empty.")
@@ -628,7 +628,7 @@ class EV(Agent):
             self.machine.end_seek_queue_abrupt()
 
         # self.machine.end_charge_abrupt()
-        print(f"EV {self.unique_id} was forced to end its charge due to overrun. It is now in state: {self.machine.state}. ")
+        print(f"EV {self.unique_id} was forced to end its charge due to time overrun. It is now in state: {self.machine.state}. ")
         # assumes EV overruning is doing interuban trip
         # self.loc_machine.set_state(f"{self.destination}")
 
@@ -994,7 +994,7 @@ class EV(Agent):
             self._journey_complete = False
             self.decrease_range_anxiety()
             print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh. Range anxiety: {self.range_anxiety}")
-            self.update_lsm()
+            # self.update_lsm()
 
         # Transition Case 8: Journey complete, battery low. travel_low -> idle
         if self.machine.state == 'Travel_low' and self.odometer >= self._distance_goal:
