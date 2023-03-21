@@ -390,6 +390,11 @@ class EV(Agent):
         battery_eod: State of charge of the EV at the end of the day.
         day_count: Number of days the EV has been active.
 
+        TO-DO
+        pull from params:
+        charge rate, distance, price, green
+
+
         
     """
     def __init__(self, unique_id, model):
