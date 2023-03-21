@@ -70,6 +70,10 @@ def get_eod_evs_socs(model):
     eod_soc = [ev.battery_eod for ev in model.evs]
     return eod_soc
 
+def get_state_evs(model):
+    eod_soc = [ev.machine.state for ev in model.evs]
+    return eod_soc
+
 def get_evs_destinations(model):
     evs_destinations = [ev.destination for ev in model.evs]
     return evs_destinations
@@ -94,21 +98,36 @@ def get_queue_length(model):
     return cpoint_len
 
 # 28/02 Request: Get number of EVs at each charging station
-def get_evs_at_cstation(model):
-    # data = []
-    # for cs in model.chargestations:
-    #     if (cs.active_ev_1 is not None) or (cs.active_ev_2 is not None):
-    #         evs_at_cstation = [cs.active_ev_1==True or cs.active_ev_2==True]
-    #         no_evs_at_cstation = np.sum(evs_at_cstation)
-    #         data.append(no_evs_at_cstation)
-    #     else:
-    #         if cs.active_ev_1 is None and cs.active_ev_2 is not None:
-    #             data.append(1)
-    #         elif cs.active_ev_1 is not None and cs.active_ev_2 is None:
-    #             data.append(1)
-    #         data.append(0)
-    # return data
-    pass
+# def get_evs_at_cstation(model):
+#     evs_at_cstation = [len(cs.queue) for cs in model.chargestations]
+#     for attr_name in dir(cs):
+#         if attr_name.startswith("cp_id_") and attr_v:
+#     pass
+
+# Approach 2
+def get_agent_info(self, agent_id):
+        """Return a dictionary of information about a specific agent"""
+        agent = self.schedule._agents[agent_id]
+        return {
+            "id": agent.unique_id,
+            "state": agent.machine.state,
+            # "type": agent.type,
+            # "x": agent.pos[0],
+            # "y": agent.pos[1],
+            # Add more attributes as desired
+        }
+
+def data_collector(self):
+    """Return a DataCollector object that collects agent data"""
+    return DataCollector(
+        model_reporters={"agent_data": lambda m: [
+            m.get_agent_info(agent_id) for agent_id in m.schedule.agent_buffer
+        ]}
+    )
+
+
+
+
 
 # def get_evs_active(model):
 #     evs_active = [ev._is_active for ev in model.evs]
@@ -223,10 +242,10 @@ class EVModel(Model):
                              'EVs EOD Battery SOC': get_eod_evs_socs,
                              'EVs Destinations': get_evs_destinations,
                              'EVs at Charging Station - S': get_evs_at_station_state,
-                            #  'Length of Queue 1 at Charging Stations': get_queue_1_length,
-                            #  'Length of Queue 2 at Charging Stations': get_queue_2_length,
                              'Length of Queue at Charging Stations': get_queue_length,
-                             'EVs at Charging Stations': get_evs_at_cstation,
+                            #  'EVs at Charging Stations': get_evs_at_cstation,
+                             'EV State': get_state_evs,
+
                              },
             # agent_reporters={'Battery': 'battery',
             #                 'Battery EOD': 'battery_eod',
@@ -291,10 +310,23 @@ class EVModel(Model):
                 pass
             # ev.update_home_charge_prop()
     
-    def overnight_charge_evs(self) -> None:
+    def start_overnight_charge_evs(self) -> None:
         """Calls the EV.charge_overnight() method for all EVs in the model."""
         for ev in self.evs:
-            ev.charge_overnight()
+            try:
+                ev.machine.start_home_charge()
+                # ev.charge_overnight()
+            except MachineError:
+                print(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle or Battery_Dead.")
+    
+    def end_overnight_charge_evs(self) -> None:
+        """Calls the EV.end_home_charge() method for all EVs in the model."""
+        for ev in self.evs:
+            try:
+                ev.machine.end_home_charge()
+                # ev.end_overnight_charge()
+            except MachineError:
+                print(f"Error in ending overnight charging. EV {ev.unique_id} is in a state other than Idle or Battery_Dead.")
 
     # def step(self, shuffle_types = True, shuffle_agents = True) -> None:
     def step(self) -> None:
@@ -314,7 +346,7 @@ class EVModel(Model):
             print(f"This is the end of day: {self.current_day_count} ")
         self._current_tick += 1
 
-        # soft reset at beginning of day
+        # relaunch at beginning of day
         if self._current_tick > 24 and self._current_tick % 24 == 1:
             try: 
                 self.ev_relaunch() #current no of days
@@ -324,9 +356,19 @@ class EVModel(Model):
             #     print("Some other error.")
         
         # overnight charging. integration with relaunch??
-        # # overnight charging. Every day at 02:00
-        # if self._current_tick > 24 and self._current_tick % 24 == 2:
-        #     self.overnight_charge_evs()
+        # start overnight charging. Every day at 02:00
+        if self._current_tick > 24 and self._current_tick % 24 == 2:
+                try:
+                    self.start_overnight_charge_evs()
+                except MachineError:
+                    print("Error in charging EVs overnight. EV is in a state other than Idle or Battery_Dead.")
+                except Exception:
+                    print("Some other error occurred when attempting to charge EVs overnight.")
+        
+        # # end overnight charging. Every day at 05:00
+        # if self._current_tick > 24 and self._current_tick % 24 == 5:
+        #     self.end_overnight_charge_evs()
+                
 
 
 

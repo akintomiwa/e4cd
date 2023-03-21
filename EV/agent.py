@@ -107,7 +107,7 @@ class ChargeStation(Agent):
             active = self.queue.pop(0)  # pick first EV in queue
             if active is None:
                 return False
-
+            # go through all charge points and assign the first one that is free
             for attr_name in [a for a in dir(self) if a.startswith("cp_id_")]:
                 attr_value = getattr(self, attr_name)
                 if attr_value is None and attr_name not in self.occupied_cps:
@@ -118,9 +118,13 @@ class ChargeStation(Agent):
                     return True
                 elif attr_value is not None:
                     self.occupied_cps.add(attr_name)
+                    active.machine.wait_in_queue()
+                    # reinsert active into queue
+                    self.queue.insert(0, active)
+                    print(f"EV {active.unique_id} remains in queue at CS {self.unique_id} at CP {attr_name} and is in state: {active.machine.state}.")
                     # print(f"CP: {attr_name} at ChargeStation {self.unique_id} is currently occupied by EV {attr_value} {attr_value.unique_id}")
                     print(f"CP: {attr_name} at ChargeStation {self.unique_id} is currently occupied by an EV")
-            return False
+            return False  
         except IndexError:
             print(f"The queue at ChargeStation {self.unique_id} is empty.")
             return False
@@ -167,6 +171,8 @@ class ChargeStation(Agent):
                         elif attr_value.battery >= attr_value._soc_charging_thresh:
                             attr_value.machine.end_charge()
                             setattr(self, attr_name, None)
+                            # new change
+                            self.occupied_cps.remove(attr_name)
                             print(f"EV at CS {self.unique_id} at CP {attr_name} has finished charging. CP is now empty.")
         except:
             pass
@@ -179,6 +185,7 @@ class ChargeStation(Agent):
         # if self.active_ev_2 is None:
         #     self.dequeue_2()
         self.dequeue()
+        print(f"Queue Length at ChargeStation {self.unique_id} is {len(self.queue)}")  # testing
         # self.announce()
 
     def stage_2(self):
@@ -428,8 +435,6 @@ class EV(Agent):
         self.set_ev_consumption_rate()
         # choose actual destination and set distance goal based on journey type
         self.choose_destination(self.journey_type)
-        # CPoint Intractions
-        # self._chosen_cp_idx = 0 #in selected_cp
         self._chosen_cs = 0 #in selected_cp correct
         self.checkpoint_list = model.checkpoints
         self.checkpoint_list_reverse = reversed(self.checkpoint_list)
@@ -439,10 +444,8 @@ class EV(Agent):
         self.set_start_time()
 
         # Home Station 
-        self.home_cs_rate = 20 #kW
-        # self.home_charge_prop = 0.7    #propensity to charge at home
-
-        # self._home_cs = ChargeStation(0, model)
+        self.home_cs_rate = 10 #kW
+        # self.home_charge_prop = 0.7    #propensity to charge at home station
 
         # Initialisation Report
         self.initalization_report()
@@ -463,48 +466,48 @@ class EV(Agent):
     # Internal functions
 
     # works
-    # def choose_journey_type(self) -> str:
-    #     """Chooses a journey type for the EV driver.
-    #     Returns:
-    #         journey_type: Choice of journey the EV driver makes.
-    #     """
-    #     self._journey_choice = choice([True, False]) #True = Urban, False = Highway
-    #     if self._journey_choice == True:
-    #         # self._distance_goal = 100 #miles
-    #         self.journey_type = "Urban"
-    #     else:
-    #         # self._distance_goal = 200 #miles
-    #         self.journey_type = "InterUrban"
-    #     return self.journey_type
-    
-    # experimental 
     def choose_journey_type(self) -> str:
         """Chooses a journey type for the EV driver.
         Returns:
             journey_type: Choice of journey the EV driver makes.
         """
-        if self.current_day_count == 1:
-            self._journey_choice = choice([True, False]) #True = Urban, False = Highway
-            if self._journey_choice == True:
-                self.journey_type = "Urban"
-            else:
-                self.journey_type = "InterUrban"
-                self.to_fro = "To"
-
-        elif self.current_day_count > 1:
-            if self.to_fro == "To" and self.journey_type == "InterUrban":
-                self.journey_type = "InterUrban"
-                self.to_fro = "Fro"
-            
-            # partially problematic. fix soon. make recursive?
-            elif self.to_fro == "Fro":
-                self._journey_choice = choice([True, False])
-                if self._journey_choice == True:
-                    self.journey_type = "Urban"
-                else:
-                    self.journey_type = "InterUrban"
-                    self.to_fro = "To"
+        self._journey_choice = choice([True, False]) #True = Urban, False = Highway
+        if self._journey_choice == True:
+            # self._distance_goal = 100 #miles
+            self.journey_type = "Urban"
+        else:
+            # self._distance_goal = 200 #miles
+            self.journey_type = "InterUrban"
         return self.journey_type
+    
+    # # experimental 
+    # def choose_journey_type(self) -> str:
+    #     """Chooses a journey type for the EV driver.
+    #     Returns:
+    #         journey_type: Choice of journey the EV driver makes.
+    #     """
+    #     if self.current_day_count == 1:
+    #         self._journey_choice = choice([True, False]) #True = Urban, False = Highway
+    #         if self._journey_choice == True:
+    #             self.journey_type = "Urban"
+    #         else:
+    #             self.journey_type = "InterUrban"
+    #             self.to_fro = "To"
+
+    #     elif self.current_day_count > 1:
+    #         if self.to_fro == "To" and self.journey_type == "InterUrban":
+    #             self.journey_type = "InterUrban"
+    #             self.to_fro = "Fro"
+            
+    #         # partially problematic. fix soon. make recursive?
+    #         elif self.to_fro == "Fro":
+    #             self._journey_choice = choice([True, False])
+    #             if self._journey_choice == True:
+    #                 self.journey_type = "Urban"
+    #             else:
+    #                 self.journey_type = "InterUrban"
+    #                 self.to_fro = "To"
+    #     return self.journey_type
     
     def set_speed(self) -> None:
         """Sets the speed of the EV driver."""
@@ -568,7 +571,7 @@ class EV(Agent):
         # destination = random.choices(list(choices.keys()), weights=list(choices.values()), k=1)
         # return destination
         # destinations_distances = {'City A': 210, 'City B': 140, 'City C': 245} # miles . Initial
-        destinations_distances = {'City A': 120, 'City B': 80, 'City C': 150} # miles. Updated
+        destinations_distances = {'City A': 120, 'City B': 80, 'City C': 140} # miles. Updated
         destination = random.choice(list(destinations_distances))
         self.destination = destination
         self._distance_goal = destinations_distances.get(destination)
@@ -677,21 +680,25 @@ class EV(Agent):
             odometer: Odometer reading for the EV.
             battery: Battery level for the EV.
         """
+        
+        self.odometer += self._speed
+        self.battery -= self.energy_usage_tick()
+        print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
 
-        if self.to_fro == "To":
-            self.odometer += self._speed
-            self.battery -= self.energy_usage_tick()
-            # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+        # if self.to_fro == "To":
+        #     self.odometer += self._speed
+        #     self.battery -= self.energy_usage_tick()
+        #     # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
 
-        elif self.to_fro == "":
-            self.odometer += self._speed
-            self.battery -= self.energy_usage_tick()
-            # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+        # elif self.to_fro == "":
+        #     self.odometer += self._speed
+        #     self.battery -= self.energy_usage_tick()
+        #     # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
 
-        elif self.to_fro == "Fro":
-            self.odometer -= self._speed
-            self.battery -= self.energy_usage_tick()
-            # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+        # elif self.to_fro == "Fro":
+        #     self.odometer -= self._speed
+        #     self.battery -= self.energy_usage_tick()
+        #     # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
        
         # # redundancy condition
         # elif self.to_fro == "":
@@ -699,9 +706,7 @@ class EV(Agent):
         #     self.battery -= self.energy_usage_tick()
 
 
-        # self.odometer += self._speed
-        # self.battery -= self.energy_usage_tick()
-        # print(f"EV {self.unique_id} is travelling. Odometer: {self.odometer}, Battery: {self.battery}")
+       
 
         # use station selection process instead
     
@@ -721,14 +726,16 @@ class EV(Agent):
         Returns:
             battery: Battery level for the EV.
         """
-        # self.machine.set_state("Charging")
-        self.machine.start_home_charge()
-        if self.battery < self._soc_charging_thresh:
-            self.battery += self.home_cs_rate
-            print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
-        else:
-            self.machine.end_home_charge()
-            print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
+        self.battery += self.home_cs_rate
+        print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
+        # self.machine.start_home_charge()
+        # #  used to be self._soc_charging_thresh
+        # if self.battery < self._soc_usage_thresh:
+        #     self.battery += self.home_cs_rate
+        #     print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
+        # else:
+        #     self.machine.end_home_charge()
+        #     print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
     
    # 16 Feb charge flow redo - new methods
     def choose_charge_station(self):
@@ -905,22 +912,6 @@ class EV(Agent):
             pass
         else:
             self.start_travel() 
-        
-        # # another approach
-        # if self.machine.state == 'Idle':
-        #     try:
-        #         self.start_travel()
-        #     except:
-        #         MachineError
-        #     else:
-        #         self.machine.state == 'Battery_dead'
-        #         pass
-
-        # # approach 2
-        # try:
-        #     self.start_travel()
-        # except:
-        #     MachineError
     
         # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
         if self.machine.state == 'Travel' and self.battery <= self._soc_usage_thresh:
@@ -978,8 +969,18 @@ class EV(Agent):
             elif self.battery < self._soc_charging_thresh:
                 self.machine.continue_charge()
                 print(f"EV {self.unique_id} is still charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
-
-
+        
+        if self.machine.state == 'Home_Charge':
+            self._is_charging = True
+            self.charge_overnight()
+            if self.battery >= self._soc_usage_thresh:
+                self.machine.end_home_charge()
+                print(f"EV {self.unique_id} has finished Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+                self._is_charging = False
+            elif self.battery < self._soc_usage_thresh:
+                self.machine.continue_home_charge()
+                print(f"EV {self.unique_id} is still charging at home. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+        
         # Transition Case 3: EV with low battery does not arrive at charge station. Travel_low -> Battery_dead
         # condition self.battery < 10 because 10 is the minimum expenditure of energy to move the vehicle in one timestep
         # if self.machine.state == 'Travel_low' and self.battery < 10:
@@ -1001,13 +1002,18 @@ class EV(Agent):
             self.machine.end_travel_low()
             # decrease range anxiety?
             print(f"EV {self.unique_id} has completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh. Range anxiety: {self.range_anxiety}")
-    
+        
+        # if self.machine.state == 'In_Queue':
+
+
         # 27 Feb
         # if (self.machine.state == 'Idle' and self._in_garage == True) and model.schedule.time 
         #     if self.battery < self.max_battery:
         #         # self.machine.return_to_garage()
         #         self.charge_overnight()
                 # print(f"EV {self.unique_id} is in state: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
+        
+   
 
 
         #########

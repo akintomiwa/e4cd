@@ -1,3 +1,72 @@
+# 20-03-2023
+
+# alt 2
+    # def dequeue(self) -> bool:
+    #     """Remove the first EV from queue."""
+    #     try:
+    #         if not self.queue:
+    #             print(f"The queue at ChargeStation {self.unique_id} is empty.")
+    #             return False
+            
+    #         if len(self.occupied_cps) == self.no_cps:
+    #             print(f"All charge points at ChargeStation {self.unique_id} are occupied.")
+    #             return False
+            
+    #         active = self.queue[0]
+    #         if active in self.occupied_ev:
+    #             self.queue.append(active)
+    #             self.queue.pop(0)
+    #             print(f"EV {active.unique_id} is already in the process of charging at ChargeStation {self.unique_id}. Moving it to the back of the queue.")
+    #             return False
+            
+    #         for attr_name in [a for a in dir(self) if a.startswith("cp_id_")]:
+    #             attr_value = getattr(self, attr_name)
+    #             if attr_value is None and attr_name not in self.occupied_cps:
+    #                 setattr(self, attr_name, active)
+    #                 active.machine.start_charge()
+    #                 self.occupied_cps.add(attr_name)
+    #                 self.occupied_ev.add(active)
+    #                 print(f"EV {active.unique_id} dequeued at CS {self.unique_id} at CP {attr_name} and is in state: {active.machine.state}. Charging started")
+    #                 self.queue.pop(0)
+    #                 return True
+        
+    #         # If no free charge points are found, move the EV to the back of the queue
+    #         self.queue.append(active)
+    #         self.queue.pop(0)
+    #         print(f"All charge points at ChargeStation {self.unique_id} are occupied. Moving EV {active.unique_id} to the back of the queue.")
+    #         return False
+        
+    #     except Exception as e:
+    #         print(f"Error assigning EV to charge point: {e}")
+    #         return False
+
+
+
+
+    # def dequeue(self) -> None:
+    #     """Remove the first EV from queue."""
+    #     try:
+    #         active = self.queue.pop(0) #pick first EV in queue
+    #         for attr_name in dir(self):
+    #             if attr_name.startswith("cp_id_"):
+    #                 attr_value = getattr(self, attr_name)
+    #                 if attr_value is None:
+    #                     setattr(self, attr_name, active)
+    #                     active.machine.start_charge()
+    #                     print(f"EV {active.unique_id} dequeued at CS {self.unique_id} at CP {attr_name} and is in state: {active.machine.state}")
+    #                     print("EV started charging.")
+    #                     # print(f"{attr_name} at CP {self.unique_id} is None")
+    #                 else:
+    #                     print(f"CP: {attr_name} at ChargeStation {self.unique_id} is currently occupied by EV {attr_value}")
+    #     except:
+    #         IndexError
+    #         print(f"The queue at ChargeStation {self.unique_id} is empty.")
+        # elif len(self.queue) > self.max_queue_size:
+        #     print("Queue is full.")
+    
+
+
+
 # 19-03-2023
 
 # try:
