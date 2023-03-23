@@ -1,5 +1,13 @@
 # 20-03-2023
 
+# def count_charging_stations(param_dict, target_route):
+#     station_counts = {}
+#     for route, stations in param_dict.items():
+#         num_stations = len(stations)
+#         station_counts[route] = num_stations
+#     return station_counts
+
+
 # alt 2
     # def dequeue(self) -> bool:
     #     """Remove the first EV from queue."""

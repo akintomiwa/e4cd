@@ -58,29 +58,41 @@ class ChargeStation(Agent):
         stage_2: Stage 2 of the agent's step function.
 
     """
-    def __init__(self, unique_id, model, no_cps):
+    def __init__(self, unique_id, model, cplist, route_id): #rem: no_cps,
         super().__init__(unique_id, model)
         # Start initialisation
         self.queue = []
         self.occupied_cps = set()
-        self.no_cps = no_cps
+        self.no_cps = len(cplist)
         # self._is_active = False
         # self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
         self.base_cp_count = 0
-        self.station_id = unique_id    
+     
+        self.route_id = route_id
         self.checkpoint_id = 0
         self._charge_rate = 7.5 #kW
 
         # new
+        # self.station_routes = set(station_routes)
         self.max_queue_size = 10
+        self.cplist = cplist
         
-        self.assign_cp_id()
+        # self.assign_cp_id()
+
+        self._initialize_chargepoints()
 
         self.init_report()
         
         # self.cp_report()
 
         # End initialisation
+
+    # def get_station_route(self):
+
+    def _initialize_chargepoints(self):
+        for item in self.cplist:
+            setattr(self, item, None)
+            print(f"CP {item} initialized at CS {self.unique_id}.")
 
     def assign_cp_id(self):
         for i in range((self.no_cps)):
@@ -93,8 +105,6 @@ class ChargeStation(Agent):
     def cp_report(self):
         for i in range(self.no_cps):
             print(f"CP_{i} is {(getattr(self, f'cp_id_{i}'))}")
-    
-  
 
     def __str__(self) -> str:
         """Return the agent's unique id."""
@@ -407,6 +417,7 @@ class EV(Agent):
         self._at_station = False
         self._is_travelling = False
         self._journey_complete = False
+        self.route = None
         self.machine = EVSM(initial='Idle', states=states, transitions=transitions)
         self.loc_machine = LSM(initial='City_D', states=lstates, transitions=ltransitions)
         self._is_active = True
@@ -458,6 +469,7 @@ class EV(Agent):
     # def travel_reverse(self)-> None:
     #     if self.to_fro == True:
 
+    # def select_route(self, de):
 
     def __str__(self) -> str:
         """Return the agent's unique id as a string, not zero indexed."""
@@ -580,6 +592,9 @@ class EV(Agent):
         destination = random.choice(list(destinations_distances))
         self.destination = destination
         self._distance_goal = destinations_distances.get(destination)
+    
+    def assign_route():
+        pass
 
     def energy_usage_trip(self) -> float:
         """Energy consumption (EC) for the entire trip. EC is the product of distance covered and energy consumption rate.

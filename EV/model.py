@@ -6,6 +6,8 @@ from mesa.datacollection import DataCollector
 from EV.agent import EV, ChargeStation
 from transitions import MachineError
 
+import config.worker as worker
+
 
 # Model Data Extraction Methods
 
@@ -174,6 +176,8 @@ class EVModel(Model):
                             points per charging station with the key as the charging station id and the value as 
                             the number of charge points.
             ticks (int): Number of ticks to run the simulation for.
+        
+        TO-DO:    
 
         """
         super().__init__()
@@ -183,12 +187,14 @@ class EVModel(Model):
         self.ticks = ticks
         self._current_tick = 1
         self.no_evs = no_evs
-        self.no_css = params['no_css']
+        # total number of CS for all routes
+        self.no_css = worker.sum_total_charging_stations(params) 
+        # self.no_css = params['no_css']
         # self.no_cps = no_cps
-        self.default_cppcs = params['default_cppcs']
-        self.no_cps_per_cs = params['no_cps_per_cs']
+        # self.default_cppcs = params['default_cppcs']
+        # self.no_cps_per_cs = params['no_cps_per_cs']
         # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
-        self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
+
         self.current_day_count = 0
         self.max_days = 0
         self.set_max_days()
@@ -197,17 +203,46 @@ class EVModel(Model):
         # Populate model with agents
         self.evs = []
         self.chargestations = []
+        
+        ##
+        # focus:
+    
+        # create routes iterable
+        self.routes = worker.get_routes(params)
+        self.route_lengths = []
+        self.route_lengths_cumulative = []
+        
+        # set up routes
+        self.set_up_routes()
+        print('Available routes: ', self.routes)
+        # make checkpoints
+        self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
+        self.checkpoints = worker.get_checkpoint_list(self.routes)
+        for route in self.routes:
+            print('Route: ', route)
+            print('Checkpoints: ', self.checkpoints)
+        # compute route
+
+        ###
         # self.chargepoints = []
+        
         print('Creating agents...')
-        # print(self.no_cps_per_cs.get('4'))
-        # print(self.no_evs, self.no_css, self.no_cps_per_cs)
         # Setup
+        # for route in self.routes:
+
         # charging stations
         for i in range(self.no_css):
             # dynamically create charge station with number of charge points
-            cs = ChargeStation(i, self, self.no_cps_per_cs.get('i', self.default_cppcs))
+            # cs = ChargeStation(i, self, self.no_cps_per_cs.get('i', self.default_cppcs))
             # add checkpoint id as a propery of cs
-            cs.__setattr__('checkpoint_id', self.checkpoints[i])    
+            # cs.__setattr__('checkpoint_id', self.checkpoints[i])  
+
+            # new architecture
+            
+            # cs = ChargeStation(i, model=self, no_cps = self.no_css, cplist=worker., route_id=choice(self.routes)))
+
+
+
             self.schedule.add(cs)
             self.chargestations.append(cs)
         # EVs
@@ -215,15 +250,27 @@ class EVModel(Model):
             ev = EV(i + self.no_css, self)
             self.schedule.add(ev)
             self.evs.append(ev)
-            # # chargepoints
+        #     # chargepoints
         # for i in range(self.no_cps):
         #     cp = Chargepoint(i * 100, self)
         #     self.schedule.add(cp)
         #     self.chargepoints.append(cp)
-        # assign checkpoints to charging points
-        # for  i, cs in enumerate(self.chargestations):
-            # cs._checkpoint_id = self.checkpoints[i]        
-        # display Charge stations and their checkpoints
+        ## assign checkpoints to charging points
+        for  i, cs in enumerate(self.chargestations):
+            cs._checkpoint_id = self.checkpoints[i]        
+        ## display Charge stations and their checkpoints
+        
+
+
+        # CS 
+        # loop to set up chargepoints for chargestations from input dictionary
+        # loop to set up route_id, route_name, distance, total_route_length = distance goal
+
+
+        # EV 
+        # loop to set up routes
+        # loop to update distance goal, route_name, total_route_length.
+        # amend chargefunction to use the charge rate of the charge point.
        
         print(f"\nNumber of Charging Stations: {len(self.chargestations)}")
         for cs in self.chargestations:
@@ -260,20 +307,46 @@ class EVModel(Model):
     #     """Compute the start time for the EV agent."""
     #     start_time = np.random.randint(5, 7)
     #     return start_time
-        
 
-    def compute_checkpoints(self,n) -> list:
-        """Compute the checkpoints for the simulation.
+    # def route_assignment(self) -> None:
+    #     """Assign routes to EV agents."""
+    #     print('Assigning routes...')
+    #     # for ev in self.evs:
+    #     #     ev.assign_route()
+
+    def _set_up_routes(self) -> None:
+        for route in self.routes:
+            setattr(self, route, str(route))
+       
+
+    # def compute_checkpoints(self,n) -> list:
+    #     """Compute the checkpoints for the simulation.
+    #     Args:
+    #         n (int): Number of charging points.
+        
+    #     Returns:
+    #         checkpoints (list): List of checkpoints.
+    #     """
+    #     start = 40
+    #     # steps = n
+    #     interval = 40
+    #     checkpoints = np.arange(start, interval * n , interval)
+    #     return checkpoints
+
+    def get_checkpoints(self, route) -> int:
+        """Compute the checkpoint for the charging station.
         Args:
-            n (int): Number of charging points.
+            cs (ChargeStation): The charging station.
         
         Returns:
-            checkpoints (list): List of checkpoints.
+            checkpoint (int): The checkpoint.
         """
-        start = 40
-        # steps = n
-        interval = 40
-        checkpoints = np.arange(start, interval * n , interval)
+        checkpoints = []
+        for i in range(len(route)):
+            checkpoints.append(route[i][0])
+        # checkpoint = cs.unique_id * 40
+
+
         return checkpoints
     
     def model_finish_day(self) -> None: 
