@@ -166,6 +166,8 @@ cython_debug/
 # ./.pytest_cache/
 ./vscode/
 
+.csv
+
 model_config.py
 
 # compiled code from python files
