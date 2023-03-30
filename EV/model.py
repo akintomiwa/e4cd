@@ -1,149 +1,14 @@
 import numpy as np
+from random import choice, randint, random, sample
 import mesa
 from mesa import Model
-# from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
 from mesa.datacollection import DataCollector
 from EV.agent import EV, ChargeStation
 from transitions import MachineError
-
 import config.worker as worker
+import EV.modelquery as mq
+# from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
 
-
-# Model Data Extraction Methods
-
-# Attribute and Flag based functions for EV agents
-def get_evs_charge_level(model):
-    evs_levels = [ev.battery for ev in model.evs]
-    # no_evs_active = np.sum(evs_active)
-    return evs_levels
-
-def get_evs_active(model):
-    evs_active = [ev._is_active for ev in model.evs]
-    no_evs_active = np.sum(evs_active)
-    return no_evs_active
-
-def get_evs_at_station_flag(model):
-    evs_charging = [ev._at_station is True for ev in model.evs]
-    no_evs_charging = np.sum(evs_charging)
-    return no_evs_charging
-
-def get_ev_distance_covered(model):
-    eod_socs = [ev.battery_eod for ev in model.evs]
-    total_distance = np.sum(eod_socs)
-    return total_distance
-
-# State machine based functions for EV agents
-def get_evs_travel(model):
-    evs_travel = [ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low' for ev in model.evs]
-    no_evs_travel = np.sum(evs_travel)
-    return no_evs_travel
-
-def get_evs_charge(model):
-    evs_charged = [ev.machine.state == 'Charge' for ev in model.evs]
-    no_evs_charged = np.sum(evs_charged)
-    return no_evs_charged
-
-def get_evs_dead(model):
-    evs_dead = [ev.machine.state == 'Battery_dead' for ev in model.evs]
-    no_evs_dead = np.sum(evs_dead)
-    return no_evs_dead
-
-def get_evs_at_station_state(model):
-    evs_at_station = [(ev.machine.state == 'Seek_queue' or ev.machine.state == 'In_queue') or (ev.machine.state == 'Charge') for ev in model.evs]
-    no_evs_at_station = np.sum(evs_at_station)
-    return no_evs_at_station
-
-def get_evs_queue(model):
-    evs_queued = [ev.machine.state == 'In_queue' for ev in model.evs]
-    no_evs_queued = np.sum(evs_queued)
-    return no_evs_queued
-
-def get_evs_not_idle(model):
-    evs_not_idle = [ev.machine.state != 'Idle' for ev in model.evs]
-    no_evs_not_idle = np.sum(evs_not_idle)
-    return no_evs_not_idle
-
-def get_active_chargestations(model):
-    active_Chargestations = [cs._is_active for cs in model.Chargestations]
-    no_active_Chargestations = np.sum(active_Chargestations)
-    return no_active_Chargestations
-
-def get_eod_evs_socs(model):
-    eod_soc = [ev.battery_eod for ev in model.evs]
-    return eod_soc
-
-def get_state_evs(model):
-    eod_soc = [ev.machine.state for ev in model.evs]
-    return eod_soc
-
-def get_evs_destinations(model):
-    evs_destinations = [ev.destination for ev in model.evs]
-    return evs_destinations
-
-def get_evs_range_anxiety(model):
-    ev_cprop = [ev.range_anxiety for ev in model.evs]
-    return ev_cprop
-
-# Attribute based functions for Charging station agents
-# def get_queue_1_length(model):
-#     cpoint_len = [len(cs.queue_1) for cs in model.chargestations]
-#     # no_evs_active = np.sum(evs_active)
-#     return cpoint_len
-
-# def get_queue_2_length(model):  
-#     cpoint_len = [len(cs.queue_2) for cs in model.chargestations]
-#     # no_evs_active = np.sum(evs_active)
-#     return cpoint_len
-def get_queue_length(model):  
-    cpoint_len = [len(cs.queue) for cs in model.chargestations]
-    # no_evs_active = np.sum(evs_active)
-    return cpoint_len
-
-# 28/02 Request: Get number of EVs at each charging station
-# def get_evs_at_cstation(model):
-#     evs_at_cstation = [len(cs.queue) for cs in model.chargestations]
-#     for attr_name in dir(cs):
-#         if attr_name.startswith("cp_id_") and attr_v:
-#     pass
-
-# Approach 2
-def get_agent_info(self, agent_id):
-        """Return a dictionary of information about a specific agent"""
-        agent = self.schedule._agents[agent_id]
-        return {
-            "id": agent.unique_id,
-            "state": agent.machine.state,
-            # "type": agent.type,
-            # "x": agent.pos[0],
-            # "y": agent.pos[1],
-            # Add more attributes as desired
-        }
-
-def data_collector(self):
-    """Return a DataCollector object that collects agent data"""
-    return DataCollector(
-        model_reporters={"agent_data": lambda m: [
-            m.get_agent_info(agent_id) for agent_id in m.schedule.agent_buffer
-        ]}
-    )
-
-
-
-
-
-# def get_evs_active(model):
-#     evs_active = [ev._is_active for ev in model.evs]
-#     no_evs_active = np.sum(evs_active)
-#     return no_evs_active
-
-# def get_evs_charging(model):
-#     evs_charging = [ev._is_charging is True for ev in model.evs]
-#     no_evs_charging = np.sum(evs_charging)
-#     return no_evs_charging
-
-
-
-############################################################################################################
 
 
 class EVModel(Model):
@@ -164,17 +29,14 @@ class EVModel(Model):
         chargestations (list): List of Charging Point agents.
             
     """
-  
+
     def __init__(self, no_evs, params, ticks) -> None:
         """
         Initialise the model.
         
         Args:
             no_evs (int): Number of EV agents to create.
-            params (dict): Dictionary of model parameters including 'no_css' (int): Number of Charging Point 
-                            agents to create and 'no_cps_per_cs' (dict): dictionary containing the number of charge 
-                            points per charging station with the key as the charging station id and the value as 
-                            the number of charge points.
+            params (dict): Dictionary of model parameters.
             ticks (int): Number of ticks to run the simulation for.
         
         TO-DO:    
@@ -185,64 +47,76 @@ class EVModel(Model):
         self.running = True
         self.random = True
         self.ticks = ticks
-        self._current_tick = 1
-        self.no_evs = no_evs
-        # total number of CS for all routes
-        self.no_css = worker.sum_total_charging_stations(params) 
-        # self.no_css = params['no_css']
-        # self.no_cps = no_cps
-        # self.default_cppcs = params['default_cppcs']
-        # self.no_cps_per_cs = params['no_cps_per_cs']
-        # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
 
+        # section 1 - user params 
+        self.no_evs = no_evs
+        self.params = params
+        # total number of CSs for all routes
+        self.no_css = worker.sum_total_charging_stations(self.params)                            #OK
+        self._current_tick = 1
         self.current_day_count = 0
         self.max_days = 0
         self.set_max_days()
+        
         # other key model attr 
         self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False, stage_list=['stage_1','stage_2'])
-        # Populate model with agents
+        
+        # create core model structures
         self.evs = []
         self.chargestations = []
-        
-        ##
-        # focus:
-    
-        # create routes iterable
-        self.routes = worker.get_routes(params)
-        self.route_lengths = []
-        self.route_lengths_cumulative = []
+        self.csroutes = []
+        self.evroutes = []
         
         # set up routes
-        self.set_up_routes()
-        print('Available routes: ', self.routes)
-        # make checkpoints
-        self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
-        self.checkpoints = worker.get_checkpoint_list(self.routes)
-        for route in self.routes:
-            print('Route: ', route)
-            print('Checkpoints: ', self.checkpoints)
-        # compute route
-
-        ###
-        # self.chargepoints = []
+        # section 2 - create routes iterable
+        self.routes = worker.get_routes(self.params)
+        self.cs_route_choices = {route: len(self.params[route]) for route in self.params}
+        self.checkpoints = 0
         
-        print('Creating agents...')
-        # Setup
-        # for route in self.routes:
+        # Building environment 
+        print("\nBuilding model environment from input parameters...")
+        print(f"\nAvailable routes: {self.routes}")
+        
+        # section 3
 
-        # charging stations
+        # dynamically create checkpoint_route list variables for model. Depends on number of routes.
+        for route in self.routes:
+            setattr(self,f"checkpoints_{route}", [])
+        
+        # dynamically set distance lists from checkpoints lists for each available route. lists contain i.e CS distances - from start to end of route.
+        # last nest level is the total distance for the route. Converts individual distances to cumulative sum, relative to start of route.
+        for route in self.routes:
+            setattr(self,f"distances_{route}", worker.cumulative_cs_distances(worker.get_dict_values(worker.get_charging_stations_along_route(self.params, route))))
+
+        # section 4 -  update model attributes with route checkpoints, chargestation checkpoint assignments
+
+        # Dynamically go through list of routes and assign route checkpoints to model attributes
+        for route in self.cs_route_choices:
+            setattr(self,f"checkpoints_{route}", list(worker.get_route_from_config(route, self.params)))
+    
+
+        # create cs.routes list to assign routes to CSs from 
+        for route in worker.select_route_as_key(self.cs_route_choices):
+            self.csroutes.append(route)
+
+        
+        # TO-DO: create EV routes list as for CS above
+        # repetition of above for EVs. May remmove this and use a single list for both CS and EVs.
+        # for route in worker.select_route_as_key(self.routes):
+        #     self.evroutes.append(route)
+
+
+        print(f"\nRoute choice space for ChargeStation agents: {self.csroutes}")
+
+        print(f"\nRoute choice space for EV agents: {self.routes}")
+
+        print("\nCreating agents...")
+    
+        # Populate model with agents
+
+        # ChargingStations 
         for i in range(self.no_css):
-            # dynamically create charge station with number of charge points
-            # cs = ChargeStation(i, self, self.no_cps_per_cs.get('i', self.default_cppcs))
-            # add checkpoint id as a propery of cs
-            # cs.__setattr__('checkpoint_id', self.checkpoints[i])  
-
-            # new architecture
-            
-            # cs = ChargeStation(i, model=self, no_cps = self.no_css, cplist=worker., route_id=choice(self.routes)))
-
-
-
+            cs = ChargeStation(i, self)
             self.schedule.add(cs)
             self.chargestations.append(cs)
         # EVs
@@ -250,17 +124,94 @@ class EVModel(Model):
             ev = EV(i + self.no_css, self)
             self.schedule.add(ev)
             self.evs.append(ev)
-        #     # chargepoints
-        # for i in range(self.no_cps):
-        #     cp = Chargepoint(i * 100, self)
-        #     self.schedule.add(cp)
-        #     self.chargepoints.append(cp)
-        ## assign checkpoints to charging points
+      
+        print("\nAgents Created")
+        
+        print("\nUpdating agents with particulars - route (EV and CS), destination (EV), charge point count (CS)")
+
+
+        # assign routes to chargestations using model chargestations and csroutes lists.
         for  i, cs in enumerate(self.chargestations):
-            cs._checkpoint_id = self.checkpoints[i]        
-        ## display Charge stations and their checkpoints
+            cs.route = self.csroutes[i]        
+        # display Charge stations and their checkpoints
+        
+       
+                                  
+        # TO-DO : write dynamic version for checkpoint_route lists vars          OK
+        # use cumulative sum to get total number of checkpoints for each route
+       
+        # convert checkpoint lists to cumulative distance lists
+        for route in self.routes:
+            setattr(self, f"checkpoint_{route}", [])
+            print(f"\nCheckpoint lists for Route: {route}: {getattr(self, f'distances_{route}')}") # test
+
+        # Summarize ChargeStation information
+
+        print("\nCharge stations, routes and associated checkpoints:")
+
+        # Focus
+        for cs in self.chargestations:
+            i = worker.remove_list_item_seq(getattr(self, f"distances_{cs.route}"))
+            # setattr(self, f"checkpoint_id", i)
+            cs.checkpoint_id = i
+
+            # test ???
+            # if hasattr(self, f"checkpoint_id"):
+            #     print("attr set")
+
+
+
+        # display Charge stations and their routes
+        for cs in self.chargestations:
+            print(f"CS {cs.unique_id}, Route: {cs.route}, CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}")
+
+
+        # CG 
+
+        
+        # TO-DO : Do route assignment for EVs as in CSs above.
+        for ev in self.evs:
+            i = choice(self.routes)
+            setattr(self, f"route", i)
+            print(f"EV {ev.unique_id}, Route: {ev.route}")
+
+        
+        # TO-DO: CP per CS assignment
+
+        # section 5 - Focus
+        # dynamically create chargepoints per charge station lists vars 
+        for cs in self.chargestations:
+            setattr(self,f"cpspcs_{cs}", [])
+            # for i in range(len(self.chargestations)):
+            #     getattr(self, f"cpspcs_{cs}").append(None)
+
+        # Dynamically go through list of routes and assign cp counts to chargestation model attributes
+        for cs in self.chargestations:
+            setattr(self,f"cpspcs_{cs}", list(worker.get_dict_values(worker.count_charge_points_by_station(self.params, cs))))
+        
+        # # route CS cpcount attrib print test                        OK
+        # for attr_name in dir(self):
+        #     if attr_name.startswith("cpspcs_"):
+        #         print(f"Charge point per cs: {attr_name} is {getattr(self, attr_name)}")
+
+
+        
+        for cs in self.chargestations:
+            for attr_name in dir(cs):
+                if attr_name.startswith("cpspcs_"):
+                    print(f"CS {cs.unique_id}, Route: {cs.route}, CPCount: {getattr(cs, attr_name)}")
+
+
+        # # self.cpspcs = worker.get_cs_cp_count() #list
+        # self.cpspcs_AB = worker.get_dict_values(worker.count_charge_points_by_station(self.params, 'A-B'))  
+        # self.cpspcs_AC = worker.get_dict_values(worker.count_charge_points_by_station(self.params, 'A-C')) 
+        # # self.chargepoints = []
+        # print(f"Number of CPs per CS, Route A-B: {self.cpspcs_AB}")
+        # print(f"Number of CPs per CS, Route A-C: {self.cpspcs_AC}")
         
 
+
+        
 
         # CS 
         # loop to set up chargepoints for chargestations from input dictionary
@@ -273,26 +224,22 @@ class EVModel(Model):
         # amend chargefunction to use the charge rate of the charge point.
        
         print(f"\nNumber of Charging Stations: {len(self.chargestations)}")
-        for cs in self.chargestations:
-            # print(f"Charging Station: {cs.unique_id} is at checkpoint: {cs._checkpoint_id} kilometers.")
-            print(f"Charging Station: {cs.unique_id} is at checkpoint: {cs.checkpoint_id} kilometers.")
+     
         # data collector
         self.datacollector = DataCollector(
-            model_reporters={'EVs Charging': get_evs_charge,
-                             'EVs Activated': get_evs_active,
-                             'EVs Travelling': get_evs_travel,
-                             'EVs Queued': get_evs_queue,
-                             'EVs Dead': get_evs_dead,
-                             'EVs Charge Level': get_evs_charge_level,
-                             'EVs Range Anxiety': get_evs_range_anxiety,
-                             'EVs Not Idle': get_evs_not_idle,
-                             'EVs EOD Battery SOC': get_eod_evs_socs,
-                             'EVs Destinations': get_evs_destinations,
-                             'EVs at Charging Station - S': get_evs_at_station_state,
-                             'Length of Queue at Charging Stations': get_queue_length,
-                            #  'EVs at Charging Stations': get_evs_at_cstation,
-                             'EV State': get_state_evs,
-
+            model_reporters={'EVs Charging': mq.get_evs_charge,
+                             'EVs Activated': mq.get_evs_active,
+                             'EVs Travelling': mq.get_evs_travel,
+                             'EVs Queued': mq.get_evs_queue,
+                             'EVs Dead': mq.get_evs_dead,
+                             'EVs Charge Level': mq.get_evs_charge_level,
+                             'EVs Range Anxiety': mq.get_evs_range_anxiety,
+                             'EVs Not Idle': mq.get_evs_not_idle,
+                             'EVs EOD Battery SOC': mq.get_eod_evs_socs,
+                             'EVs Destinations': mq.get_evs_destinations,
+                             'EVs at Charging Station - S': mq.get_evs_at_station_state,
+                             'Length of Queue at Charging Stations': mq.get_queue_length,
+                             'EV State': mq.get_state_evs,
                              },
             # agent_reporters={'Battery': 'battery',
             #                 'Battery EOD': 'battery_eod',
@@ -317,38 +264,14 @@ class EVModel(Model):
     def _set_up_routes(self) -> None:
         for route in self.routes:
             setattr(self, route, str(route))
-       
-
-    # def compute_checkpoints(self,n) -> list:
-    #     """Compute the checkpoints for the simulation.
-    #     Args:
-    #         n (int): Number of charging points.
-        
-    #     Returns:
-    #         checkpoints (list): List of checkpoints.
-    #     """
-    #     start = 40
-    #     # steps = n
-    #     interval = 40
-    #     checkpoints = np.arange(start, interval * n , interval)
-    #     return checkpoints
-
-    def get_checkpoints(self, route) -> int:
-        """Compute the checkpoint for the charging station.
-        Args:
-            cs (ChargeStation): The charging station.
-        
-        Returns:
-            checkpoint (int): The checkpoint.
-        """
-        checkpoints = []
-        for i in range(len(route)):
-            checkpoints.append(route[i][0])
-        # checkpoint = cs.unique_id * 40
-
-
-        return checkpoints
     
+    def _set_up_checkpoints(self, route, station_config)-> list:
+        a = worker.get_route_from_config(route, station_config)
+        b = (list(a.keys()))
+        c = worker.cumulative_cs_distances(b)
+        print(c)
+        return c
+
     def model_finish_day(self) -> None: 
         """
         Reset the EVs at the end of the day. Calls the EV.add_soc_eod() and EV.finish_day() methods.

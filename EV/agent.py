@@ -2,8 +2,8 @@
 
 import numpy as np
 import pandas as pd
-import math
-import os
+# import math
+# import os
 import random
 from random import choice
 import warnings
@@ -15,26 +15,13 @@ from matplotlib import pyplot as plt, patches
 import scipy.stats as ss
 import cufflinks as cf
 cf.go_offline()
-from plotly.offline import iplot
+# from plotly.offline import iplot
 from transitions import Machine, MachineError
 from transitions.extensions import GraphMachine
 from functools import partial
-# import EV.model as model
 from EV.statemachine import EVSM, LSM, states, transitions, lstates, ltransitions
-# from EV.statemachine import EVSM, LSM
+import config.worker as worker
 
-# class Chargepoint(Agent):
-#     """Charging point for charging stations"""
-    
-#     def __init__(self, unique_id: int, model: Model) -> None:
-#         super().__init__(unique_id, model)
-#         self.active_ev = None
-#         self._charge_rate = 7.5 #kW
-    
-#     def init_report(self):
-#         print(f"\nCP info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
-    
-    
 
 class ChargeStation(Agent):
     """A charging station (CS) agent.
@@ -58,36 +45,39 @@ class ChargeStation(Agent):
         stage_2: Stage 2 of the agent's step function.
 
     """
-    def __init__(self, unique_id, model, cplist, route_id): #rem: no_cps,
+    def __init__(self, unique_id, model): #rem: no_cps,
         super().__init__(unique_id, model)
         # Start initialisation
         self.queue = []
         self.occupied_cps = set()
-        self.no_cps = len(cplist)
-        # self._is_active = False
+        self.no_cps = 0
+        self._is_active = False
         # self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
-        self.base_cp_count = 0
-     
-        self.route_id = route_id
-        self.checkpoint_id = 0
-        self._charge_rate = 7.5 #kW
+        # self.base_cp_count = 0
+        self.checkpoint_id = None # was 0 
+        self._charge_rates = [] #kW . TO-DO: update in later step, fetch charge rate from input dict
+        # self._charge_rate = 7.5 #kW
 
         # new
         # self.station_routes = set(station_routes)
-        self.max_queue_size = 10
-        self.cplist = cplist
+        # self.max_queue_size = 10
+        self.route = None
+        self.cplist = None
         
-        # self.assign_cp_id()
-
-        self._initialize_chargepoints()
-
-        self.init_report()
+        self.prelim_report()
+        
+        # self.init_report()
         
         # self.cp_report()
 
         # End initialisation
 
-    # def get_station_route(self):
+    def update_cp_count(self):  ## not done
+        cs = worker.count_charge_points_by_station(model.station_config, self.route)
+        # values_list = worker.get_values(cs)
+        # for cp in cpcounts
+        
+        pass
 
     def _initialize_chargepoints(self):
         for item in self.cplist:
@@ -101,10 +91,12 @@ class ChargeStation(Agent):
     def init_report(self):
         print(f"\nCS info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
         print(f"It has {self.no_cps} charging points.")
-
-    def cp_report(self):
         for i in range(self.no_cps):
             print(f"CP_{i} is {(getattr(self, f'cp_id_{i}'))}")
+
+    def prelim_report(self):
+        print(f"CS info: ID: {(self.unique_id)}, initialized.")
+        
 
     def __str__(self) -> str:
         """Return the agent's unique id."""
@@ -452,8 +444,8 @@ class EV(Agent):
         # choose actual destination and set distance goal based on journey type
         self.choose_destination(self.journey_type)
         self._chosen_cs = 0 #in selected_cp correct
-        self.checkpoint_list = model.checkpoints
-        self.checkpoint_list_reverse = reversed(self.checkpoint_list)
+        self.checkpoint_list = []
+        # self.checkpoint_list_reverse = reversed(self.checkpoint_list)
 
         
         # set EV start time
@@ -464,7 +456,8 @@ class EV(Agent):
         # self.home_charge_prop = 0.7    #propensity to charge at home station
 
         # Initialisation Report
-        self.initalization_report()
+        self.prelim_report()
+        # self.initalization_report()
     
     # def travel_reverse(self)-> None:
     #     if self.to_fro == True:
@@ -475,10 +468,14 @@ class EV(Agent):
         """Return the agent's unique id as a string, not zero indexed."""
         return str(self.unique_id + 1)
     
+    def prelim_report(self):
+        print(f"CS info: ID: {(self.unique_id)}, initialized.")
+
     def initalization_report(self) -> None:
         """Prints the EV's initialisation report."""
         print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
         print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}, location: {self.loc_machine.state}.")
+    
 
     # Internal functions
 
