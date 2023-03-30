@@ -1,3 +1,488 @@
+# 30-03-23
+
+
+# def compute_checkpoints(self,n) -> list:
+#     """Compute the checkpoints for the simulation.
+#     Args:
+#         n (int): Number of charging points.
+    
+#     Returns:
+#         checkpoints (list): List of checkpoints.
+#     """
+#     start = 40
+#     # steps = n
+#     interval = 40
+#     checkpoints = np.arange(start, interval * n , interval)
+#     return checkpoints
+
+
+# for attr_name in dir(cs):
+# if attr_name.startswith("cpspcs_"):
+
+    # old architecture
+# for cs in self.chargestations:
+#     if cs.route == "A-B":
+#         for  i, cs in enumerate(self.checkpoints_AB):
+#             cs.checkpoint_id = self.checkpoints_AB[i]  
+
+# for cs in self.chargestations:
+#     if cs.route == "A-C":
+#         for i,cs in enumerate(self.checkpoints_AC):
+#             cs.checkpoint_id = self.checkpoints_AC[i]      
+
+
+# for i,cs in enumerate(self.chargestations):
+#     for route in self.routes:
+#         if cs.route == route:
+#             cs._checkpoint_id = self.checkpoints[i]
+#             print(f"CS {cs.unique_id}, Route: {cs.route}, Checkpoint: {cs._checkpoint_id}")
+#     # cs._checkpoint_id = self.checkpoints[i]
+#     # print(f"CS {cs.unique_id}, Route: {cs.route}, Checkpoint: {cs._checkpoint_id}")
+
+# for cs in  self.chargestations:
+#     for i in self.csroutes:
+#         if cs.route == i:
+#             cs._checkpoint_id = self.checkpoints[i]
+#             print(f"CS {cs.unique_id}, Route: {cs.route}, Checkpoint: {cs._checkpoint_id}")
+
+
+ 
+# # check for existence of checkpoint and distance lists
+# for attr_name in dir(self):
+#     if attr_name.startswith("checkpoints_"):
+#         print(attr_name)
+# for attr_name in dir(self):
+#     if attr_name.startswith("distances_"):
+#         print(attr_name)
+
+# if hasattr(self, f"checkpoint_id"):
+#         print("attr set")
+
+
+# 29-03-23
+
+# for route in self.routes:
+#     setattr(self,f"distances_{route}", worker.get_dict_values(worker.get_charging_stations_along_route(self.params, route)))
+
+# show initial distance values, non cumulative
+ # # use existing checkpoint_AB, checkpoint_AC lists and append to them..
+        # for route in self.routes:
+        #     setattr(self, f"checkpoint_{route}", [])
+        #     print(f"\nIndividual distance measures for Route: {route}: {getattr(self, f'checkpoints_{route}')}") # test
+
+# # use existing checkpoint_AB, checkpoint_AC lists and append to them
+# for route in self.routes:
+#     setattr(self, f"checkpoint_{route}", [])
+#     for i in range(len(self.routes)):
+#         getattr(self, f"checkpoints_{route}").append(None) #this added None to list 2 extra times
+#     print(f"Checkpoint lists for Route: {route}: {getattr(self, f'checkpoints_{route}')}") # test
+
+# for cs in self.chargestations:
+    #     for attr_name in dir(cs):
+    #             if attr_name.startswith("checkpoint_"):
+    #                 print(attr_name)
+
+
+    # for cs in self.chargestations:
+    #     for route in self.routes:
+    #         if cs.route == route:
+    #             for i, j in enumerate(getattr(self, f"checkpoints_{route}")):
+    #                 cs.checkpoint_id = j
+    #                 print(f"CS {cs.unique_id}, Checkpoint {i}: {j}")
+    
+    
+    # # CS, route, checkpoint ID print check
+    # for cs in self.chargestations:
+    #     for attr_name in dir(cs):
+    #         if attr_name.startswith("checkpoint_"):
+    #             print(f"CS {cs.unique_id}, Route: {cs.route}, Checkpoint: {getattr(cs, attr_name)}")
+
+
+# 27-03-2023
+
+# # route checkpoint attrib print test                        OK
+    # for attr_name in dir(self):
+    #     if attr_name.startswith("checkpoints_"):
+    #         print(f"Checkpoints: {attr_name} is {getattr(self, attr_name)}")
+
+#     # chargepoints
+# for i in range(self.no_cps):
+#     cp = Chargepoint(i * 100, self)
+#     self.schedule.add(cp)
+#     self.chargepoints.append(cp)
+## assign checkpoints to charging points
+
+# a = worker.get_route('A-B', self.params)
+    # b = (list(a.keys()))
+    # self.checkpoints_route_ab = worker.cumulative_sum(b)
+
+    ###
+
+# works but not sure if it's the best way
+# def charging_stations_on_route_reverse_2(route_dict, route_name):
+#     charging_stations = []
+#     if route_name in route_dict:
+#         for charging_station in route_dict[route_name].values():
+#             charging_stations.extend(charging_station)
+#         charging_stations = list(reversed(charging_stations))
+#     return charging_stations
+
+# # route checkpoint list attrib print test     OK
+# for attr_name in dir(self):
+#     if attr_name.startswith("checkpoints_"):
+#         print(attr_name)
+
+# for attr_name in dir(self):
+#     if attr_name.startswith("route_"):
+#         attr_value = getattr(self, attr_name)
+#         if attr_value is None:
+#             print(f"{attr_name} is None")
+#         else:
+#             # setattr(self, f"route_{route}", str(route))
+#             setattr(self, f"route_{route}", self._set_up_checkpoints(route=route))
+#             print(f"{attr_name} is {attr_value}")
+
+
+# model.routes source of route data for CS agents
+# model. 
+
+
+# make checkpoints
+# self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
+
+# for route in self.routes:
+#     # self.checkpoints = worker.get_checkpoint_list(self.routes, route) # ??
+#     # setattr(self, f"route_checkpoints_{route}", worker.get_checkpoint_list(params, route))
+#     a = worker.remove_random_item(self.routes)
+
+# for route in self.routes:
+#     print('Route: ', route)
+#     print('Checkpoints: ', self.checkpoints)
+
+
+# old parameterisation
+
+# self.no_css = params['no_css']
+# self.no_cps = no_cps
+# self.default_cppcs = params['default_cppcs']
+# self.no_cps_per_cs = params['no_cps_per_cs']
+# self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
+
+
+# route names
+# self.set_up_routes()
+# route ids
+# self.set_up_route_ids()
+# self.chosen_route = worker.get_charging_stations_on_route(params, 'A-C')
+
+# # check choices
+# for choice in self.route_choices:
+#     print(choice)
+
+
+
+# for attr_name in dir(self):
+#     if attr_name.startswith("checkpoints_"):
+#         attr_value = getattr(self, attr_name)
+
+# what does ab look like? get analog
+
+# aa = worker.get_route_from_config('A-B', self.params)
+# ab = (list(aa.keys()))
+# print(ab)
+# self.checkpointsAB = worker.cumulative_cs_distances(ab)
+
+# aac = worker.get_route_from_config('A-C', self.params)
+# abc = (list(aac.keys()))
+# print(abc)
+# self.checkpointsAC = worker.cumulative_cs_distances(abc)
+
+# print(f"Checkpoints AB: {self.checkpointsAB}")
+# print(f"Checkpoints AC: {self.checkpointsAC}")
+
+# two list link template
+# for cs in self.chargestations:
+#     cs.update_checkpoint_id()
+#     cs.update_cp_ratings()
+
+# for  i, cs in enumerate(self.chargestations):
+#     cs._checkpoint_id = self.checkpoints[i]        
+        
+
+# cs = ChargeStation(i, self, self.no_cps_per_cs.get('i', self.default_cppcs))
+# add checkpoint id as a propery of cs
+# cs.__setattr__('checkpoint_id', self.checkpoints[i])  
+
+# no_evs = 3
+# no_css = 5
+# no_cps = 2
+# check points = [40, 80, 120, 160, 200, 240, 280]
+# params = {'no_css': 5, 
+#           'no_cps_per_cs':{
+#                 '1':2, '2':3, '3':4, '4':2, '5':2
+#                 },
+#             'default_cppcs': 3,
+#             }
+
+
+# 24-02-2023
+
+# New structure
+
+# def read_charging_data(filename):
+#     charging_data = {}
+
+#     with open(filename, 'r') as csv_file:
+#         csv_reader = csv.reader(csv_file, delimiter=',')
+#         next(csv_reader)  # skip the header row
+
+#         for row in csv_reader:
+#             route = row[0]
+#             station = row[1]
+#             cpid = row[2]
+#             power = int(row[3])
+#             distance = int(row[4])
+#             price = int(row[5])
+#             green = bool(int(row[6]))
+#             booking = bool(int(row[7]))
+
+#             if route not in charging_data:
+#                 charging_data[route] = {}
+
+#             if station not in charging_data[route]:
+#                 charging_data[route][station] = {'cpids': [], 'power': {}, 'total_power': 0, 'total_price': 0, 'green': 0, 'booking': 0}
+
+#             charging_data[route][station]['cpids'].append(cpid)
+
+#             if power not in charging_data[route][station]['power']:
+#                 charging_data[route][station]['power'][power] = 0
+
+#             charging_data[route][station]['power'][power] += 1
+#             charging_data[route][station]['total_power'] += power
+#             charging_data[route][station]['total_price'] += price
+#             charging_data[route][station]['green'] |= green
+#             charging_data[route][station]['booking'] |= booking
+
+#     return charging_data
+
+# def return_strings(num_calls, string_list):
+#     """
+#     Returns one of the strings from the given list each time the function is called up to the
+#     number of times specified in the num_calls argument.
+    
+#     Parameters:
+#     num_calls (int): The maximum number of times the function can be called.
+#     string_list (list): The list of strings to return from.
+    
+#     Returns:
+#     A string from the list of strings.
+#     """
+#     if not string_list:
+#         raise ValueError("The string list cannot be empty.")
+        
+#     def counter_wrapper():
+#         if counter_wrapper.counter < num_calls:
+#             counter_wrapper.counter += 1
+#             return random.choice(string_list)
+#         else:
+#             return None
+        
+#     counter_wrapper.counter = 0
+#     return counter_wrapper
+
+
+# def count_charging_stations(param_dict, target_route):
+#     station_counts = {}
+#     for route, stations in param_dict.items():
+#         num_stations = len(stations)
+#         station_counts[route] = num_stations
+#     return station_counts
+
+
+
+# def get_station_distances(route_name, station_config):
+#     route_stations = station_config['routes'][route_name]['charging_stations']
+#     station_distances = []
+#     for i, station_id in enumerate(route_stations):
+#         if i == 0:
+#             station_distances.append(station_config['charging_stations'][station_id]['distance'])
+#         else:
+#             prev_station_id = route_stations[i-1]
+#             prev_station_distance = station_config['charging_stations'][prev_station_id]['distance']
+#             curr_station_distance = station_config['charging_stations'][station_id]['distance']
+#             station_distances.append(curr_station_distance - prev_station_distance)
+#     return station_distances
+
+# def get_cumulative_distances(route, station_config):
+#     distances = []
+#     current_station = f"CS_{route}_1"
+#     distance_to_current = station_config[current_station]['distance_to_next']
+#     distances.append(distance_to_current)
+    
+#     while True:
+#         next_station = station_config[current_station]['next_station']
+#         if next_station is None:
+#             break
+#         distance_to_next = station_config[next_station]['distance_to_next']
+#         distances.append(distance_to_current + distance_to_next)
+#         current_station = next_station
+#         distance_to_current += distance_to_next
+    
+#     return distances
+
+
+# def cumulative_distances(route_name, station_config):
+#     route = station_config["routes"][route_name]
+#     distances = [route["distance"]]
+
+#     for i in range(1, len(route["stations"])):
+#         station_id = route["stations"][i]
+#         distance = station_config["charging_stations"][station_id]["distance"]
+#         distances.append(distance)
+
+#     return [sum(distances[:i]) for i in range(1, len(distances) + 1)]
+
+# def get_station_distances(nested_dict, route_name):
+#     # Find the stations for the given route
+#     route_stations = [key for key in nested_dict.keys() if key.startswith(route_name)]
+
+#     # Get the distance values for each station
+#     distances = []
+#     for i, station in enumerate(route_stations):
+#         distance_key = f"{station}_distance"
+#         distance = nested_dict[station].get(distance_key)
+#         if distance is None:
+#             raise ValueError(f"No distance value found for station {station}")
+#         if i == 0:
+#             distances.append(distance)
+#         else:
+#             prev_station = route_stations[i-1]
+#             prev_distance_key = f"{prev_station}_distance"
+#             prev_distance = nested_dict[prev_station].get(prev_distance_key)
+#             if prev_distance is None:
+#                 raise ValueError(f"No distance value found for station {prev_station}")
+#             distances.append(distance - prev_distance)
+
+#     return distances
+
+
+# def get_cumulative_distances(route_name, charging_stations):
+#     route_data = charging_stations.get(route_name)
+#     if not route_data:
+#         return None
+    
+#     cumul_distances = []
+#     curr_distance = 0
+#     for station_id, station_data in route_data.items():
+#         station_distance = station_data.get('distance')
+#         curr_distance += station_distance
+#         cumul_distances.append(curr_distance)
+        
+#     if cumul_distances:
+#         cumul_distances[0] = charging_stations[route_name]['CS'][0]['distance']
+    
+#     return cumul_distances
+
+# def get_cumulative_distances(route_name, charging_stations_dict):
+#     # Find the route with the given name
+#     route = None
+#     for r in charging_stations_dict['routes']:
+#         if r['name'] == route_name:
+#             route = r
+#             break
+#     if route is None:
+#         raise ValueError(f"No route found with name '{route_name}'")
+    
+#     # Initialize the list of distances with the distance to the first charging station
+#     distances = [route['distanceToFirstCS']]
+    
+#     # Iterate over the charging stations on the route, adding their distances to the list
+#     for cs in route['chargingStations']:
+#         distances.append(cs['distanceToNextCS'])
+    
+#     # Return the list of cumulative distances
+#     for i in range(1, len(distances)):
+#         distances[i] += distances[i-1]
+#     return distances
+
+
+
+
+
+# route_counts = Counter([station['Route'] for station in charging_stations])
+# print(route_counts)
+
+
+# points_per_station_per_route = {}
+# for station in charging_stations:
+#     key = f"{station['Route']}_{station['Station']}"
+#     if key not in points_per_station_per_route:
+#         points_per_station_per_route[key] = []
+#     points_per_station_per_route[key].append(station['CPID'])
+# print(points_per_station_per_route)
+
+# routes = list(set([station['Route'] for station in charging_stations]))
+# print(routes)
+
+# num_routes = len(routes)
+# print(num_routes)
+
+
+
+
+# Route,Station,CPID,Power,Distance,Price,Green,Booking
+# A-B,CS_A-B_1,CS_AB_1_1,7,40,6,0,0
+# A-B,CS_A-B_1,CS_AB_1_2,7,40,6,0,0
+# A-B,CS_A-B_1,CS_AB_1_3,60,40,10,0,0
+# A-B,CS_A-B_2,CS_AB_2_1,7,20,6,0,0
+# A-B,CS_A-B_2,CS_AB_2_2,7,20,6,0,0
+# A-B,CS_A-B_3,CS_AB_3_1,7,50,6,0,0
+# A-B,CS_A-B_3,CS_AB_3_2,7,50,6,0,0
+# A-B,CS_A-B_3,CS_AB_3_3,60,50,10,0,0
+# A-B,CS_A-B_4,CS_AB_4_1,7,10,6,0,0
+# A-B,CS_A-B_4,CS_AB_4_2,7,10,6,0,0
+# A-B,CS_A-B_4,CS_AB_4_3,60,10,10,0,0
+# A-B,CS_A-B_5,CS_AB_5_1,7,30,6,0,0
+# A-B,CS_A-B_5,CS_AB_5_2,7,30,6,0,0
+# A-B,CS_A-B_5,CS_AB_5_3,7,30,6,0,0
+# A-C,CS_A-C_1,CS_AC_1_1,7,40,6,0,0
+# A-C,CS_A-C_1,CS_AC_1_2,7,40,6,0,0
+# A-C,CS_A-C_2,CS_AC_2_1,7,40,6,0,0
+# A-C,CS_A-C_2,CS_AC_2_2,7,40,6,0,0
+# A-C,CS_A-C_3,CS_AC_3_1,7,40,6,0,0
+# A-C,CS_A-C_3,CS_AC_3_2,7,40,6,0,0
+# A-C,CS_A-C_4,CS_AC_4_1,7,40,6,0,0
+# A-C,CS_A-C_4,CS_AC_4_2,7,40,6,0,0
+
+# 23-02-2023
+
+
+
+
+# class Chargepoint(Agent):
+#     """Charging point for charging stations"""
+    
+#     def __init__(self, unique_id: int, model: Model) -> None:
+#         super().__init__(unique_id, model)
+#         self.active_ev = None
+#         self._charge_rate = 7.5 #kW
+    
+#     def init_report(self):
+#         print(f"\nCP info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
+    
+#  def get_checkpoints(self, route) -> int:
+#         """Compute the checkpoint for the charging station.
+#         Args:
+#             cs (ChargeStation): The charging station.
+        
+#         Returns:
+#             checkpoint (int): The checkpoint.
+#         """
+#         checkpoints = []
+#         for i in range(len(route)):
+#             checkpoints.append(route[i][0])
+#         # checkpoint = cs.unique_id * 40
+
 # 20-03-2023
 
 # def count_charging_stations(param_dict, target_route):
@@ -103,6 +588,7 @@
 
 
 # 15-03-2023 Attempt to dynamically create cps for css
+
  #    cs = ChargeStation(i,self, self.no_cps_per_cs.get(str(i)))
 
 

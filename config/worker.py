@@ -419,7 +419,7 @@ def set_lists(self, lst, n) -> None:
 
 # 29/03/2023
 
-# # modify for cp charge rating 
+# # modify for cp charge rating extraction.
 # def get_distance_values(station_config, route_name):
 #     """Returns a list of all distance values, for every CP on a given route."""
 #     distance_values = []
