@@ -33,8 +33,16 @@ class ChargeStation(Agent):
         _active_ev_1: The first EV currently charging at the CS.
         _active_ev_2: The second EV currently charging at the CS.
         _charge_rate: The rate at which the CS charges an EV.
-        _checkpoint_id: The ID of the checkpoint the CS is associated with. Initialised to 0.
-        max_queue_size: The maximum number of EVs that can be queued at the CS.
+        checkpoint_id: The ID of the checkpoint the CS is associated with, on its route. Initialised to 0. Subsequently updated by model.
+    Post initialisation attributes:
+        route: The route the CS is associated with.
+        checkpoint_id: Updated by model.
+        no_cps: The number of charging points at the CS.
+        cp_rates: The charging rates of the charging points at the CS.
+        cp_{i}: The i-th charging point at the CS.
+        
+
+
 
     Methods:
         __init__: Initialises the agent.
@@ -54,55 +62,46 @@ class ChargeStation(Agent):
         self._is_active = False
         # self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
         # self.base_cp_count = 0
-        self.checkpoint_id = None # was 0 
-        self._charge_rates = [] #kW . TO-DO: update in later step, fetch charge rate from input dict
-        # self._charge_rate = 7.5 #kW
+        self.checkpoint_id = 0 # was 0 
 
         # new
-        # self.station_routes = set(station_routes)
-        # self.max_queue_size = 10
         self.route = None
         self.cplist = None
+        self.cprates = []  #kW
+        self._charge_rate = 0
         
         self.prelim_report()
         
         # self.init_report()
-        
-        # self.cp_report()
 
         # End initialisation
+    
 
-    def update_cp_count(self):  ## not done
-        cs = worker.count_charge_points_by_station(model.station_config, self.route)
-        # values_list = worker.get_values(cs)
-        # for cp in cpcounts
-        
-        pass
 
-    def _initialize_chargepoints(self):
-        for item in self.cplist:
-            setattr(self, item, None)
-            print(f"CP {item} initialized at CS {self.unique_id}.")
-
-    def assign_cp_id(self):
-        for i in range((self.no_cps)):
-            setattr(self, f'cp_id_{i}', None)
+    # def assign_cp_id(self):
+    #     for i in range((self.no_cps)):
+    #         setattr(self, f'cp_id_{i}', None)
+    
+    def prelim_report(self):
+        print(f"CS {(self.unique_id)}, initialized.")
 
     def init_report(self):
-        print(f"\nCS info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
+        print(f"\nCS info: ID: {(self.unique_id)}, initialized. Charge rates for charge points: {self.cprates} kW.")
         print(f"It has {self.no_cps} charging points.")
         for i in range(self.no_cps):
             print(f"CP_{i} is {(getattr(self, f'cp_id_{i}'))}")
 
-    def prelim_report(self):
-        print(f"CS info: ID: {(self.unique_id)}, initialized.")
+    def retrieve_charge_point_rate(self,cp_id) -> int:
+        """Return the charge rate of the charge point with id cp_id."""
+        cr = self.cprates[self.cp_id]
+        return cr
         
 
     def __str__(self) -> str:
         """Return the agent's unique id."""
         return str(self.unique_id + 1)
     
-
+    # modify to run through all charge points in the station. Multiple lists.
     def dequeue(self) -> bool:
         """Remove the first EV from queue."""
         try:
@@ -110,7 +109,7 @@ class ChargeStation(Agent):
             if active is None:
                 return False
             # go through all charge points and assign the first one that is free
-            for attr_name in [a for a in dir(self) if a.startswith("cp_id_")]:
+            for attr_name in [a for a in dir(self) if a.startswith("cp_")]:
                 attr_value = getattr(self, attr_name)
                 if attr_value is None and attr_name not in self.occupied_cps:
                     setattr(self, attr_name, active)
@@ -211,123 +210,7 @@ class ChargeStation(Agent):
         #         self.finish_charge_ev_2()
         # pass      
 
-# class ChargeStation(Agent):
-#     """A charging station (CS) agent.
-#     Attributes:
-#         unique_id: Unique identifier for the agent.
-#         model: The model the agent is running in.
-#         queue_1: A list of EVs waiting to charge at the CS.
-#         queue_2: A list of EVs waiting to charge at the CS.
-#         _active_ev_1: The first EV currently charging at the CS.
-#         _active_ev_2: The second EV currently charging at the CS.
-#         _charge_rate: The rate at which the CS charges an EV.
-#         _checkpoint_id: The ID of the checkpoint the CS is associated with. Initialised to 0.
-#         max_queue_size: The maximum number of EVs that can be queued at the CS.
 
-#     Methods:
-#         __init__: Initialises the agent.
-#         __str__: Returns the agent's unique id.
-#         dequeue_1: Removes the first EV from queue_1.
-#         dequeue_2: Removes the first EV from queue_2.
-#         finish_charge_ev_1: Finish charging the EV at CP1 at the Charge Station.
-#         finish_charge_ev_2: Finish charging the EV at CP2 at the Charge Station.
-#         stage_1: Stage 1 of the agent's step function.
-#         stage_2: Stage 2 of the agent's step function.
-
-#     """
-#     def __init__(self, unique_id, model):
-#         super().__init__(unique_id, model)
-#         self.queue_1 = []
-#         self.queue_2 = []
-#         self._is_active = False
-#         self.active_ev_1 = None
-#         self.active_ev_2 = None
-#         # can replace with array of 2
-#         # self.active_evs = []
-#         # self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
-
-#         self._charge_rate = 7.5 #kW
-#         self._checkpoint_id = 0
-
-#         # new
-#         self.max_queue_size = 10
-
-
-#         print(f"\nCP info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
-
-#         # End initialisation
-
-#     def __str__(self) -> str:
-#         """Return the agent's unique id."""
-#         return str(self.unique_id + 1)
-    
-    
-#     def dequeue_1(self) -> None:
-#         """Remove the first EV from each queue. FIFO fom queue.
-#         If the queue is empty, do nothing. 
-#         If the queue is not empty, remove the first EV from the queue and set as active ev.
-#         Transition the EV to the charging state.
-
-#         """
-#         try:
-#             self.active_ev_1 = self.queue_1.pop(0)
-#             self.active_ev_1.machine.start_charge()
-#             print(f"EV {(self.active_ev_1.unique_id)} dequeued at CS {self.unique_id} at Queue 1 and is in state: {self.active_ev_1.machine.state}")
-#             print(f"Queue 1 size after dequeuing: {len(self.queue_1)}")
-#         except:
-#             pass
-    
-#     def dequeue_2(self) -> None:
-#         """Remove the first EV from each queue. FIFO fom queue. 
-#         This is the same as dequeue_1, but for queue 2."""
-#         try:
-#             self.active_ev_2 = self.queue_2.pop(0)
-#             self.active_ev_2.machine.start_charge()
-#             print(f"EV {(self.active_ev_2.unique_id)} dequeued at CP {self.unique_id} at Queue 2 and is in state: {self.active_ev_2.machine.state}")
-#             print(f"Queue 2 size after dequeuing: {len(self.queue_2)}")
-#         except:
-#             pass
-    
-#     def finish_charge_ev_1(self):
-#         """Finish charging the EV at CP1 at the Charge Station."""
-#         if self.active_ev_1 is not None:
-#             # self.active_ev_1.machine.end_charge() # this is a toggle
-#             self.active_ev_1 = None
-#             print(f"EV at Charge Station {self.unique_id}, CP 1 has exited.")
-
-#     def finish_charge_ev_2(self):
-#         """Finish charging the EV at CP2 at the Charge Station."""
-#         if self.active_ev_2 is not None:
-#             # self.active_ev_2.machine.end_charge() # this is another toggle
-#             self.active_ev_2 = None
-#             print(f"EV at Charge Station {self.unique_id}, CP 2 has exited.")
-
-#     def stage_1(self):
-#         """Stage 1 of the charge station's step function."""
-#         if self.active_ev_1 is None:
-#             self.dequeue_1()
-#         if self.active_ev_2 is None:
-#             self.dequeue_2()
-
-#     def stage_2(self):
-#         """Stage 2 of the charge station's step function."""
-#         if self.active_ev_1 is not None:
-#             if self.active_ev_1.battery < self.active_ev_1._soc_charging_thresh:
-#                 self.active_ev_1.charge()
-#                 self.active_ev_1.machine.continue_charge()
-#             else:    
-#                 # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_1.machine.state}.")                                       #testing
-#                 self.active_ev_1.machine.end_charge()
-#                 self.finish_charge_ev_1()
-#         if self.active_ev_2 is not None:
-#             if self.active_ev_2.battery < self.active_ev_2._soc_charging_thresh:
-#                 self.active_ev_2.charge()
-#                 self.active_ev_2.machine.continue_charge()
-#             else:
-#                 # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
-#                 self.active_ev_2.machine.end_charge()
-#                 self.finish_charge_ev_2()
-            
 
 class EV(Agent):
     """An agent used to model an electric vehicle (EV).
@@ -417,13 +300,13 @@ class EV(Agent):
         self._distance_goal = 0
         self.journey_type = None
         self.destination = None
-        self.battery = random.randint(40, 70) #kWh
+        self.battery = random.randint(30, 60) #kWh (40, 70) 
         self.max_battery = self.battery
         # To/ Fro handling
         self.to_fro = ""
         # EV Driver Behaviour
         self._speed = 0
-        self.range_anxiety = 0.5    #propensity to charge at main station 
+        self.range_anxiety = 0.5    #likelihood to charge at charge station 
         # battery soc level at which EV driver feels compelled to start charging at station.
         # self._soc_usage_thresh = (0.4 * self.max_battery) 
         self._soc_usage_thresh = (self.range_anxiety * self.max_battery) 
@@ -435,29 +318,31 @@ class EV(Agent):
         self.battery_eod = []
         self.current_day_count = 1
         self.start_time = 0
-        # choose journey type
-        self.journey_type = self.choose_journey_type()
+        self._chosen_cs = 0 #in selected_cp correct
+        self.checkpoint_list = []
+     
         # set EV speed
         self.set_speed()
         # set energy consumption rate
         self.set_ev_consumption_rate()
-        # choose actual destination and set distance goal based on journey type
-        self.choose_destination(self.journey_type)
-        self._chosen_cs = 0 #in selected_cp correct
-        self.checkpoint_list = []
-        # self.checkpoint_list_reverse = reversed(self.checkpoint_list)
-
-        
-        # set EV start time
-        self.set_start_time()
-
         # Home Station 
         self.home_cs_rate = 10 #kW
-        # self.home_charge_prop = 0.7    #propensity to charge at home station
+
+        # old flow  
+        # choose journey type
+        self.journey_type = self.choose_journey_type()
+        # # choose actual destination and set distance goal based on journey type
+        # self.choose_destination(self.journey_type)
+
+        
+        # set EV start time moved to model as not at init
+        # self.set_start_time()
+
 
         # Initialisation Report
         self.prelim_report()
         # self.initalization_report()
+        # self.checkpoint_list_reverse = reversed(self.checkpoint_list)
     
     # def travel_reverse(self)-> None:
     #     if self.to_fro == True:
@@ -469,16 +354,17 @@ class EV(Agent):
         return str(self.unique_id + 1)
     
     def prelim_report(self):
-        print(f"CS info: ID: {(self.unique_id)}, initialized.")
+        print(f"EV {(self.unique_id)}, initialized.")
 
     def initalization_report(self) -> None:
         """Prints the EV's initialisation report."""
-        print(f"\nEV info: ID: {self.unique_id}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
+        print(f"\nEV info: ID: {self.unique_id}, route: {self.route}, destination name: {self.destination}, journey type: {self.journey_type}, max_battery: {self.max_battery}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
         print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}, location: {self.loc_machine.state}.")
-    
+        print(f"EV {self.unique_id} Checkpoint list: {self.checkpoint_list}")
 
     # Internal functions
-
+    
+    # Remove as part of redesign: 
     # works
     def choose_journey_type(self) -> str:
         """Chooses a journey type for the EV driver.
@@ -493,6 +379,8 @@ class EV(Agent):
             # self._distance_goal = 200 #miles
             self.journey_type = "InterUrban"
         return self.journey_type
+    
+
     
     # # experimental 
     # def choose_journey_type(self) -> str:
@@ -523,6 +411,7 @@ class EV(Agent):
     #                 self.to_fro = "To"
     #     return self.journey_type
     
+    # Key. Old set speed function
     def set_speed(self) -> None:
         """Sets the speed of the EV driver."""
         base_speed = 10 #urban speed (mph). Interurban speed is scaled by 2.
@@ -530,12 +419,12 @@ class EV(Agent):
             self._speed = base_speed
         else:
             self._speed = (base_speed * 2) #interurban speed (mph). 
+
         
     def set_ev_consumption_rate(self) -> None:
         # baselines
         mu_urban, mu_interurban = 0.2, 0.5 # means
         sigma = 0.1 # standard deviation
-        # s = np.random.normal(mu, sigma, 1000)
         # set vehicle energy consumption rate
         if self.journey_type == "Urban":
             # self.ev_consumption_rate = 0.2 # 200 Wh/mile OR 20 kWh/100 miles OR 0.2 kWh/mile
@@ -545,7 +434,26 @@ class EV(Agent):
             # self.ev_consumption_rate = 0.5 # 500 Wh/mile OR 50 kWh/100 miles
             # self.ev_consumption_rate = np.random.normal(mu_interurban, sigma) # opt: size = 1
             self.ev_consumption_rate = np.random.default_rng().normal(mu_interurban, sigma) # opt: size = 1
-
+    
+    # def choose_dest_from_route(self) -> None:
+    #     """Chooses a destination for the EV driver.
+    #     Args:
+    #         route: Choice of route the EV driver makes.
+    #     Returns:
+    #         destination: Choice of destination for the EV driver.
+    #     """
+    #     if self.route == "A-B":
+    #         # Option 1: use keys to determine destination
+    #         destinations = {'work': 50, 'store': 80, 'friend_1': 45}
+    #         self.destination = choice(list(destinations.keys()))
+    #         self._distance_goal = destinations[self.destination]
+    #         # return self.destination
+    #     elif self.route == "A-C":
+    #         # Option 1: use keys to determine destination
+    #         destinations = {'friend_2': 25, 'auto_shop': 35, 'gym': 40}
+    #         self.destination = choice(list(destinations.keys()))
+    #         self._distance_goal = destinations[self.destination]
+    #         # return self.destination
     
     def choose_destination(self, journey_type:str) -> str:
         """Chooses a destination for the EV driver.
@@ -558,7 +466,7 @@ class EV(Agent):
             self.choose_destination_urban()
         else:
             self.choose_destination_interurban()
-        return self.destination
+        return self.destination # type: ignore
 
     def choose_destination_urban(self) -> None:
         """Chooses a destination for the EV driver. Urban destination from destinations distances dictionary.
@@ -569,10 +477,16 @@ class EV(Agent):
 
         # Option 2: use values directly to determine destination
         # destinations_distances = {'work': 50, 'market': 80, 'friend_1': 45, 'friend_2': 135, 'autoshop': 70} #miles. Initial
-        destinations_distances = {'work': 50, 'market': 40, 'friend_1': 30, 'friend_2': 90, 'autoshop': 60} #miles. Updated
-        destination = random.choice(list(destinations_distances))
-        self.destination = destination
-        self._distance_goal = destinations_distances.get(destination)
+        if self.route == "A-B":
+            destinations_distances = {'work': 60, 'market': 90, 'friend_1': 55} #miles. Updated
+            destination = random.choice(list(destinations_distances))
+            self.destination = destination
+            self._distance_goal = destinations_distances.get(destination)
+        elif self.route == "A-C":
+            destinations_distances = {'work': 50, 'autoshop': 85, 'gym': 70}
+            destination = random.choice(list(destinations_distances))
+            self.destination = destination
+            self._distance_goal = destinations_distances.get(destination)
 
     def choose_destination_interurban(self) -> None:
         """
@@ -585,14 +499,17 @@ class EV(Agent):
         # destination = random.choices(list(choices.keys()), weights=list(choices.values()), k=1)
         # return destination
         # destinations_distances = {'City A': 210, 'City B': 140, 'City C': 245} # miles . Initial
-        destinations_distances = {'City A': 120, 'City B': 80, 'City C': 140} # miles. Updated
-        destination = random.choice(list(destinations_distances))
-        self.destination = destination
-        self._distance_goal = destinations_distances.get(destination)
-    
-    def assign_route():
-        pass
-
+        if self.route == "A-B":
+            destinations_distances = {'City B': 120, 'City E': 100} # miles. Updated
+            destination = random.choice(list(destinations_distances))
+            self.destination = destination
+            self._distance_goal = destinations_distances.get(destination)
+        elif self.route == "A-C":
+            destinations_distances = {'City C': 160, 'City D': 130}
+            destination = random.choice(list(destinations_distances))
+            self.destination = destination
+            self._distance_goal = destinations_distances.get(destination)
+ 
     def energy_usage_trip(self) -> float:
         """Energy consumption (EC) for the entire trip. EC is the product of distance covered and energy consumption rate.
         
@@ -689,7 +606,7 @@ class EV(Agent):
         self.range_anxiety -= abs(margin)
   
     # Core EV Functions
-    def travel(self, to_fro:str) -> None:
+    def travel(self) -> None:
         """
         Travel function. Moves EV along the road. Updates odometer and battery level.
         
@@ -733,7 +650,9 @@ class EV(Agent):
         Returns:
             battery: Battery level for the EV.
         """
-        self.battery += self._chosen_cs._charge_rate
+        # self.battery += self._chosen_cs._charge_rate
+        # maybe use function from CS to charge
+        self.battery += self._chosen_cs._charge_rate()
         # print(f"EV {self.unique_id} at CS {self._chosen_cs.unique_id} is in state: {self.machine.state}, Battery: {self.battery}")
 
     def charge_overnight(self):
@@ -764,7 +683,7 @@ class EV(Agent):
         """
         # choose station
         for cs in self.model.chargestations:
-            if cs.checkpoint_id == self.odometer:
+            if (cs.checkpoint_id == self.odometer) and (cs.route == self.route):
                 self._chosen_cs = cs
                 self._chosen_cs._is_active = True
         print(f"EV {(self.unique_id)} selected Charge Station: {(self._chosen_cs.unique_id)} for charging.")
@@ -879,6 +798,7 @@ class EV(Agent):
             # print(f"EV {self.unique_id} has started travelling at {self.model.schedule.time}")
             print(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
     
+    # TO-DO: Fix this, reflect routing variable.
     def update_lsm(self) -> None:
         if self.journey_type == 'Urban':
             self.loc_machine.city_d_2_d()
@@ -938,15 +858,15 @@ class EV(Agent):
         # 21/02/23 - new flow for locating a station. Combo of 1b and 4
         # Locating a Charge Station #
 
-        if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and self.odometer < self._distance_goal:
+        if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and (self.odometer < self._distance_goal):
             if self.machine.state == 'Travel':
-                self.travel(to_fro=self.to_fro)
+                self.travel()
                 self.machine.continue_travel()
                 print(f"EV {self.unique_id}  has travelled: {self.odometer} miles. State: {self.machine.state}. Battery: {self.battery} kWh")
             elif self.machine.state == 'Travel_low':
                 if self.battery > 0:
                     print(f"EV {self.unique_id} is low on charge and is seeking a charge station. Current charge: {self.battery} kWh")
-                    self.travel(to_fro=self.to_fro)
+                    self.travel()
                 elif self.battery <= 0:
                     self.machine.deplete_battery()
                     print(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh")
@@ -954,7 +874,7 @@ class EV(Agent):
         
         # 21/02/23 - new flow for recognising a charge station (CS). Also, choosing a CS and charge queue.
         # Recognising a Charge Station #
-        if self.odometer in self.checkpoint_list:
+        if (self.odometer in self.checkpoint_list):
             if self.machine.state == 'Travel':
                 print(f"EV {self.unique_id} has arrived at Charge Station but is in state: {self.machine.state}. Not travelling low.")
             elif self.machine.state == 'Travel_low':

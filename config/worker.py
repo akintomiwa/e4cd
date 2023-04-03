@@ -1,38 +1,6 @@
 import csv
 import random
 
-# def nest_charging_stations(csv_file):
-#     nested_dict = {}
-    
-#     with open(csv_file, newline='') as csvfile:
-#         reader = csv.DictReader(csvfile)
-        
-#         for row in reader:
-#             route = row['Route']
-#             station = row['Station']
-#             cpid = row['CPID']
-#             power = int(row['Power'])
-#             distance = int(row['Distance'])
-#             price = float(row['Price'])
-#             green = bool(int(row['Green']))
-#             booking = bool(int(row['Booking']))
-            
-#             if route not in nested_dict:
-#                 nested_dict[route] = {}
-                
-#             if station not in nested_dict[route]:
-#                 nested_dict[route][station] = {}
-                
-#             nested_dict[route][station]['CPID'] = cpid
-#             nested_dict[route][station]['Power'] = power
-#             nested_dict[route][station]['Distance'] = distance
-#             nested_dict[route][station]['Price'] = price
-#             nested_dict[route][station]['Green'] = green
-#             nested_dict[route][station]['Booking'] = booking
-            
-#     return nested_dict 
-
-
 
 def read_csv(filename):
     """Reads a CSV file and returns a dictionary of dictionaries of dictionaries."""
@@ -101,13 +69,6 @@ def total_route_length(route_dict, route_name):
     total_distance = sum(station['Distance'] for station in route_stations.values())  # Sum the distance attribute of each charging station
     return total_distance
 
-# def cpids_for_route(route_dict, route_name):
-#     """Returns a list of CPIDs for the specified route."""
-#     route_stations = route_dict.get(route_name)  # Get the dictionary of charging stations for the specified route
-#     if route_stations is None:
-#         raise ValueError(f"No such route: {route_name}")
-#     cpids = [station['CPID'] for station in route_stations.values()]  # Extract the CPID attribute of each charging station
-#     return cpids
 
 # unused
 def get_charging_stations_on_route(stations_dict, route_name):
@@ -118,15 +79,6 @@ def get_charging_stations_on_route(stations_dict, route_name):
             route_stations.extend(stations_dict[key])
     return route_stations
 
-# unused
-def charging_stations_on_route_reverse(route_dict, route_name):
-    """Returns a reversed list of charging stations for the specified route."""
-    charging_stations = []
-    if route_name in route_dict:
-        for charging_station in route_dict[route_name].values():
-            charging_stations.extend(charging_station)
-        charging_stations = list(reversed(charging_stations))
-    return charging_stations
 
 # unused
 def find_cpid_for_charging_station(cs_dict, cpid):
@@ -144,29 +96,10 @@ def get_route_cps(route_name, cp_dict):
         cps.append(cp['CPID'])
     return cps
 
-# unused
-# def get_checkpoint_list(route_dict, route_name):
-#     """Returns a list of checkpoints for the specified route."""
-#     route_stations = route_dict.get(route_name)  # Get the dictionary of charging stations for the specified route
-#     if route_stations is None:
-#         raise ValueError(f"No such route: {route_name}")
-    
-#     distances = [station['Distance'] for station in route_stations.values()]  # Extract the distance attribute of each charging station
-#     checkpoints = [sum(distances[:i+1]) for i in range(len(distances))]  # Calculate the running total of distances
-#     return checkpoints
-
-# unused
-# def get_checkpoints(route, data):
-#     cs_data = data[route]
-#     cp_list = []
-#     dist = 0
-    
-#     for cp in cs_data:
-#         cp_data = cs_data[cp]
-#         dist += cp_data['Distance']
-#         cp_list.append((cp_data['CPID'], dist))
-    
-#     return cp_list
+def get_element_at_index(lst, index):
+    if index < 0 or index >= len(lst):
+        return None
+    return lst[index]
 
 
 
@@ -298,7 +231,7 @@ def get_route_from_config(route_id: str, station_config:dict) -> dict:
                     route_dict[cs['Distance']] = [cs]
         return route_dict
     except KeyError:
-        return None
+        return None # type: ignore
 
 def get_distances_along_route(station_config, route_name):
     """
@@ -370,23 +303,6 @@ def select_route_as_key(input):
             yield str(e)
             return
 
-# works okay
-# def remove_list_item_random(lst):
-#     """
-#     Removes a random item from the given list without replacement.
-    
-#     Parameters:
-#     lst (list): The list to remove an item from.
-    
-#     Returns:
-#     The removed item.
-#     """
-#     if len(lst) == 0:
-#         raise ValueError("Cannot remove an item from an empty list.")
-    
-#     idx = random.randrange(len(lst))
-#     return lst.pop(idx)
-
 
 def remove_list_item_seq(lst):
     """
@@ -417,17 +333,6 @@ def set_lists(self, lst, n) -> None:
             getattr(self, s).append(None)
 
 
-# 29/03/2023
-
-# # modify for cp charge rating extraction.
-# def get_distance_values(station_config, route_name):
-#     """Returns a list of all distance values, for every CP on a given route."""
-#     distance_values = []
-#     for station in station_config[route_name]:
-#         for charger in station_config[route_name][station]:
-#             distance_values.append(int(charger['Distance']))
-#     return distance_values
-
 def get_charging_stations_along_route(station_config, route_name):
     """
     Returns a dictionary of charging stations distances along the route. 
@@ -440,3 +345,85 @@ def get_charging_stations_along_route(station_config, route_name):
             for station in station_data:
                 charging_stations[station_name] = int(station['Distance'])
     return charging_stations
+
+def get_power_values_for_route(station_config, route_name):
+    """Returns a dict with Charge station name as key and list of power values for each charge point in the station."""
+    power_dict = {}
+    for station in station_config[route_name]:
+        cp_power = []
+        for charger in station_config[route_name][station]:
+            cp_power.append(int(charger['Power']))
+        power_dict[station] = cp_power
+    return power_dict
+
+# 29/03/2023
+
+# # modify for cp charge rating extraction.
+# def get_distance_values(station_config, route_name):
+#     """Returns a list of all distance values, for every CP on a given route."""
+#     distance_values = []
+#     for station in station_config[route_name]:
+#         for charger in station_config[route_name][station]:
+#             distance_values.append(int(charger['Distance']))
+#     return distance_values
+
+
+# works okay
+# def remove_list_item_random(lst):
+#     """
+#     Removes a random item from the given list without replacement.
+    
+#     Parameters:
+#     lst (list): The list to remove an item from.
+    
+#     Returns:
+#     The removed item.
+#     """
+#     if len(lst) == 0:
+#         raise ValueError("Cannot remove an item from an empty list.")
+    
+#     idx = random.randrange(len(lst))
+#     return lst.pop(idx)
+
+
+# unused
+# def get_checkpoint_list(route_dict, route_name):
+#     """Returns a list of checkpoints for the specified route."""
+#     route_stations = route_dict.get(route_name)  # Get the dictionary of charging stations for the specified route
+#     if route_stations is None:
+#         raise ValueError(f"No such route: {route_name}")
+    
+#     distances = [station['Distance'] for station in route_stations.values()]  # Extract the distance attribute of each charging station
+#     checkpoints = [sum(distances[:i+1]) for i in range(len(distances))]  # Calculate the running total of distances
+#     return checkpoints
+
+# unused
+# def get_checkpoints(route, data):
+#     cs_data = data[route]
+#     cp_list = []
+#     dist = 0
+    
+#     for cp in cs_data:
+#         cp_data = cs_data[cp]
+#         dist += cp_data['Distance']
+#         cp_list.append((cp_data['CPID'], dist))
+    
+#     return cp_list
+
+# unused
+# def charging_stations_on_route_reverse(route_dict, route_name):
+#     """Returns a reversed list of charging stations for the specified route."""
+#     charging_stations = []
+#     if route_name in route_dict:
+#         for charging_station in route_dict[route_name].values():
+#             charging_stations.extend(charging_station)
+#         charging_stations = list(reversed(charging_stations))
+#     return charging_stations
+
+# def cpids_for_route(route_dict, route_name):
+#     """Returns a list of CPIDs for the specified route."""
+#     route_stations = route_dict.get(route_name)  # Get the dictionary of charging stations for the specified route
+#     if route_stations is None:
+#         raise ValueError(f"No such route: {route_name}")
+#     cpids = [station['CPID'] for station in route_stations.values()]  # Extract the CPID attribute of each charging station
+#     return cpids
