@@ -1,3 +1,5 @@
+import numpy as np
+from mesa.datacollection import DataCollector
 # Model Data Extraction Methods
 
 # Attribute and Flag based functions for EV agents

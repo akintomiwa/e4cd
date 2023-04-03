@@ -1,4 +1,405 @@
-# 30-03-23
+# 02-04-2023
+  
+# self.home_charge_prop = 0.7    #propensity to charge at home station
+
+
+# 31-03-2023
+
+# make multiple list attributes for each CS, depending on cp count per CS
+
+# Focus 
+# Assign charge rates to CS as list of values from config file.
+# for cs in self.chargestations:
+#     cs.cp_rates = worker.remove_list_item_seq(worker.get_dict_values(worker.get_power_values_for_route(self.params, cs.route)))
+#     # Display Charge stations and their routes  
+#     print(f"CS {cs.unique_id}, Route: {cs.route}, CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}. Number of charge points: {cs.no_cps}. CP rates: {cs.cp_rates} ") 
+#     # dynamically create chargepoints per charge station lists vars. Each element is charge rate for each cp.
+#     for i in range(cs.no_cps):
+#         setattr(cs, f"cp_{i}", [])
+
+# section 5 
+# # dynamically create chargepoints per charge station lists vars. Each element is charge rate for each cp.
+# for cs in self.chargestations:
+#     for i in range(cs.no_cps):
+#         setattr(cs, f"cp_{i}", [])
+
+
+# def nest_charging_stations(csv_file):
+#     nested_dict = {}
+    
+#     with open(csv_file, newline='') as csvfile:
+#         reader = csv.DictReader(csvfile)
+        
+#         for row in reader:
+#             route = row['Route']
+#             station = row['Station']
+#             cpid = row['CPID']
+#             power = int(row['Power'])
+#             distance = int(row['Distance'])
+#             price = float(row['Price'])
+#             green = bool(int(row['Green']))
+#             booking = bool(int(row['Booking']))
+            
+#             if route not in nested_dict:
+#                 nested_dict[route] = {}
+                
+#             if station not in nested_dict[route]:
+#                 nested_dict[route][station] = {}
+                
+#             nested_dict[route][station]['CPID'] = cpid
+#             nested_dict[route][station]['Power'] = power
+#             nested_dict[route][station]['Distance'] = distance
+#             nested_dict[route][station]['Price'] = price
+#             nested_dict[route][station]['Green'] = green
+#             nested_dict[route][station]['Booking'] = booking
+            
+#     return nested_dict 
+
+
+
+# test ???
+    # if hasattr(self, f"checkpoint_id"):
+    #     print("attr set")
+
+# old architecture
+
+# # self.cpspcs = worker.get_cs_cp_count() #list
+# self.cpspcs_AB = worker.get_dict_values(worker.count_charge_points_by_station(self.params, 'A-B'))  
+# self.cpspcs_AC = worker.get_dict_values(worker.count_charge_points_by_station(self.params, 'A-C')) 
+# # self.chargepoints = []
+# print(f"Number of CPs per CS, Route A-B: {self.cpspcs_AB}")
+# print(f"Number of CPs per CS, Route A-C: {self.cpspcs_AC}")
+
+
+
+
+
+# CS 
+# loop to set up chargepoints for chargestations from input dictionary
+# loop to set up route_id, route_name, distance, total_route_length = distance goal
+
+
+
+# ############################################################################################################
+
+
+# class EVModel(Model):
+#     """Simulation Model with EV agents and Charging Points agents.
+    
+#     Args:
+#         no_evs (int): Number of EV agents to create.
+#         no_css (int): Number of Charging Point agents to create.
+#         ticks (int): Number of ticks to run the simulation for.
+        
+#     Attributes: 
+#         ticks (int): Number of ticks to run the simulation for.
+#         _current_tick (int): Current tick of the simulation.
+#         no_evs (int): Number of EV agents to create.
+#         no_css (int): Number of Charging Point agents to create.
+#         schedule (RandomActivation): Schedule for the model.
+#         evs (list): List of EV agents.
+#         chargestations (list): List of Charging Point agents.
+            
+#     """
+  
+#     def __init__(self, no_evs, no_css, ticks, cp_count) -> None:
+#         """
+#         Initialise the model.
+        
+#         Args:
+#             no_evs (int): Number of EV agents to create.
+#             no_css (int): Number of Charging Point agents to create.
+#             ticks (int): Number of ticks to run the simulation for.
+
+#         """
+#         super().__init__()
+#         # init with input args
+#         self.running = True
+#         self.random = True
+#         self.ticks = ticks
+#         self._current_tick = 1
+#         self.no_evs = no_evs
+#         self.no_css = no_css
+#         # self.checkpoints = [40, 80, 120, 160, 200, 240, 280]
+#         self.checkpoints = self.compute_checkpoints(self.no_css+1) #+1 to ensure no overruns.
+#         self.current_day_count = 0
+#         self.max_days = 0
+#         self.set_max_days()
+#         # other key model attr 
+#         # self.schedule = mesa.time.RandomActivation(self)
+#         self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False, stage_list=['stage_1','stage_2'])
+#         # self.schedule = SimultaneousActivation(self)
+#         # self.schedule = RandomActivationByType(self) #requires addional args in model.step()
+#         # Populate model with agents
+#         self.evs = []
+#         self.chargestations = []
+        
+#         # Setup
+#         # evs
+#         for i in range(self.no_evs):
+#             ev = EV(i,self)
+#             self.schedule.add(ev)
+#             self.evs.append(ev)
+#         # charging points
+#         for i in range(self.no_css):
+#             # cs = ChargeStation(i + no_evs, self)
+#             cs = ChargeStation(i + no_evs, self, cp_count)
+#             # for i in range(self.cp_count):
+#                 # cs.cp(i) = None
+#             self.schedule.add(cs)
+#             self.chargestations.append(cs)
+#         # assign checkpoints to charging points
+#         for  i, cs in enumerate(self.chargestations):
+#             cs._checkpoint_id = self.checkpoints[i]        
+#         # display Charge stations and their checkpoints
+#         print(f"\nNumber of Charging Stations: {len(self.chargestations)}")
+#         for cs in self.chargestations:
+#             print(f"Charging Station: {cs.unique_id} is at checkpoint: {cs._checkpoint_id} kilometers.")
+#         # data collector
+#         self.datacollector = DataCollector(
+#             model_reporters={'EVs Charging': get_evs_charge,
+#                              'EVs Activated': get_evs_active,
+#                              'EVs Travelling': get_evs_travel,
+#                              'EVs Queued': get_evs_queue,
+#                              'EVs Dead': get_evs_dead,
+#                              'EVs Charge Level': get_evs_charge_level,
+#                              'EVs Range Anxiety': get_evs_range_anxiety,
+#                              'EVs Not Idle': get_evs_not_idle,
+#                              'EVs EOD Battery SOC': get_eod_evs_socs,
+#                              'EVs Destinations': get_evs_destinations,
+#                              'EVs at Charging Station - S': get_evs_at_station_state,
+#                             #  'Length of Queue 1 at Charging Stations': get_queue_1_length,
+#                             #  'Length of Queue 2 at Charging Stations': get_queue_2_length,
+#                              'Length of Queue at Charging Stations': get_queue_length,
+#                              'EVs at Charging Stations': get_evs_at_cstation,
+#                              },
+#             # agent_reporters={'Battery': 'battery',
+#             #                 'Battery EOD': 'battery_eod',
+#             #                 'Destination': 'destination',
+#             #                 'State': 'state',
+#             #                 }
+#                              )
+#         print(f"\nModel initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks or {self.max_days} days.\n")
+#         # print(f"Charging station checkpoints: {self.checkpoints}")
+    
+#     # def compute_ev_start_time(self, ev) -> int:
+#     #     """Compute the start time for the EV agent."""
+#     #     start_time = np.random.randint(5, 7)
+#     #     return start_time
+        
+
+#     def compute_checkpoints(self,n) -> list:
+#         """Compute the checkpoints for the simulation.
+#         Args:
+#             n (int): Number of charging points.
+        
+#         Returns:
+#             checkpoints (list): List of checkpoints.
+#         """
+#         start = 40
+#         # steps = n
+#         interval = 40
+#         checkpoints = np.arange(start, interval * n , interval)
+#         return checkpoints
+    
+#     def model_finish_day(self) -> None: 
+#         """
+#         Reset the EVs at the end of the day. Calls the EV.add_soc_eod() and EV.finish_day() methods.
+#         """
+#         for ev in self.evs:
+#             ev.add_soc_eod()
+#             ev.finish_day()
+
+#     def update_day_count(self) -> None:
+#         """Increments the day count of the simulation. Called at the end of each day."""
+#         self.current_day_count += 1
+#         print(f"\nCurrent day: {self.current_day_count}.")
+
+#     def set_max_days(self) -> None:
+#         """Set the max number of days for the simulation."""
+#         self.max_days = self.ticks / 24
+#         # print(f"Max days: {self.max_days}")
+
+#     def ev_relaunch(self) -> None:
+#         """
+#         Relaunches EVs that are dead or idle at the end of the day. Ignores EVs that are charging or travelling.
+#         """
+#         for ev in self.evs:
+#             if ev.machine.state == 'Battery_dead':
+#                 ev.relaunch_dead()
+#             elif ev.machine.state == 'Idle':
+#                 ev.relaunch_idle()
+#             elif ev.machine.state == 'Travel':
+#                 ev.relaunch_travel()
+#             elif ev.machine.state == 'Charging':
+#                 ev.relaunch_charge()
+#                 pass
+#             # ev.update_home_charge_prop()
+    
+#     def overnight_charge_evs(self) -> None:
+#         """Calls the EV.charge_overnight() method for all EVs in the model."""
+#         for ev in self.evs:
+#             ev.charge_overnight()
+
+#     # def step(self, shuffle_types = True, shuffle_agents = True) -> None:
+#     def step(self) -> None:
+#         """Advance model one step in time"""
+#         print(f"\nCurrent timestep (tick): {self._current_tick}.")
+#         # print("Active Css: " + str(get_active_css(self)))
+#         # print(self.get_agent_count(self))
+#         self.schedule.step()
+        
+#         # old code
+#         # if self.schedule.steps % 24 == 0:
+#         #     # print(f"This is the end of day:{(self.schedule.steps + 1) / 24} ")
+#         #     print(f"This is the end of day: {self.schedule.steps / 24}. ")
+#         #     for ev in self.evs:
+#         #         ev.add_soc_eod()
+#         #         ev.choose_journey_type()
+#         #         ev.choose_destination(ev.journey_type)
+#         #         ev.set_new_day()
+#         self.datacollector.collect(self)
+
+#         # if self.schedule.steps % 24 == 0:
+#         if self._current_tick % 24 == 0:
+#             # print(f"This is the end of day:{(self.schedule.steps + 1) / 24} ")
+#             self.model_finish_day()
+#             self.update_day_count()
+#             # print(f"This is the end of day: {self.schedule.steps / 24}. Or {self.current_day_count} ")
+#             print(f"This is the end of day: {self.current_day_count} ")
+#         self._current_tick += 1
+
+#         # soft reset at beginning of day
+#         if self._current_tick > 24 and self._current_tick % 24 == 1:
+#             try: 
+#                 self.ev_relaunch() #current no of days
+#             except MachineError:
+#                 print("Error in relaunching EVs. EV is in a state other than Idle or Battery_Dead.")
+#             # else:
+#             #     print("Some other error.")
+        
+#         # overnight charging. integraition with relaunch??
+#         # # overnight charging. Every day at 02:00
+#         # if self._current_tick > 24 and self._current_tick % 24 == 2:
+#         #     self.overnight_charge_evs()
+
+# class ChargeStation(Agent):
+#     """A charging station (CS) agent.
+#     Attributes:
+#         unique_id: Unique identifier for the agent.
+#         model: The model the agent is running in.
+#         queue_1: A list of EVs waiting to charge at the CS.
+#         queue_2: A list of EVs waiting to charge at the CS.
+#         _active_ev_1: The first EV currently charging at the CS.
+#         _active_ev_2: The second EV currently charging at the CS.
+#         _charge_rate: The rate at which the CS charges an EV.
+#         _checkpoint_id: The ID of the checkpoint the CS is associated with. Initialised to 0.
+#         max_queue_size: The maximum number of EVs that can be queued at the CS.
+
+#     Methods:
+#         __init__: Initialises the agent.
+#         __str__: Returns the agent's unique id.
+#         dequeue_1: Removes the first EV from queue_1.
+#         dequeue_2: Removes the first EV from queue_2.
+#         finish_charge_ev_1: Finish charging the EV at CP1 at the Charge Station.
+#         finish_charge_ev_2: Finish charging the EV at CP2 at the Charge Station.
+#         stage_1: Stage 1 of the agent's step function.
+#         stage_2: Stage 2 of the agent's step function.
+
+#     """
+#     def __init__(self, unique_id, model):
+#         super().__init__(unique_id, model)
+#         self.queue_1 = []
+#         self.queue_2 = []
+#         self._is_active = False
+#         self.active_ev_1 = None
+#         self.active_ev_2 = None
+#         # can replace with array of 2
+#         # self.active_evs = []
+#         # self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
+
+#         self._charge_rate = 7.5 #kW
+#         self._checkpoint_id = 0
+
+#         # new
+#         self.max_queue_size = 10
+
+
+#         print(f"\nCP info: ID: {(self.unique_id)}, initialized. Charge rate: {self._charge_rate} kW.")
+
+#         # End initialisation
+
+#     def __str__(self) -> str:
+#         """Return the agent's unique id."""
+#         return str(self.unique_id + 1)
+    
+    
+#     def dequeue_1(self) -> None:
+#         """Remove the first EV from each queue. FIFO fom queue.
+#         If the queue is empty, do nothing. 
+#         If the queue is not empty, remove the first EV from the queue and set as active ev.
+#         Transition the EV to the charging state.
+
+#         """
+#         try:
+#             self.active_ev_1 = self.queue_1.pop(0)
+#             self.active_ev_1.machine.start_charge()
+#             print(f"EV {(self.active_ev_1.unique_id)} dequeued at CS {self.unique_id} at Queue 1 and is in state: {self.active_ev_1.machine.state}")
+#             print(f"Queue 1 size after dequeuing: {len(self.queue_1)}")
+#         except:
+#             pass
+    
+#     def dequeue_2(self) -> None:
+#         """Remove the first EV from each queue. FIFO fom queue. 
+#         This is the same as dequeue_1, but for queue 2."""
+#         try:
+#             self.active_ev_2 = self.queue_2.pop(0)
+#             self.active_ev_2.machine.start_charge()
+#             print(f"EV {(self.active_ev_2.unique_id)} dequeued at CP {self.unique_id} at Queue 2 and is in state: {self.active_ev_2.machine.state}")
+#             print(f"Queue 2 size after dequeuing: {len(self.queue_2)}")
+#         except:
+#             pass
+    
+#     def finish_charge_ev_1(self):
+#         """Finish charging the EV at CP1 at the Charge Station."""
+#         if self.active_ev_1 is not None:
+#             # self.active_ev_1.machine.end_charge() # this is a toggle
+#             self.active_ev_1 = None
+#             print(f"EV at Charge Station {self.unique_id}, CP 1 has exited.")
+
+#     def finish_charge_ev_2(self):
+#         """Finish charging the EV at CP2 at the Charge Station."""
+#         if self.active_ev_2 is not None:
+#             # self.active_ev_2.machine.end_charge() # this is another toggle
+#             self.active_ev_2 = None
+#             print(f"EV at Charge Station {self.unique_id}, CP 2 has exited.")
+
+#     def stage_1(self):
+#         """Stage 1 of the charge station's step function."""
+#         if self.active_ev_1 is None:
+#             self.dequeue_1()
+#         if self.active_ev_2 is None:
+#             self.dequeue_2()
+
+#     def stage_2(self):
+#         """Stage 2 of the charge station's step function."""
+#         if self.active_ev_1 is not None:
+#             if self.active_ev_1.battery < self.active_ev_1._soc_charging_thresh:
+#                 self.active_ev_1.charge()
+#                 self.active_ev_1.machine.continue_charge()
+#             else:    
+#                 # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_1.machine.state}.")                                       #testing
+#                 self.active_ev_1.machine.end_charge()
+#                 self.finish_charge_ev_1()
+#         if self.active_ev_2 is not None:
+#             if self.active_ev_2.battery < self.active_ev_2._soc_charging_thresh:
+#                 self.active_ev_2.charge()
+#                 self.active_ev_2.machine.continue_charge()
+#             else:
+#                 # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
+#                 self.active_ev_2.machine.end_charge()
+#                 self.finish_charge_ev_2()
+            
 
 
 # def compute_checkpoints(self,n) -> list:
