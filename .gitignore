@@ -169,6 +169,7 @@ cython_debug/
 .csv
 
 model_config.py
+networkviz.py
 
 # compiled code from python files
 EV/__pycache__/agent.cpython-311.pyc
@@ -177,3 +178,5 @@ EV/__pycache__/statemachine.cpython-311.pyc
 EV/__pycache__/model.cpython-311.pyc
 EV/__pycache__/statemachine.cpython-311.pyc
 .vscode/settings.json
+.gitignore
+.DS_Store
