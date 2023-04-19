@@ -25,11 +25,11 @@ import logging
 from collections import Counter
 
 
-import config.model_config as cfg
-import config.worker as worker
+import EV.model_config as cfg
+import EV.worker as worker
 from EV.agent import EV, ChargeStation
 import EV.model as model
-from EV.statemachine import EVSM, LSM
+from EV.statemachines import EVSM, LSM
 from EV.modelquery import get_evs_charge, get_evs_charge_level, get_evs_active, get_evs_queue, get_evs_travel, get_evs_not_idle, get_active_chargestations, get_eod_evs_socs, get_evs_destinations, get_ev_distance_covered
 """
 This is the main file for the EV ABM simulator.

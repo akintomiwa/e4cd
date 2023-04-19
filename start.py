@@ -1,38 +1,22 @@
-# imports
-# import os
-# import seaborn as sns
+# imports 
 from random import choice
 import warnings
 warnings.simplefilter("ignore")
-
-# from mesa import Agent, Model
 
 from mesa.datacollection import DataCollector
 # from matplotlib import pyplot as plt, patches
 # import scipy.stats as ss
 import cufflinks as cf
 cf.go_offline()
-# from plotly.offline import iplot
-# from transitions import Machine
-# import random
-# from transitions.extensions import GraphMachine
-# import graphviz
-# import timeit
-# import logging
-# from collections import Counter
-# import pandas as pd
-# import numpy as np
-# import mesa
-# from mesa.time import RandomActivation, RandomActivationByType, SimultaneousActivation
 from datetime import datetime
 
 
 
-import config.model_config as cfg
+import EV.model_config as cfg
 # import config.worker as worker
-from EV.agent import EV, ChargeStation
+# from EV.agent import EV, ChargeStation
 import EV.model as model
-from EV.statemachine import EVSM, LSM
+from EV.statemachines import EVSM, LSM
 from EV.modelquery import get_evs_charge, get_evs_charge_level, get_evs_active, get_evs_queue, get_evs_travel, get_evs_not_idle, get_active_chargestations, get_eod_evs_socs, get_evs_destinations, get_ev_distance_covered
 """
 This is the main file for the EV ABM simulator.
@@ -47,7 +31,7 @@ date_str = str(datetime.today())
 
 
 def run():
-    model_run = model.EVModel(ticks=cfg.ticks, no_evs=cfg.no_evs, params=cfg.station_config)
+    model_run = model.EVModel(ticks=cfg.ticks, no_evs=cfg.no_evs, station_params=cfg.station_config, location_params=cfg.location_config, station_location_param=cfg.station_location_config)
     for i in range(cfg.ticks):
         model_run.step()
     return model_run
