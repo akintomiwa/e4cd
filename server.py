@@ -82,7 +82,7 @@ class LocationLegend(TextElement):
         return "Location: <span style='color:black;'>N/A</span>"
 
 
-grid = CanvasGrid(agent_portrayal, 100, 100,600, 500)
+grid = CanvasGrid(agent_portrayal, 100, 100,500, 500)
 
 # Define other visualization elements such as charts or text
 # text = TextElement(text="My Model")
@@ -97,7 +97,7 @@ user_param = UserSettableParameter('slider', "My Parameter", 5, 1, 10, 1)
 server = ModularServer(EVModel,
                     [grid, chart, bar_chart, EVLegend(), StationLegend(), LocationLegend()],
                     "ec4d EV Model",
-                    {'no_evs': 10, 
+                    {'no_evs': 3, 
                      'station_params':model_config.station_config, 
                      'location_params':model_config.location_config,
                      'station_location_param':model_config.station_location_config, 
@@ -105,3 +105,9 @@ server = ModularServer(EVModel,
 
 server.port = 8521
 server.launch()
+
+# in stage 1  Agemt step_1
+# Todo: replace odometer and distance goal check with dist_pos and self pos comparisiona
+# Fix charging flow 
+
+

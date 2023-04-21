@@ -150,11 +150,11 @@ class EVModel(Model):
         for  i, cs in enumerate(self.chargestations):
             cs.route = self.csroutes[i]        
        
-        # show CS routes and associated distances. not chkpts per se, but the cummulative distances between CSs along the route, relative to start.
-        for route in self.routes:
-            setattr(self, f"checkpoint_{route}", [])
-            # make another list of checkpoints for each route, and assign to CSs
-            print(f"\nCheckpoint lists for Route: {route}: {getattr(self, f'distances_{route}')}") # test
+        # # show CS routes and associated distances. not chkpts per se, but the cummulative distances between CSs along the route, relative to start.
+        # for route in self.routes:
+        #     setattr(self, f"checkpoint_{route}", [])
+        #     # make another list of checkpoints for each route, and assign to CSs
+        #     print(f"\nCheckpoint lists for Route: {route}: {getattr(self, f'distances_{route}')}") # test
         
         # Set name, inital locations coordinates for Locations
         for i, loc in enumerate(self.locations):
@@ -196,7 +196,7 @@ class EVModel(Model):
             ev.select_initial_coord(self)
             ev.select_destination_coord(self)
             ev.set_destination()
-            ev.get_distance_goal_from_dest()
+            ev.get_distance_goal_and_coord_from_dest()
             ev.initialization_report(self)
             # # place ev agent on grid
             self.grid.place_agent(ev, ev.pos)

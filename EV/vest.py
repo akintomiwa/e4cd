@@ -1,6 +1,178 @@
+# 21-04-2023
+
+       # if self.machine.state == 'Travel_low':
+        #     for loc in self.model.locations:
+        #         if self.pos == loc.pos:
+        #             self.choose_charge_station(loc)
+
+        # 21/02/23 - new flow for recognising a charge station (CS). Also, choosing a CS and charge queue.
+        # Recognising a Charge Station #
+        # elif self.machine.state == 'Travel_low':
+        #     self._at_station = True
+        #     print(f"EV {self.unique_id} is low on battery and is at a station. Seeking charge queue. Current EV state: {self.machine.state}")
+        #     # self.select_cp()
+        #     self.choose_charge_station()
+        #     self.machine.seek_charge_queue()
+        #     self.machine.join_charge_queue()
+        #     # self.choose_cs_queue()
+        #     self.join_cs_queue()
+        #     # Here, EV has arrived at CS, joined one of the two queues and is waiting to become the active ev, and get charged.
+        #     # self.machine.start_charge()
+        #     self._in_queue = True
+
+        # if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low'): # and self.pos == 
+            # if self.machine.state == 'Travel': 
+                # print(f"EV {self.unique_id} has arrived at Charge Station but is in state: {self.machine.state}. Not travelling low.")
+                # Check if the EV has encountered a ChargeStation agent
+                # cellmates = self.model.grid.get_cell_list_contents([next_pos])
+                # cellmates = self.model.grid.get_neighbors(self.pos, moore = True, include_center=False, radius=2)
+                # for cellmate in cellmates:
+                    # if isinstance(cellmate, ChargeStation):
+                        # print(f"EV {self.unique_id} has encountered a Charge Station, but is not low on battery. State: {self.machine.state}.")
+            # if self.machine.state == 'Travel_low': 
+                # # Check if the EV has encountered a ChargeStation agent
+                # # cellmates = self.model.grid.get_cell_list_contents([next_pos])
+                # cellmates = self.model.grid.get_neighbors(self.pos, moore = True, include_center=False, radius=2)
+                # for cellmate in cellmates:
+                #     if isinstance(cellmate, ChargeStation):
+                #         target = cellmate
+                #         for agent in self.model.schedule.agents:
+                #             if agent.unique_id == target:
+                #                 print(f"Found the CS agent!")
+                #                 self._chosen_cs = agent
+                #         return None
+                # self.search_for_charge_station()
+                # self.join_cs_queue()
+                            
+                # self._at_station = True
+                # self.choose_charge_station()
+                # self.machine.seek_charge_queue()
+                # self.machine.join_charge_queue()
+                # self._in_queue = True
+
+                # for cellmate in cellmates:
+                #     if isinstance(cellmate, ChargeStation):
+                #         # cellmate.queue.append(self)
+                #         self._chosen_station = cellmate
+                #         self.machine.seek_charge_queue()
+                #         self.machine.join_charge_queue()
+                #         print(f"EV {self.unique_id} has encountered a Charge Station and is low on battery. State: {self.machine.state}.")
+
+# 20-04-2023
+# if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and self.pos == [pos for pos in self.model.locations.values() if pos == self.dest_pos][0]: 
+
+
+# 21/02/23 - new flow for recognising a charge station (CS). Also, choosing a CS and charge queue.
+        # # Recognising a Charge Station #
+        # if (self.odometer in self.checkpoint_list):
+        #     if self.machine.state == 'Travel':
+        #         print(f"EV {self.unique_id} has arrived at Charge Station but is in state: {self.machine.state}. Not travelling low.")
+        #     elif self.machine.state == 'Travel_low':
+        #         self._at_station = True
+        #         print(f"EV {self.unique_id} is low on battery and is at a station. Seeking charge queue. Current EV state: {self.machine.state}")
+        #         # self.select_cp()
+        #         self.choose_charge_station()
+        #         self.machine.seek_charge_queue()
+        #         self.machine.join_charge_queue()
+        #         # self.choose_cs_queue()
+        #         self.join_cs_queue()
+        #         # Here, EV has arrived at CS, joined one of the two queues and is waiting to become the active ev, and get charged.
+        #         # self.machine.start_charge()
+        #         self._in_queue = True
+        # if self.machine.state == 'Travel' or self.machine.state == 'Travel_low': 
+        #     if self.machine.state == 'Travel': 
+        #         # Check if the EV has encountered a ChargeStation agent
+        #         # cellmates = self.model.grid.get_cell_list_contents([next_pos])
+        #         cellmates = self.model.grid.get_neighbors(self.pos, moore = True, include_center=False, radius=2)
+        #         for cellmate in cellmates:
+        #             if isinstance(cellmate, ChargeStation):
+        #                 print(f"EV {self.unique_id} has encountered a Charge Station, but is not low on battery. State: {self.machine.state}.")
+        #     if self.machine.state == 'Travel_low': 
+        #         # Check if the EV has encountered a ChargeStation agent
+        #         # cellmates = self.model.grid.get_cell_list_contents([next_pos])
+        #         cellmates = self.model.grid.get_neighbors(self.pos, moore = True, include_center=False, radius=2)
+        #         for cellmate in cellmates:
+        #             if isinstance(cellmate, ChargeStation):
+        #                 cellmate.queue.append(self)
+        #                 # self._chosen_station = cellmate
+        #                 self.machine.seek_charge_queue()
+        #                 self.machine.join_charge_queue()
+        #                 print(f"EV {self.unique_id} has encountered a Charge Station and is low on battery. State: {self.machine.state}.")
+
+
+
 # 19-04-2023
 
 
+# next_pos = (int((self.pos[0] + dx)*self._speed), int((self.pos[1] + dy)*self._speed))
+# next_pos = (int((self.pos[0] + dx)), int((self.pos[1] + dy)))
+
+# old flow 
+# def set_initial_grid_location(self, route) -> None:
+#     """
+#     Sets the initial grid location of the EV based on the route.
+
+#     """
+#     self.location = worker.get_string_before_hyphen(route)
+#     self.pos = worker.get_location_coordinates_by_name(self.model.location_params, self.location)
+#     print(f"This is EV position {self.pos}")
+
+# def get_direction(self, route: str) -> int:
+#     """Gets the direction of the EV based on the route.
+#     """
+#     s = route
+#     # Extract the source and destination points from the input string
+#     src, dest_pos = s.split('-')
+#     # Define a dictionary to map each point to its row and column in the grid
+#     point_map = {'A': (0, 0), 'B': (0, 1), 'C': (1, 0), 'D': (1, 1)}
+#     # Get the row and column numbers for the source and destination points
+#     src_row, src_col = point_map[src]
+#     dest_row, dest_col = point_map[dest_pos]
+#     # Calculate the row and column differences between the source and destination points
+#     row_diff = dest_row - src_row
+#     col_diff = dest_col - src_col
+#     # Determine the direction based on the row and column differences
+#     if row_diff == -1 and col_diff == 0:
+#         return 1  # up
+#     elif row_diff == 0 and col_diff == 1:
+#         return 2  # right
+#     elif row_diff == 1 and col_diff == 0:
+#         return 3  # down
+#     elif row_diff == 0 and col_diff == -1:
+#         return 4  # left
+#     elif row_diff == -1 and col_diff == 1:
+#         return 5  # diagonal - right and up
+#     elif row_diff == -1 and col_diff == -1:
+#         return 6  # diagonal - left and up
+#     elif row_diff == 1 and col_diff == 1:
+#         return 7  # diagonal - right and down
+#     elif row_diff == 1 and col_diff == -1:
+#         return 8  # diagonal - left and down
+#     else:
+#         raise ValueError('Invalid input: {}'.format(s))
+
+# from travel() in agent 
+# self.move(direction=direction)
+# self.move_new()
+
+#    # 16 Feb charge flow redo - new methods
+#     def choose_charge_station(self):
+#         """
+#         Chooses a charge station to charge at. Selects the charge station with the correct checkpoint id.
+#         Returns:
+#             _chosen_cs: Charge Station chosen for charging.
+
+#         """
+#         # choose station
+#         # neighbours = self.model.grid.get_neighbors(self.pos, include_center=True, moore = True) radius = 1
+#         neighbours = self.model.grid.get_neighborhood(self.pos, moore = True, include_center = True)
+#         for neighbour in neighbours:
+#             if isinstance(neighbour, ChargeStation):
+#                 # if neighbour.checkpoint_id == self.checkpoint_id:
+#                 self._chosen_cs = neighbour
+#         print(f"Chosen CS object is of type: {type(self._chosen_cs)}. Value: {self._chosen_cs}")
+#         # print(f"EV {self.unique_id} chose CS {self._chosen_cs.unique_id} to charge at.")
+#         return self._chosen_cs
 
 # # section 3
 # # accomodate reverse trips
