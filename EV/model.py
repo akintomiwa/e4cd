@@ -314,7 +314,7 @@ class EVModel(Model):
         """
         for ev in self.evs:
             if ev.machine.state == 'Battery_dead':
-                ev.relaunch_dead()
+                ev.relaunch_dead(ev.model)
             elif ev.machine.state == 'Idle':
                 ev.relaunch_idle()
             elif ev.machine.state == 'Travel':
