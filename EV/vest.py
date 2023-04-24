@@ -1,6 +1,39 @@
 # 24-04-2023
 
 
+# def check_location_for_arrivals(self, model):
+#     """Checks the location for arrivals."""
+#     neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 2, include_center=True)
+#     for neighbour in neighbours:
+#         if isinstance(neighbour, EV):
+#             if neighbour.machine.state == 'Travel_low':
+#                 self.location_occupancy += 1
+#                 self.location_occupancy_list.append(neighbour.unique_id)
+#                 self.queue.append(neighbour)
+#                 print(f"EV {neighbour.unique_id} has arrived at Charge Station {self.name}. Current CS occupancy: {self.location_occupancy}")
+#                 break
+
+
+# def _charge_rate(self):
+#     charge_rate = 0
+#     for i in range(self.no_cps):
+#         rate = self.get_cp_rating_by_index(i)
+#         print(f"CP_{i} is {(getattr(self, f'cp_id_{i}'))} and has a charge rate of {rate} kW.")
+#         rate.append(charge_rate)
+#     print(f"Charge rate vector is {charge_rate} kW.")
+#     return charge_rate
+        
+        
+# # Check if the EV has encountered a ChargeStation agent
+# cellmates = model.grid.get_cell_list_contents([next_pos])
+# for cellmate in cellmates:
+#     if isinstance(cellmate, ChargeStation):
+#         cellmate.queue.append(self)
+#         # self._chosen_station = cellmate
+# else:
+#     # The next position is outside the grid, the EV has reached the edge of the grid
+#     self.dest_pos = None
+
 # class EVSM(Machine):
 #     """A state machine for managing status of EV agent in AB model.
 #     Can be deployed as EvState object.
