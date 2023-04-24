@@ -98,32 +98,9 @@ class ChargeStation(Agent):
         # return cp_value * rate_value
         return rate_value
 
-    # def _charge_rate(self):
-    #     charge_rate = 0
-    #     for i in range(self.no_cps):
-    #         rate = self.get_cp_rating_by_index(i)
-    #         print(f"CP_{i} is {(getattr(self, f'cp_id_{i}'))} and has a charge rate of {rate} kW.")
-    #         rate.append(charge_rate)
-    #     print(f"Charge rate vector is {charge_rate} kW.")
-    #     return charge_rate
-            
-
     def __str__(self) -> str:
         """Return the agent's unique id."""
         return str(self.unique_id + 1)
- 
-    # def check_location_for_arrivals(self, model):
-    #     """Checks the location for arrivals."""
-    #     neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 2, include_center=True)
-    #     for neighbour in neighbours:
-    #         if isinstance(neighbour, EV):
-    #             if neighbour.machine.state == 'Travel_low':
-    #                 self.location_occupancy += 1
-    #                 self.location_occupancy_list.append(neighbour.unique_id)
-    #                 self.queue.append(neighbour)
-    #                 print(f"EV {neighbour.unique_id} has arrived at Charge Station {self.name}. Current CS occupancy: {self.location_occupancy}")
-    #                 break
-
 
     def dequeue(self) -> bool:
         """Remove the first EV from queue."""
@@ -133,14 +110,22 @@ class ChargeStation(Agent):
                 return False
             # go through all charge points and assign the first one that is free
             for attr_name in [a for a in dir(self) if a.startswith("cp_")]:
+                print(f"Checking charge point {attr_name} at CS {self.unique_id} for EV {active.unique_id}")
                 attr_value = getattr(self, attr_name)
-                if attr_value is None and attr_name not in self.occupied_cps:
+                # print(attr_value)
+                # print(f"{attr_value} is currently assigned to charge point {attr_name} at CS {self.unique_id}")
+                # if attr_value is None and attr_name not in self.occupied_cps:
+                if attr_value is None:
                     setattr(self, attr_name, active)
+                    print(f"EV {active.unique_id} assigned to charge point {attr_name} at CS {self.unique_id}")
                     active.machine.start_charge()
+                    print(f"EV {active.unique_id} is in state: {active.machine.state}.")
                     self.occupied_cps.add(attr_name)
                     print(f"EV {active.unique_id} dequeued at CS {self.unique_id} at CP {attr_name} and is in state: {active.machine.state}. Charging started")
-                    return True
+                    # return True
+                    break
             # if all charge points are occupied, reinsert active into queue
+            # use break to exit loop ?
             self.queue.insert(0, active)
             print(f"EV {active.unique_id} remains in queue at CS {self.unique_id} and is in state: {active.machine.state}.")
             return False
@@ -331,11 +316,7 @@ class EV(Agent):
         """Prints the EV's initialisation report."""
         print(f"\nEV info: ID: {self.unique_id}, max_battery: {self.max_battery:.2f}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
         print(f"EV info (Cont'd): Start time: {self.start_time},  soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}.")
-        print(f"EV Grid info: current position: {self.pos}, destination position: {self.dest_pos}, Distance goal: {self._distance_goal}.")
-        # print(f"EV {self.unique_id}, distance goal: {self._distance_goal}, location state: {self.loc_machine.state}")
-        
-
-
+        print(f"EV Grid info: current position: {self.pos}, destination position: {self.dest_pos}, Distance goal: {self._distance_goal}.")        
 
     # Internal functions
     def set_initial_loc_mac_from_route(self, route:str):
@@ -354,7 +335,7 @@ class EV(Agent):
 
     def get_destination_from_route(self, route:str):
         destination = worker.get_string_after_hyphen(route)
-        self.destination = destination                          # separate get and set
+        self.destination = destination                                           # separate get and set
         return destination
     
     def update_destination_for_new_trip(self, location:str):
@@ -416,12 +397,20 @@ class EV(Agent):
         self.machine.emergency_intervention()
         model.grid.remove_agent(self)
         print(f"\nEV {self.unique_id} has been removed from the grid, recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Range anxiety has increased to: {self.range_anxiety}")
+        # transport EV back to random location. source?
+        # self.pos = 
+        self.select_initial_coord(model)
+        model.grid.place_agent(self, self.pos) 
+        print(f"EV {self.unique_id} has been transported to {self.pos} and is now in state: {self.machine.state}.")
+        # print(f"Location {model.locations} at coord: {model.locations[self.pos]}")
+        # lambda function for returening location from coord
+        self.loc_machine.set_state(f"{self.destination}")
 
     def travel_intervention(self) -> None:
         """Intervention for when the EV is traveling. The EV is set to Idle and will be transported to its destination.
         """
         self.machine.end_travel()
-        print(f"EV {self.unique_id} was forced to end its stip due to overrun. It is now in state: {self.machine.state}. ")
+        print(f"EV {self.unique_id} was forced to end its trip due to overrun. It is now in state: {self.machine.state}. ")
         # assumes EV overruning is doing interuban trip
         # self.loc_machine.set_state(f"{self.destination}")
     def charge_intervention(self) -> None:
@@ -433,11 +422,8 @@ class EV(Agent):
             self.machine.end_queue_abrupt()
         elif self.machine.state == "Seek_queue":
             self.machine.end_seek_queue_abrupt()
-
         # self.machine.end_charge_abrupt()
-        print(f"EV {self.unique_id} was forced to end its charge due to time overrun. It is now in state: {self.machine.state}. ")
-        # assumes EV overruning is doing interuban trip
-        # self.loc_machine.set_state(f"{self.destination}")
+        print(f"EV {self.unique_id} was forced to end its charge due to time overrun. It is now in state: {self.machine.state}.")
 
 
     def set_start_time(self) -> None:
@@ -453,7 +439,7 @@ class EV(Agent):
     
     # Range Anxiety charging behavior
     def increase_range_anxiety(self) -> None:
-        """Increases the propensity for charging. Higher propensity for charging means that the EV is more likely to charge at a Charge Station, due to having a higher soc_usage threshold.
+        """Increases the range anxiety (RA). Higher RA means that the EV is more likely to charge at a Charge Station, due to having a higher soc_usage threshold.
         
         Returns:
             charge_prop: Propensity for charging behavior.
@@ -465,8 +451,7 @@ class EV(Agent):
 
     def decrease_range_anxiety(self) -> None:
         """
-        Decreases the propensity for charging. Lower propensity for charging means that the EV is less likely to charge at a Charge Station, due to having a lower soc_usage threshold.
-        
+        Decreases the range anxiety (RA). Lower RA means that the EV is less likely to charge at a Charge Station, due to having a lower soc_usage threshold.
         Returns:/
             charge_prop: Propensity for charging behavior.
         """
@@ -523,9 +508,6 @@ class EV(Agent):
             print(f"EV {self.unique_id} has reached its destination. IN MOVE")
             return
         
-        # # Calculate the unit vector towards the destination
-        # dx = self.dest_pos[0] - self.pos[0]
-        # dy = self.dest_pos[1] - self.pos[1]
 
         dx,dy,distance = self.get_distance_goal_and_coord_from_dest()
         # Normalize the vector to get a unit vector
@@ -542,16 +524,7 @@ class EV(Agent):
         if (0 <= next_pos[0] < model.grid.width) and (0 <= next_pos[1] < model.grid.height):
             # Move the EV to the next position
             model.grid.move_agent(self, next_pos)
-            
-            # # Check if the EV has encountered a ChargeStation agent
-            # cellmates = model.grid.get_cell_list_contents([next_pos])
-            # for cellmate in cellmates:
-            #     if isinstance(cellmate, ChargeStation):
-            #         cellmate.queue.append(self)
-            #         # self._chosen_station = cellmate
-        # else:
-        #     # The next position is outside the grid, the EV has reached the edge of the grid
-        #     self.dest_pos = None
+
 
     # def search_for_charge_station(self) -> None:
     #     cellmates = self.model.grid.get_neighbors(self.pos, moore = True, include_center=True, radius=2)
@@ -714,15 +687,15 @@ class EV(Agent):
     
     def search_for_charge_station(self, model) -> None:
         """EV in 'Travel_low checks for Chargestations in neighbourhood."""
-        neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 2, include_center=True)
+        neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 3, include_center=True)
         for neighbour in neighbours:
             if isinstance(neighbour, ChargeStation):
                 self._chosen_cs = neighbour
-                print(f"EV {self.unique_id} has arrived at Charge Station{self._chosen_cs.name}.")
+                print(f"EV {self.unique_id} has arrived at Charge Station {self._chosen_cs.name}.")
                 self.join_cs_queue()
-                print(f"EV {self.unique_id} has arrived at Charge Station and joined the queue {self._chosen_cs.name}. Current CS occupancy: {self._chosen_cs.location_occupancy}")
                 self._chosen_cs.location_occupancy += 1
                 self._chosen_cs.location_occupancy_list.append(self.unique_id)
+                print(f"EV {self.unique_id} has joined the queue {self._chosen_cs.name}. Current CS occupancy: {self._chosen_cs.location_occupancy}")
                 break
 
     

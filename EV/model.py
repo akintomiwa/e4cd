@@ -78,7 +78,6 @@ class EVModel(Model):
         
         # set up routes
         # section 2 - create routes iterable
-
         self.routes = worker.get_routes(self.station_params)
         self.all_routes = set(worker.get_combinations(self.location_params)) #/locations .csv param file
         print(f"\nAvailable routes: {self.routes}")
@@ -178,8 +177,10 @@ class EVModel(Model):
             # Display Charge stations and their routes  
             print(f"CS {cs.unique_id}, Route: {cs.route}, Position: {cs.pos}, CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}. Number of charge points: {cs.no_cps}. CP rates: {cs.cprates} ") 
             # dynamically create chargepoints per charge station lists vars. Each element is charge rate for each cp.
+            # for i in range(cs.no_cps):
+            #     setattr(cs, f"cp_{i}", [])
             for i in range(cs.no_cps):
-                setattr(cs, f"cp_{i}", [])
+                setattr(cs, f"cp_{i}", None)
             # place ev agent on grid
             self.grid.place_agent(cs, cs.pos)
         
@@ -291,10 +292,11 @@ class EVModel(Model):
             ev.get_destination_from_route(ev.route)
             # set destination from possible choices
             ev.set_initial_loc_mac_from_route(ev.route) 
-            # set distance goalc
+            ev.select_destination_coord(self)
+            # set distance goal
             ev.set_distance_goal()
             # read route information from model attributes
-
+            
             ev.initialization_report(ev.model)
             
 
