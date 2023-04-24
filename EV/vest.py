@@ -1,3 +1,128 @@
+# 24-04-2023
+
+
+# class EVSM(Machine):
+#     """A state machine for managing status of EV agent in AB model.
+#     Can be deployed as EvState object.
+
+#     States:
+#     Idle, Travel, Seek_queue, Travel_low, In_queue, Charge, Travel_low, Battery_dead, Home_Charge
+#     Transitions:
+#     start_travel: Idle -> Travel
+#     get_low: Travel -> Travel_low
+#     seek_charge_queue: Travel_low -> Seek_queue
+#     deplete_battery: Travel_low -> Battery_dead
+#     join_charge_queue: Seek_queue -> In_queue
+#     wait_in_queue: In_queue -> In_queue
+#     start_charge: In Queue -> Charge
+#     end_charge: Charge -> Travel
+#     continue_travel: Travel -> Travel
+#     continue_charge: Charge -> Charge
+#     end_travel: Travel -> Idle
+#     end_travel_low: Travel_low -> Idle
+#     end_charge_abrupt: Charge -> Idle
+#     end_queue_abrupt: In_queue -> Idle
+#     end_seek_abrupt: Seek_queue -> Idle
+
+#     """
+
+# states = ['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead', 'Home_Charge']
+# transitions = [
+#     {'trigger': 'start_home_charge', 'source': 'Idle', 'dest': 'Home_Charge'},
+#     {'trigger': 'continue_home_charge', 'source': 'Home_Charge', 'dest': 'Home_Charge'},
+#     {'trigger': 'end_home_charge', 'source': 'Home_Charge', 'dest': 'Idle'},
+#     {'trigger': 'start_travel', 'source': 'Idle', 'dest': 'Travel'},
+#     {'trigger': 'get_low', 'source': 'Travel', 'dest': 'Travel_low'},
+#     {'trigger': 'seek_charge_queue', 'source': 'Travel_low', 'dest': 'Seek_queue'},
+#     {'trigger': 'deplete_battery', 'source': 'Travel_low', 'dest': 'Battery_dead'},
+#     {'trigger': 'join_charge_queue', 'source': 'Seek_queue', 'dest': 'In_queue'},
+#     {'trigger': 'wait_in_queue', 'source': 'In_queue', 'dest': 'In_queue'},
+#     {'trigger': 'start_charge', 'source': 'In_queue', 'dest': 'Charge'},
+#     {'trigger': 'continue_charge', 'source': 'Charge', 'dest': 'Charge'},
+#     {'trigger': 'end_charge', 'source': 'Charge', 'dest': 'Travel'},
+#     {'trigger': 'continue_travel', 'source': 'Travel', 'dest': 'Travel'},
+#     {'trigger': 'end_travel', 'source': 'Travel', 'dest': 'Idle'},
+#     {'trigger': 'end_travel_low', 'source': 'Travel_low', 'dest': 'Idle'},
+#     {'trigger': 'emergency_intervention', 'source': 'Battery_dead', 'dest': 'Idle'},
+#     {'trigger': 'end_charge_abrupt', 'source': 'Charge', 'dest': 'Idle'},
+#     {'trigger': 'end_queue_abrupt', 'source': 'In_queue', 'dest': 'Idle'},
+#     {'trigger': 'end_seek_abrupt', 'source': 'Seek_queue', 'dest': 'Idle'},
+#     ]
+
+            # for ev_id in self.location_occupancy_list:
+            #     ev = self.model.schedule.agents[ev_id]
+            #     # if (ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low') and ev._journey_complete == False:
+            #     if (ev.machine.state == 'Idle') and ev._journey_complete == False:
+            #         self.location_occupancy -= 1
+            #         self.location_occupancy_list.remove(ev_id)
+            #         print(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
+            #         break 
+        
+
+# # Check the neighborhood for the presence of a Location agent
+#         for nx, ny in self.model.grid.get_neighborhood(self.pos, moore=True, radius=1):
+#             cell = self.model.grid.get_cell_list_contents([(nx, ny)])
+#             for agent in cell:
+#                 if isinstance(agent, Location):
+#                     self.model.remove_agent(self)
+#                     break
+
+        #  # Check the neighborhood for the presence of a Location agent
+        # for nx, ny in self.model.grid.get_neighborhood(self.pos, moore=True, radius=1):
+        #     cell = self.model.grid.get_cell_list_contents([(nx, ny)])
+        #     for agent in cell:
+        #         if isinstance(agent, Location):
+        #             self.model.remove_agent(self)
+        #             break
+
+    # def remove_arrived_ev(self, ev_id):
+    #     """Removes an EV from the location's occupancy list."""
+    #     self.location_occupancy -= 1
+    #     self.location_occupancy_list.remove(ev_id)
+    #     print(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
+
+
+    # old report 
+    # def initialization_report(self) -> None:
+    #     """Prints the EV's initialisation report."""
+    #     print(f"\nEV info: ID: {self.unique_id}, route: {self.route}, destination name: City {self.destination}, max_battery: {self.max_battery}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
+    #     print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}, location: {self.loc_machine.state}.")
+    #     print(f"EV {self.unique_id} Checkpoint list: {self.checkpoint_list}, direction: {self.direction}")
+
+
+      # if self.active_ev_1 is not None:
+        #     if self.active_ev_1.battery < self.active_ev_1._soc_charging_thresh:
+        #         self.active_ev_1.charge()
+        #         self.active_ev_1.machine.continue_charge()
+        #     else:    
+        #         # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_1.machine.state}.")                                       #testing
+        #         self.active_ev_1.machine.end_charge()
+        #         self.finish_charge_ev_1()
+        # if self.active_ev_2 is not None:
+        #     if self.active_ev_2.battery < self.active_ev_2._soc_charging_thresh:
+        #         self.active_ev_2.charge()
+        #         self.active_ev_2.machine.continue_charge()
+        #     else:
+        #         # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
+        #         self.active_ev_2.machine.end_charge()
+        #         self.finish_charge_ev_2()
+        # pass      
+
+        # if self.machine.state == 'In_Queue':
+
+
+        # 27 Feb
+        # if (self.machine.state == 'Idle' and self._in_garage == True) and model.schedule.time 
+        #     if self.battery < self.max_battery:
+        #         # self.machine.return_to_garage()
+        #         self.charge_overnight()
+                # print(f"EV {self.unique_id} is in state: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
+        
+   
+
+
+
+
 # 21-04-2023
 
        # if self.machine.state == 'Travel_low':
