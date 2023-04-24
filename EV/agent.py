@@ -1,5 +1,4 @@
 """This module contains the agent classes for the EV model."""
-
 import numpy as np
 import pandas as pd
 import math
@@ -113,20 +112,17 @@ class ChargeStation(Agent):
         """Return the agent's unique id."""
         return str(self.unique_id + 1)
  
-    def check_location_for_arrivals(self, model):
-        """Checks the location for arrivals."""
-        neighbours = self.model.grid.get_neighbors(self.pos, moore=True, radius = 2, include_center=True)
-        for neighbour in neighbours:
-            if isinstance(neighbour, EV):
-                if neighbour.machine.state == 'Travel_low':
-                # if (neighbour.machine.state == 'Travel' or neighbour.machine.state == 'Travel_low') and neighbour._journey_complete == True:  
-                    self.location_occupancy += 1
-                    self.location_occupancy_list.append(neighbour.unique_id)
-                    self.queue.append(neighbour)
-                    print(f"EV {neighbour.unique_id} has arrived at Charge Station{self.name}. Current occupancy: {self.location_occupancy}")
-                    # self.model.grid.remove_agent(neighbour)
-                    # print(f"EV {neighbour.unique_id} has been removed from grid on arrival at {self.name}. Current state: {neighbour.machine.state}")
-                    break
+    # def check_location_for_arrivals(self, model):
+    #     """Checks the location for arrivals."""
+    #     neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 2, include_center=True)
+    #     for neighbour in neighbours:
+    #         if isinstance(neighbour, EV):
+    #             if neighbour.machine.state == 'Travel_low':
+    #                 self.location_occupancy += 1
+    #                 self.location_occupancy_list.append(neighbour.unique_id)
+    #                 self.queue.append(neighbour)
+    #                 print(f"EV {neighbour.unique_id} has arrived at Charge Station {self.name}. Current CS occupancy: {self.location_occupancy}")
+    #                 break
 
 
     def dequeue(self) -> bool:
@@ -181,38 +177,21 @@ class ChargeStation(Agent):
 
     def stage_1(self):
         """Stage 1 of the charge station's step function."""
-        # if self.active_ev_1 is None:
-        #     self.dequeue_1()
-        # if self.active_ev_2 is None:
-        #     self.dequeue_2()
+        # self.check_location_for_arrivals(self.model)
         self.dequeue()
-        if self.dequeue == True:
-            print(f"Dequeue successful. Length at ChargeStation {self.unique_id} is now {len(self.queue)}")  # testing
-        elif self.dequeue == False:
-            print(f"Dequeue unsuccessful. Length at ChargeStation {self.unique_id} is still {len(self.queue)}")
+        # if self.dequeue == True:
+        #     print(f"Dequeue successful. Length at ChargeStation {self.unique_id} is now {len(self.queue)}")  # testing
+        # elif self.dequeue == False:
+        #     print(f"Dequeue unsuccessful. Length at ChargeStation {self.unique_id} is still {len(self.queue)}")
         # self.announce()
 
     def stage_2(self):
         """Stage 2 of the charge station's step function."""
+        # for attr_name in dir(self):
+        #         if attr_name.startswith("cp_"):
+        #             print(f"CP {attr_name} at ChargeStation {self.unique_id} is occupied by EV {getattr(self, attr_name)}")
         self.finish_charge()
-        # if self.active_ev_1 is not None:
-        #     if self.active_ev_1.battery < self.active_ev_1._soc_charging_thresh:
-        #         self.active_ev_1.charge()
-        #         self.active_ev_1.machine.continue_charge()
-        #     else:    
-        #         # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_1.machine.state}.")                                       #testing
-        #         self.active_ev_1.machine.end_charge()
-        #         self.finish_charge_ev_1()
-        # if self.active_ev_2 is not None:
-        #     if self.active_ev_2.battery < self.active_ev_2._soc_charging_thresh:
-        #         self.active_ev_2.charge()
-        #         self.active_ev_2.machine.continue_charge()
-        #     else:
-        #         # print(f"EV {self.active_ev_2}, Pre-trans: {self.active_ev_2.machine.state}.")                                       #testing
-        #         self.active_ev_2.machine.end_charge()
-        #         self.finish_charge_ev_2()
-        # pass      
-
+  
 
 
 class EV(Agent):
@@ -347,12 +326,7 @@ class EV(Agent):
     
     def prelim_report(self):
         print(f"EV {(self.unique_id)}, initialized.")
-    # old report 
-    # def initialization_report(self) -> None:
-    #     """Prints the EV's initialisation report."""
-    #     print(f"\nEV info: ID: {self.unique_id}, route: {self.route}, destination name: City {self.destination}, max_battery: {self.max_battery}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
-    #     print(f"EV info (Cont'd): Start time: {self.start_time}, distance goal: {self._distance_goal}, soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}, location: {self.loc_machine.state}.")
-    #     print(f"EV {self.unique_id} Checkpoint list: {self.checkpoint_list}, direction: {self.direction}")
+
     def initialization_report(self, model) -> None:
         """Prints the EV's initialisation report."""
         print(f"\nEV info: ID: {self.unique_id}, max_battery: {self.max_battery:.2f}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
@@ -432,7 +406,7 @@ class EV(Agent):
         return delta
     
     # interventions 
-    def dead_intervention(self) -> None:
+    def dead_intervention(self, model) -> None:
         """
         Intervention for when the EV runs out of battery. The EV is recharged to the maximum by emergency services and will be transported to its destination.
         """
@@ -440,7 +414,8 @@ class EV(Agent):
         # self.odometer = self._distance_goal
         self.increase_range_anxiety()
         self.machine.emergency_intervention()
-        print(f"\nEV {self.unique_id} has been recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Range anxiety: {self.range_anxiety}")
+        model.grid.remove_agent(self)
+        print(f"\nEV {self.unique_id} has been removed from the grid, recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Range anxiety has increased to: {self.range_anxiety}")
 
     def travel_intervention(self) -> None:
         """Intervention for when the EV is traveling. The EV is set to Idle and will be transported to its destination.
@@ -658,7 +633,8 @@ class EV(Agent):
     
     def join_cs_queue(self) -> None:
         self._chosen_cs.queue.append(self)
-        print(f"EV {(self.unique_id)} joined queue at Charge Station {(self._chosen_cs.unique_id)}")
+        self.machine.join_charge_queue()
+        print(f"EV {(self.unique_id)} joined queue at Charge Station. CS Name: {(self._chosen_cs.name)} UID: {(self._chosen_cs.unique_id)}")
   
     # Model env functions
     def add_soc_eod(self) -> None:
@@ -711,11 +687,11 @@ class EV(Agent):
         self.charge_intervention()
         self.relaunch_base(n = self.model.current_day_count)
 
-    def relaunch_dead(self) -> None:
+    def relaunch_dead(self,model) -> None:
         """
         Relaunches dead EVs by calling the dead_intervention method, followed by the relaunch_base method.
         """
-        self.dead_intervention()
+        self.dead_intervention(model)
         self.relaunch_base(n = self.model.current_day_count)
 
     def relaunch_idle(self) -> None:
@@ -726,7 +702,7 @@ class EV(Agent):
         #     self.relaunch_base(self,n)
         # elif self.machine.state != "Idle":
         #     print(f"EV {self.unique_id} is not in Idle state. Cannot relaunch for new day.")
-        self.relaunch_base(n = self.model.current_day_count, )
+        self.relaunch_base(n = self.model.current_day_count) # type: ignore
 
     def start_travel(self) -> None:
         """
@@ -734,13 +710,24 @@ class EV(Agent):
         """
         if self.model.schedule.time == self.start_time:
             self.machine.start_travel()
-            # print(f"EV {self.unique_id} has started travelling at {self.model.schedule.time}")
             print(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
     
-    
+    def search_for_charge_station(self, model) -> None:
+        """EV in 'Travel_low checks for Chargestations in neighbourhood."""
+        neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 2, include_center=True)
+        for neighbour in neighbours:
+            if isinstance(neighbour, ChargeStation):
+                self._chosen_cs = neighbour
+                print(f"EV {self.unique_id} has arrived at Charge Station{self._chosen_cs.name}.")
+                self.join_cs_queue()
+                print(f"EV {self.unique_id} has arrived at Charge Station and joined the queue {self._chosen_cs.name}. Current CS occupancy: {self._chosen_cs.location_occupancy}")
+                self._chosen_cs.location_occupancy += 1
+                self._chosen_cs.location_occupancy_list.append(self.unique_id)
+                break
+
     
     # Define a function to calculate the Euclidean distance between two points
-    def distance(self, x1, y1, x2, y2)-> float:
+    def euc_distance(self, x1, y1, x2, y2)-> float:
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
     # staged step functions
@@ -792,6 +779,9 @@ class EV(Agent):
     
     def stage_2(self):
         """Stage 2: EV waits in queue until it is the active EV."""
+
+        if self.machine.state == 'Travel_low':
+            self.search_for_charge_station(self.model)
         
         if self.machine.state == 'Charge':
             self._in_queue = False
@@ -833,8 +823,8 @@ class EV(Agent):
         #     # self.update_lsm()
         
 
-        if self.machine.state == 'Travel' and self.pos == self.dest_pos:
-        # if (self.machine.state == 'Travel') and self.distance(self.pos[0], self.pos[1], self.dest_pos[0], self.dest_pos[1]) < 1:
+        # if self.machine.state == 'Travel' and self.pos == self.dest_pos:
+        if (self.machine.state == 'Travel') and self.euc_distance(self.pos[0], self.pos[1], self.dest_pos[0], self.dest_pos[1]) < 3.0:
         # if (self.machine.state == 'Travel') and self.odometer >= self._distance_goal:
             self.machine.end_travel()
             self._journey_complete = True
@@ -843,27 +833,15 @@ class EV(Agent):
 
         # Transition Case 8: Journey complete, battery low. travel_low -> idle
         # if self.machine.state == 'Travel_low' and self.odometer >= self._distance_goal:
-        if self.machine.state == 'Travel_low' and self.pos == self.dest_pos:
-        # if (self.machine.state == 'Travel_low') and self.distance(self.pos[0], self.pos[1], self.dest_pos[0], self.dest_pos[1]) < 1:
+        # if self.machine.state == 'Travel_low' and self.pos == self.dest_pos:
+        if (self.machine.state == 'Travel_low') and (self.euc_distance(self.pos[0], self.pos[1], self.dest_pos[0], self.dest_pos[1]) < 3.0):
         # if (self.machine.state == 'Travel_low') and self.odometer >= self._distance_goal:
             self.machine.end_travel_low()
             self._journey_complete = True
-            # decrease range anxiety?
+            # decrease range anxiety
             self.decrease_range_anxiety()
             print(f"EV {self.unique_id} narrowly completed its journey. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh. Range anxiety: {self.range_anxiety}")
         
-        # if self.machine.state == 'In_Queue':
-
-
-        # 27 Feb
-        # if (self.machine.state == 'Idle' and self._in_garage == True) and model.schedule.time 
-        #     if self.battery < self.max_battery:
-        #         # self.machine.return_to_garage()
-        #         self.charge_overnight()
-                # print(f"EV {self.unique_id} is in state: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh")
-        
-   
-
 
 class Location(Agent):
     """A location agent. This agent represents a location in the model, and is used to store information about the location."""
@@ -871,21 +849,16 @@ class Location(Agent):
         super().__init__(unique_id, model)
         self.location_type = None
         self.name = None
-        self.location_capacity = 0
+        # self.location_capacity = 0
         self.x = None
         self.y = None
         self.pos = None
         self.location_occupancy = 0
         self.location_occupancy_list = []
 
-    # def set_location_name(self, locations_dict)->None:
-    #     """set name for Location Agent"""
-    #     self.name = ""
-    #     pass
-
     def check_location_for_arrivals(self, model):
         """Checks the location for arrivals."""
-        neighbours = self.model.grid.get_neighbors(self.pos, moore=True, radius = 2, include_center=True)
+        neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 3, include_center=True)
         for neighbour in neighbours:
             if isinstance(neighbour, EV):
                 if neighbour.machine.state == 'Idle' and neighbour._journey_complete == True:  
@@ -893,23 +866,21 @@ class Location(Agent):
                     self.location_occupancy += 1
                     self.location_occupancy_list.append(neighbour.unique_id)
                     print(f"EV {neighbour.unique_id} has arrived at {self.name}. Current occupancy: {self.location_occupancy}")
-                    self.model.grid.remove_agent(neighbour)
+                    model.grid.remove_agent(neighbour)
                     print(f"EV {neighbour.unique_id} has been removed from grid on arrival at {self.name}. Current state: {neighbour.machine.state}")
                     break
     
-        #  # Check the neighborhood for the presence of a Location agent
-        # for nx, ny in self.model.grid.get_neighborhood(self.pos, moore=True, radius=1):
-        #     cell = self.model.grid.get_cell_list_contents([(nx, ny)])
-        #     for agent in cell:
-        #         if isinstance(agent, Location):
-        #             self.model.remove_agent(self)
-        #             break
-
-    # def remove_arrived_ev(self, ev_id):
-    #     """Removes an EV from the location's occupancy list."""
-    #     self.location_occupancy -= 1
-    #     self.location_occupancy_list.remove(ev_id)
-    #     print(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
+    def ev_departure(self):
+        """Removes an EV from the location's occupancy list."""
+        for ev_id in self.location_occupancy_list:
+                ev = self.model.schedule.agents[ev_id]
+                # if (ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low') and ev._journey_complete == False:
+                # if (ev.machine.state == 'Idle') and ev._journey_complete == False:
+                if ev.start_time == self.model.schedule.time:
+                    self.location_occupancy -= 1
+                    self.location_occupancy_list.remove(ev_id)
+                    print(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
+                    break 
 
     def stage_1(self):
         """Stage 1 of the charge station's step function."""
@@ -918,23 +889,7 @@ class Location(Agent):
     def stage_2(self):
         """Stage 2 of the charge station's step function."""
         if self.location_occupancy_list != []:
-            for ev_id in self.location_occupancy_list:
-                ev = self.model.schedule.agents[ev_id]
-                # if (ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low') and ev._journey_complete == False:
-                if (ev.machine.state == 'Idle') and ev._journey_complete == False:
-                    self.location_occupancy -= 1
-                    self.location_occupancy_list.remove(ev_id)
-                    print(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
-                    break 
-        
-
-# # Check the neighborhood for the presence of a Location agent
-#         for nx, ny in self.model.grid.get_neighborhood(self.pos, moore=True, radius=1):
-#             cell = self.model.grid.get_cell_list_contents([(nx, ny)])
-#             for agent in cell:
-#                 if isinstance(agent, Location):
-#                     self.model.remove_agent(self)
-#                     break
+            self.ev_departure()
 
 
 #########
