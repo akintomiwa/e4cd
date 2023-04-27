@@ -72,7 +72,6 @@ class EVModel(Model):
         self.evs = []
         self.chargestations = []
         self.locations = []
-
         self.csroutes = []
         self.evroutes = []
         
@@ -143,17 +142,11 @@ class EVModel(Model):
         
         print("\nUpdating agents with particulars - route (EV and CS), destination (EV), charge point count (CS), grid locations ...")
 
-        
+    
 
         # assign routes to chargestations using model chargestations and csroutes lists.
         for  i, cs in enumerate(self.chargestations):
             cs.route = self.csroutes[i]        
-       
-        # # show CS routes and associated distances. not chkpts per se, but the cummulative distances between CSs along the route, relative to start.
-        # for route in self.routes:
-        #     setattr(self, f"checkpoint_{route}", [])
-        #     # make another list of checkpoints for each route, and assign to CSs
-        #     print(f"\nCheckpoint lists for Route: {route}: {getattr(self, f'distances_{route}')}") # test
         
         # Set name, inital locations coordinates for Locations
         for i, loc in enumerate(self.locations):
@@ -179,9 +172,9 @@ class EVModel(Model):
             # dynamically create chargepoints per charge station lists vars. Each element is charge rate for each cp.
             # for i in range(cs.no_cps):
             #     setattr(cs, f"cp_{i}", [])
-            for i in range(cs.no_cps):
+            for i in range(1,cs.no_cps+1):
                 setattr(cs, f"cp_{i}", None)
-            # place ev agent on grid
+            # # place ev agent on grid
             self.grid.place_agent(cs, cs.pos)
         
         # loop to update distance goal, route_name, total_route_length
@@ -196,12 +189,13 @@ class EVModel(Model):
             ev.route = choice(self.routes)
             ev.select_initial_coord(self)
             ev.select_destination_coord(self)
-            ev.set_destination()
+            # ev.set_destination()
+            ev.set_source_loc_mac_from_route(ev.route)
+            ev.get_destination_from_route(ev.route)
             ev.get_distance_goal_and_coord_from_dest()
             ev.initialization_report(self)
             # # place ev agent on grid
             self.grid.place_agent(ev, ev.pos)
-            print(f"EV {ev.unique_id}, Grid position: {ev.pos}, Destination Position: {ev.dest_pos}")
             
             # print(f"EV {ev.unique_id}, EV Checkpoint list: {ev.checkpoint_list}")
             # print(f"EV Location: {ev.location}, Position: {ev.pos}, Direction: {ev.direction}")
@@ -216,10 +210,7 @@ class EVModel(Model):
 
         # end of update section
         print("\nAgents Updated")
-        
-
-        # print(f"\nNumber of Charging Stations: {len(self.chargestations)}, Number of EVs: {len(self.evs)}")
-     
+         
         # data collector
         self.datacollector = DataCollector(
             model_reporters={'EVs Charging': mq.get_evs_charge,
@@ -256,28 +247,19 @@ class EVModel(Model):
         c = worker.cumulative_cs_distances(b)
         print(c)
         return c
-    
-    # TO-DO: Add a method to redo set up of the EVs and their routes. 
-    # under ev.finish_day; make EV methods for:
-    # set new route 
-    # update location machine to new location
-    # update new destination
-    # update distance goal
-    # update checkpoint list
-    # update route information from model attributes
+  
     
     def model_finish_day_evs(self) -> None: 
         """
         Reset the EVs at the end of the day. Calls the EV.add_soc_eod() and EV.finish_day() methods.
         """
         for ev in self.evs:
-            print(f"At end of day {self.current_day_count}...")
+            # print(f"At end of day {self.current_day_count}...")
+            print("\n")
             ev.add_soc_eod()
-            
             ev.reset_odometer()
             ev.increment_day_count()
             # print out ev locations
-            
             print(f"EV {ev.unique_id}, Route: {ev.route}, Destination: {ev.destination}, Distance Goal: {ev._distance_goal}, Checkpoint List: {ev.checkpoint_list}")
     
     def model_start_day_evs(self) -> None: 
@@ -286,18 +268,20 @@ class EVModel(Model):
         """
         print("EVs reset for new day. Assigning new routes, destinations and distance goals... \n")
         for ev in self.evs:
-            # new
-            ev.route = choice(self.routes)
-            # set location machine to start of route
-            ev.get_destination_from_route(ev.route)
-            # set destination from possible choices
-            ev.set_initial_loc_mac_from_route(ev.route) 
+            possibilities = worker.get_possible_journeys_long(ev.loc_machine.state)
+            ev.route = choice(possibilities)
+            print(f"\nEV {ev.unique_id}, Location: {ev.loc_machine.state}, Route possibilities: {possibilities}")
+            print(f"EV {ev.unique_id}, New Route: {ev.route}")
+
+            ev.select_initial_coord(self)
             ev.select_destination_coord(self)
-            # set distance goal
-            ev.set_distance_goal()
-            # read route information from model attributes
-            
-            ev.initialization_report(ev.model)
+            ev.set_source_loc_mac_from_route(ev.route)
+            ev.get_destination_from_route(ev.route)
+            ev.get_distance_goal_and_coord_from_dest()
+            ev.set_start_time()
+            ev.initialization_report(self)
+            # # place ev agent on grid
+            self.grid.place_agent(ev, ev.pos)
             
 
     def update_day_count(self) -> None:

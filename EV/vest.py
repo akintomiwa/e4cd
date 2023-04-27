@@ -1,3 +1,279 @@
+#26-02-2023
+
+
+# TO-DO: Add a method to redo set up of the EVs and their routes. 
+# under ev.finish_day; make EV methods for:
+# set new route 
+# update location machine to new location
+# update new destination
+# update distance goal
+# update checkpoint list
+# update route information from model attributes
+
+
+
+# from model.py
+# right before: "Set name, inital locations coordinates for Locations"
+# # show CS routes and associated distances. not chkpts per se, but the cummulative distances between CSs along the route, relative to start.
+
+# for route in self.routes:
+#     setattr(self, f"checkpoint_{route}", [])
+#     # make another list of checkpoints for each route, and assign to CSs
+#     print(f"\nCheckpoint lists for Route: {route}: {getattr(self, f'distances_{route}')}") # test
+
+
+  # # new
+            # ev.route = choice(self.routes)
+            # # set location machine to start of route
+            # ev.get_destination_from_route(ev.route)
+            # # set destination from possible choices
+            # ev.set_source_loc_mac_from_route(ev.route) 
+            # # ev.update_loc_mac_with_destination(ev.destination)
+            # ev.select_destination_coord(self)
+            # # set distance goal
+            # ev.get_distance_goal_and_coord_from_dest()  #uses pos and dest_pos
+            # # ev.set_distance_goal()
+            # # read route information from model attributes
+            # ev.initialization_report(ev.model)
+
+      
+            # this is insufficient. route selection must reflect current location of EV
+            # ev.route = choice(self.routes)
+            # new 
+
+# From EV step function
+# if self.machine.state == 'Travel_low' and self.odometer >= self._distance_goal:
+        # if self.machine.state == 'Travel_low' and self.pos == self.dest_pos:
+        # if (self.machine.state == 'Travel_low') and (self.euc_distance(self.pos[0], self.pos[1], self.dest_pos[0], self.dest_pos[1]) < 3.0):
+# if self.machine.state == 'Travel' and self.odometer >= self._distance_goal:
+        # if self.machine.state == 'Travel' and self.pos == self.dest_pos:
+        # if (self.machine.state == 'Travel') and self.euc_distance(self.pos[0], self.pos[1], self.dest_pos[0], self.dest_pos[1]) < 3.0:
+
+#From EV agent class in agent.py
+# self._soc_usage_thresh = (0.4 * self.max_battery) 
+    # To/ Fro handling
+        # self.to_fro = ""
+
+        
+# if self.machine.state == 'Travel' and self.odometer >= self._distance_goal:
+#     self.machine.end_travel()
+#     # self._in_garage = True
+#     self._journey_complete = True
+#     self.decrease_range_anxiety()
+#     print(f"EV {self.unique_id} has completed its journey to Location {self.destination}. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh. Range anxiety: {self.range_anxiety}")
+
+        
+# from EV stage 1 function
+# self.travel(direction=self.direction)
+        # self.search_for_charge_station()
+        # # check exactly where this is called
+        # for loc in self.model.locations:
+        #     if self.pos == loc.pos:
+        #         self._chosen_cs = loc
+        #         self.travel()
+
+
+# from agents relaunch base
+    # self.choose_journey_type()
+    # self.choose_destination(self.journey_type)
+
+# def choose_charge_station(self):
+#     """
+#     Chooses a charge station to charge at. Selects the charge station with the correct checkpoint id.
+#     Returns:
+#         _chosen_cs: Charge Station chosen for charging, or None if no suitable neighbor was found.
+
+#     """
+#     # choose station
+#     neighbours = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=True)
+#     for neighbour in neighbours:
+#         # if isinstance(neighbour, ChargeStation) and neighbour.checkpoint_id == self.checkpoint_id:
+#         if isinstance(neighbour, ChargeStation):
+#             self._chosen_cs = neighbour
+#             print(f"Chosen CS object is of type: {type(self._chosen_cs)}. Value: {self._chosen_cs}")
+#             return self._chosen_cs
+#     print("No suitable neighbor was found.")
+#     return None
+
+
+# self.battery += self._chosen_cs._charge_rate() #with right rate
+        # print(f"EV {self.unique_id} at CS {self._chosen_cs.unique_id} is in state: {self.machine.state}, Battery: {self.battery}")
+
+# def search_for_charge_station(self) -> None:
+#     cellmates = self.model.grid.get_neighbors(self.pos, moore = True, include_center=True, radius=2)
+#     for cellmate in cellmates:
+#         if isinstance(cellmate, ChargeStation):
+#             target = cellmate
+#             for agent in self.model.schedule.agents:
+#                 if agent.unique_id == target:
+#                     print(f"Found the CS agent! CS assigned to EV {self.unique_id}")
+#                     self._chosen_cs = agent
+#             return None
+
+
+# for attr_name in dir(self):
+#         if attr_name.startswith("cp_"):
+#             print(f"CP {attr_name} at ChargeStation {self.unique_id} is occupied by EV {getattr(self, attr_name)}")
+
+# self.check_location_for_arrivals(self.model)
+    # if self.dequeue == True:
+    #     print(f"Dequeue successful. Length at ChargeStation {self.unique_id} is now {len(self.queue)}")  # testing
+    # elif self.dequeue == False:
+    #     print(f"Dequeue unsuccessful. Length at ChargeStation {self.unique_id} is still {len(self.queue)}")
+
+
+# def dequeue(self) -> bool:
+#     """Remove the first EV from queue."""
+#     try:
+#         active = self.queue.pop(0)  # pick first EV in queue
+#         if active is None:
+#             return False
+#         # go through all charge points and assign the first one that is free
+#         for attr_name in [a for a in dir(self) if a.startswith("cp_")]:
+#             print(f"Checking charge point {attr_name} at CS {self.unique_id} for EV {active.unique_id}")
+#             attr_value = getattr(self, attr_name)
+#             # print(attr_value)
+#             # print(f"{attr_value} is currently assigned to charge point {attr_name} at CS {self.unique_id}")
+#             # if attr_value is None and attr_name not in self.occupied_cps:
+#             if attr_value is None:
+#                 setattr(self, attr_name, active)
+#                 print(f"EV {active.unique_id} assigned to charge point {attr_name} at CS {self.unique_id}")
+#                 active.machine.start_charge()
+#                 print(f"EV {active.unique_id} is in state: {active.machine.state}.")
+#                 self.occupied_cps.add(attr_name)
+#                 print(f"EV {active.unique_id} dequeued at CS {self.unique_id} at CP {attr_name} and is in state: {active.machine.state}. Charging started")
+#                 # return True
+#                 break
+#         # if all charge points are occupied, reinsert active into queue
+#         # use break to exit loop ?
+#         self.queue.insert(0, active)
+#         print(f"EV {active.unique_id} remains in queue at CS {self.unique_id} and is in state: {active.machine.state}.")
+#         return False
+#     except IndexError:
+#         print(f"The queue at ChargeStation {self.unique_id} is empty.")
+#         return False
+#     except Exception as e:
+#         print(f"Error assigning EV to charge point: {e}")
+#         return False
+
+# def get_charge_rate(self):
+#     _charge_rate = 0
+#     for attr_name in dir(self):
+
+#     return self._charge_rate
+# March rewrite 1
+
+# 25-02-2023
+
+# def get_cp_rating_by_index(self, index):
+#     cp_attrs = sorted([key for key in vars(self) if key.startswith('cp_')], key=lambda x: int(x.split('_')[1]))
+#     cp_key = cp_attrs[index]
+#     # cp_value = getattr(self, cp_key) #EV itself?
+#     rate_value = self.cprates[index]
+#     # return cp_value * rate_value
+#     return rate_value
+
+
+        # 29/03/2023
+
+# # modify for cp charge rating extraction.
+# def get_distance_values(station_config, route_name):
+#     """Returns a list of all distance values, for every CP on a given route."""
+#     distance_values = []
+#     for station in station_config[route_name]:
+#         for charger in station_config[route_name][station]:
+#             distance_values.append(int(charger['Distance']))
+#     return distance_values
+
+
+# works okay
+# def remove_list_item_random(lst):
+#     """
+#     Removes a random item from the given list without replacement.
+    
+#     Parameters:
+#     lst (list): The list to remove an item from.
+    
+#     Returns:
+#     The removed item.
+#     """
+#     if len(lst) == 0:
+#         raise ValueError("Cannot remove an item from an empty list.")
+    
+#     idx = random.randrange(len(lst))
+#     return lst.pop(idx)
+
+
+# unused
+# def get_checkpoint_list(route_dict, route_name):
+#     """Returns a list of checkpoints for the specified route."""
+#     route_stations = route_dict.get(route_name)  # Get the dictionary of charging stations for the specified route
+#     if route_stations is None:
+#         raise ValueError(f"No such route: {route_name}")
+    
+#     distances = [station['Distance'] for station in route_stations.values()]  # Extract the distance attribute of each charging station
+#     checkpoints = [sum(distances[:i+1]) for i in range(len(distances))]  # Calculate the running total of distances
+#     return checkpoints
+
+# unused
+# def get_checkpoints(route, data):
+#     cs_data = data[route]
+#     cp_list = []
+#     dist = 0
+    
+#     for cp in cs_data:
+#         cp_data = cs_data[cp]
+#         dist += cp_data['Distance']
+#         cp_list.append((cp_data['CPID'], dist))
+    
+#     return cp_list
+
+# unused
+# def charging_stations_on_route_reverse(route_dict, route_name):
+#     """Returns a reversed list of charging stations for the specified route."""
+#     charging_stations = []
+#     if route_name in route_dict:
+#         for charging_station in route_dict[route_name].values():
+#             charging_stations.extend(charging_station)
+#         charging_stations = list(reversed(charging_stations))
+#     return charging_stations
+
+# def cpids_for_route(route_dict, route_name):
+#     """Returns a list of CPIDs for the specified route."""
+#     route_stations = route_dict.get(route_name)  # Get the dictionary of charging stations for the specified route
+#     if route_stations is None:
+#         raise ValueError(f"No such route: {route_name}")
+#     cpids = [station['CPID'] for station in route_stations.values()]  # Extract the CPID attribute of each charging station
+#     return cpids
+
+
+
+# space 
+# def read_location_coords_from_csv(file_path, location_of_interest):
+#     with open(file_path, newline='') as csvfile:
+#         reader = csv.DictReader(csvfile)
+#         for row in reader:
+#             if row['location'] == location_of_interest:
+#                 x = int(row['x'])
+#                 y = int(row['y'])
+#                 return (x, y)
+#     return None
+
+# works 
+
+# def read_location_coords_from_csv(file_path):
+#     location_dict = {}
+#     with open(file_path, newline='') as csvfile:
+#         reader = csv.DictReader(csvfile)
+#         for row in reader:
+#             location = row['location']
+#             x = int(row['x'])
+#             y = int(row['y'])
+#             location_dict[location] = (x, y)
+#     return location_dict
+
+
+
 # 24-04-2023
 
 

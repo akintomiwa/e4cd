@@ -38,9 +38,7 @@ transitions = [
     {'trigger': 'start_travel', 'source': 'Idle', 'dest': 'Travel'},
     {'trigger': 'get_low', 'source': 'Travel', 'dest': 'Travel_low'},
     {'trigger': 'deplete_battery', 'source': 'Travel_low', 'dest': 'Battery_dead'},
-
     {'trigger': 'join_charge_queue', 'source': 'Travel_low', 'dest': 'In_queue'},
-
     {'trigger': 'wait_in_queue', 'source': 'In_queue', 'dest': 'In_queue'},
     {'trigger': 'start_charge', 'source': 'In_queue', 'dest': 'Charge'},
     {'trigger': 'continue_charge', 'source': 'Charge', 'dest': 'Charge'},

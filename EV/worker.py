@@ -430,103 +430,18 @@ def find_key(tup, dictionary):
     return None
 
 
-# space 
-# def read_location_coords_from_csv(file_path, location_of_interest):
-#     with open(file_path, newline='') as csvfile:
-#         reader = csv.DictReader(csvfile)
-#         for row in reader:
-#             if row['location'] == location_of_interest:
-#                 x = int(row['x'])
-#                 y = int(row['y'])
-#                 return (x, y)
-#     return None
-
-# works 
-
-# def read_location_coords_from_csv(file_path):
-#     location_dict = {}
-#     with open(file_path, newline='') as csvfile:
-#         reader = csv.DictReader(csvfile)
-#         for row in reader:
-#             location = row['location']
-#             x = int(row['x'])
-#             y = int(row['y'])
-#             location_dict[location] = (x, y)
-#     return location_dict
 
 def get_location_coordinates_by_name(locations, location_name):
     return locations.get(location_name)
 
 
-# 29/03/2023
+def get_power_value_for_cp(station_config, route_name, cs_name, cp_name):
+    """Returns the power value for a specific charge point."""
+    power_dict = get_power_values_for_route(station_config, route_name)
+    for key, value in power_dict.items():
+        if key == cs_name:
+            return value[cp_name]
 
-# # modify for cp charge rating extraction.
-# def get_distance_values(station_config, route_name):
-#     """Returns a list of all distance values, for every CP on a given route."""
-#     distance_values = []
-#     for station in station_config[route_name]:
-#         for charger in station_config[route_name][station]:
-#             distance_values.append(int(charger['Distance']))
-#     return distance_values
-
-
-# works okay
-# def remove_list_item_random(lst):
-#     """
-#     Removes a random item from the given list without replacement.
-    
-#     Parameters:
-#     lst (list): The list to remove an item from.
-    
-#     Returns:
-#     The removed item.
-#     """
-#     if len(lst) == 0:
-#         raise ValueError("Cannot remove an item from an empty list.")
-    
-#     idx = random.randrange(len(lst))
-#     return lst.pop(idx)
-
-
-# unused
-# def get_checkpoint_list(route_dict, route_name):
-#     """Returns a list of checkpoints for the specified route."""
-#     route_stations = route_dict.get(route_name)  # Get the dictionary of charging stations for the specified route
-#     if route_stations is None:
-#         raise ValueError(f"No such route: {route_name}")
-    
-#     distances = [station['Distance'] for station in route_stations.values()]  # Extract the distance attribute of each charging station
-#     checkpoints = [sum(distances[:i+1]) for i in range(len(distances))]  # Calculate the running total of distances
-#     return checkpoints
-
-# unused
-# def get_checkpoints(route, data):
-#     cs_data = data[route]
-#     cp_list = []
-#     dist = 0
-    
-#     for cp in cs_data:
-#         cp_data = cs_data[cp]
-#         dist += cp_data['Distance']
-#         cp_list.append((cp_data['CPID'], dist))
-    
-#     return cp_list
-
-# unused
-# def charging_stations_on_route_reverse(route_dict, route_name):
-#     """Returns a reversed list of charging stations for the specified route."""
-#     charging_stations = []
-#     if route_name in route_dict:
-#         for charging_station in route_dict[route_name].values():
-#             charging_stations.extend(charging_station)
-#         charging_stations = list(reversed(charging_stations))
-#     return charging_stations
-
-# def cpids_for_route(route_dict, route_name):
-#     """Returns a list of CPIDs for the specified route."""
-#     route_stations = route_dict.get(route_name)  # Get the dictionary of charging stations for the specified route
-#     if route_stations is None:
-#         raise ValueError(f"No such route: {route_name}")
-#     cpids = [station['CPID'] for station in route_stations.values()]  # Extract the CPID attribute of each charging station
-#     return cpids
-
+def cp_name_to_cp_number(cp_no):
+    """Returns the charge point number from the charge point name."""
+    return int(cp_no.split('_')[1])
