@@ -260,7 +260,8 @@ class EVModel(Model):
             ev.reset_odometer()
             ev.increment_day_count()
             # print out ev locations
-            print(f"EV {ev.unique_id}, Route: {ev.route}, Destination: {ev.destination}, Distance Goal: {ev._distance_goal}, Checkpoint List: {ev.checkpoint_list}")
+            print(f"EV {ev.unique_id}, State: {ev.machine.state}, Route: {ev.route}, Current Location (LSM): {ev.loc_machine.state}, Distance Goal: {ev._distance_goal}")
+            # print(f"EV {ev.unique_id}, Route: {ev.route}, Destination: {ev.destination}, Distance Goal: {ev._distance_goal}, Checkpoint List: {ev.checkpoint_list}")
     
     def model_start_day_evs(self) -> None: 
         """
@@ -332,19 +333,14 @@ class EVModel(Model):
     def step(self) -> None:
         """Advance model one step in time"""
         print(f"\nCurrent timestep (tick): {self._current_tick}.")
-        # print("Active Css: " + str(get_active_css(self)))
-        # print(self.get_agent_count(self))
         self.schedule.step()
         self.datacollector.collect(self)
 
         # if self.schedule.steps % 24 == 0:
         if self._current_tick % 24 == 0:
-            # print(f"This is the end of day:{(self.schedule.steps + 1) / 24} ")
             self.model_finish_day_evs()
             self.update_day_count()
-            # print(f"This is the end of day: {self.schedule.steps / 24}. Or {self.current_day_count} ")
             print(f"This is the end of day: {self.current_day_count} ")
-        self._current_tick += 1
 
         # relaunch at beginning of day
         if self._current_tick > 24 and self._current_tick % 24 == 1:
@@ -356,19 +352,22 @@ class EVModel(Model):
             # else:
             #     print("Some other error.")
         
-        # overnight charging. integration with relaunch??
         # start overnight charging. Every day at 02:00
-        if self._current_tick > 24 and self._current_tick % 24 == 2:
-                try:
-                    self.start_overnight_charge_evs()
-                except MachineError:
-                    print("Error in charging EVs overnight. EV is in a state other than Idle or Battery_Dead.")
-                except Exception:
-                    print("Some other error occurred when attempting to charge EVs overnight.")
+        # overnight charging integration with relaunch??
+        # if self._current_tick > 24 and self._current_tick % 24 == 2:
+        #         try:
+        #             self.start_overnight_charge_evs()
+        #         except MachineError:
+        #             print("Error in charging EVs overnight. EV is in a state other than Idle or Battery_Dead.")
+        #         except Exception:
+        #             print("Some other error occurred when attempting to charge EVs overnight.")
         
         # # end overnight charging. Every day at 05:00
         # if self._current_tick > 24 and self._current_tick % 24 == 5:
         #     self.end_overnight_charge_evs()
+        
+        # Last step of the day
+        self._current_tick += 1
                 
 
 

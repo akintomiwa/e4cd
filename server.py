@@ -101,6 +101,7 @@ grid = CanvasGrid(agent_portrayal, 100, 100,500, 500)
 chart = ChartModule([{"Label": "EV status", "Color": "green"}, 
                      {"Label": "ChargeStation occupancy", "Color": "red"}])
 
+
 bar_chart = BarChartModule([{"Label": "Count", "Color": "black"}])
 
 # Define user parameters if necessary

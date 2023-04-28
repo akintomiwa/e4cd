@@ -1,5 +1,70 @@
-#26-02-2023
+# 28-04-2023
+# print(attr_value)
+                # print(f"{attr_value} is currently assigned to charge point {attr_name} at CS {self.unique_id}")
+                # if attr_value is None and attr_name not in self.occupied_cps:
 
+# print(f"attr_name is {attr_name}")
+                    # print(worker.get_power_value_for_cp(station_config=model.station_params, route_name=active.route, cs_name=self.name, cp_name = worker.cp_name_to_cp_number(attr_name)))
+                    # print(f"EV {active.unique_id} is in state: {active.machine.state}.")
+
+#26-04-2023
+
+# from mesa import Agent
+# from mesa.space import MultiGrid
+# import random
+
+# class EV(Agent):
+#     def __init__(self, unique_id, model):
+#         super().__init__(unique_id, model)
+#         self.pos = self._random_location()
+#         self.route = self._choose_route()
+#         self.chosen_station = None
+    
+#     def _random_location(self):
+#         # Choose a random location from the Location agents
+#         location_agents = [agent for agent in self.model.schedule.agents if isinstance(agent, Location)]
+#         location_agent = random.choice(location_agents)
+#         return location_agent.pos
+    
+#     def _choose_route(self):
+#         # Choose a random route that contains the ChargeStation agents
+#         charge_station_agents = [agent for agent in self.model.schedule.agents if isinstance(agent, ChargeStation)]
+#         route = []
+#         current_position = self.pos
+#         while len(charge_station_agents) > 0:
+#             # Find the closest ChargeStation agent to the current position
+#             closest_station = min(charge_station_agents, key=lambda x: self.distance(current_position, x.pos))
+#             # Add the closest ChargeStation agent to the route
+#             route.append(closest_station)
+#             # Remove the closest ChargeStation agent from the list of available ChargeStation agents
+#             charge_station_agents.remove(closest_station)
+#             current_position = closest_station.pos
+#         return route
+    
+#     def _distance(self, pos1, pos2):
+#         # Calculate the Euclidean distance between two positions
+#         return ((pos1[0]-pos2[0])**2 + (pos1[1]-pos2[1])**2)**0.5
+    
+#     def _move(self):
+#         # Move towards the position of the next ChargeStation agent in the route
+#         if len(self.route) > 0:
+#             next_station = self.route[0]
+#             dx = next_station.pos[0] - self.pos[0]
+#             dy = next_station.pos[1] - self.pos[1]
+#             if abs(dx) > abs(dy):
+#                 self.pos = (self.pos[0] + dx//abs(dx), self.pos[1])
+#             else:
+#                 self.pos = (self.pos[0], self.pos[1] + dy//abs(dy))
+#             # Check if there is a ChargeStation agent at the new position
+#             cellmates = self.model.grid.get_cell_list_contents([self.pos])
+#             for agent in cellmates:
+#                 if isinstance(agent, ChargeStation):
+#                     self._drop_by(agent)
+#                     break
+    
+#     def _drop_by(self, station):
+#         # Append the chosen ChargeStation agent to the chosen_station attribute
+#         self.chosen_station = station
 
 # TO-DO: Add a method to redo set up of the EVs and their routes. 
 # under ev.finish_day; make EV methods for:
