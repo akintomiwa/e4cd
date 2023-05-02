@@ -180,3 +180,4 @@ EV/__pycache__/statemachine.cpython-311.pyc
 .vscode/settings.json
 .gitignore
 .DS_Store
+.csv
