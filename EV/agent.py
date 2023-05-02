@@ -468,8 +468,8 @@ class EV(Agent):
         elif self._distance_goal >= 90:
             self.start_time = random.randint(6, 9)
 
-        if self.model.current_day_count > 1:
-            self.start_time = self.model.current_day_count * 24 + self.start_time
+        if self.model.current_day_count > 0:
+            self.start_time = (self.model.current_day_count * 24) + self.start_time
     
     # Range Anxiety charging behavior
     def increase_range_anxiety(self) -> None:
