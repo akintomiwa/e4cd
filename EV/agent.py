@@ -1,6 +1,6 @@
 """This module contains the agent classes for the EV model."""
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import math
 # import os
 import random
@@ -9,9 +9,8 @@ import warnings
 warnings.simplefilter("ignore")
 import numpy as np
 from mesa import Agent
-from mesa.datacollection import DataCollector
 from matplotlib import pyplot as plt, patches
-import scipy.stats as ss
+# import scipy.stats as ss
 import cufflinks as cf
 cf.go_offline()
 # from plotly.offline import iplot
@@ -99,12 +98,17 @@ class ChargeStation(Agent):
                 attr_value = getattr(self, attr_name)
                 if attr_value is None:
                     setattr(self, attr_name, active)
-                    print(f"EV {active.unique_id} assigned to charge point {attr_name} at CS {self.unique_id}")
                     active.machine.start_charge()
                     self.occupied_cps.add(attr_name)
                     print(f"EV {active.unique_id} dequeued at {self.name} at {attr_name} and is in state: {active.machine.state}. Charging started")
-                    active.charge_rate = worker.get_power_value_for_cp(station_config=model.station_params, route_name=active.route, cs_name=self.name, cp_name=worker.cp_name_to_cp_number(attr_name))
-                    print(f"EV {active.unique_id} is assigned to charge point {attr_name} at CS {self.unique_id} with charge rate {active.charge_rate} kW.")
+                    route_rates = worker.get_power_values_route(station_config=model.station_params, route_name=self.route)
+                    print(f"\nCP assignment summary:")
+                    print(f"CS name: {self.name}, Route charge rates: {route_rates}, CP number: {worker.cp_name_to_cp_number(attr_name)}")
+                    rate = worker.get_cp_value(route_rates, self.name, worker.cp_name_to_cp_number(attr_name))
+                    # print(f"rate: {rate}")
+                    active.charge_rate = rate
+                    # active.charge_rate = 22 if active.charge_rate is None else rate
+                    print(f"EV {active.unique_id} has been assigned to {attr_name} at {self.name} with charge rate {active.charge_rate} kW.")
                     print(f"EV {active.unique_id} is in state: {active.machine.state}.")
                     return True
                 elif attr_value is not None:
@@ -119,54 +123,7 @@ class ChargeStation(Agent):
         except Exception as e:
             print(f"Error assigning EV to charge point: {e}")
             return False
-
-
-    def dequeue_old(self, model) -> bool:
-        """Remove the first EV from queue."""
-        try:
-            active = self.queue.pop(0)  # pick first EV in queue
-            if active is None:
-                return False
-            # go through all charge points and assign the first one that is free
-            for attr_name in [a for a in dir(self) if a.startswith("cp_")]:
-                print(f"Checking charge point {attr_name} at {self.name} for EV {active.unique_id}")
-                attr_value = getattr(self, attr_name)
-                if attr_value is None:
-                    setattr(self, attr_name, active)
-                    print(f"EV {active.unique_id} assigned to charge point {attr_name} at CS {self.unique_id}")
-                    active.machine.start_charge()
-                    self.occupied_cps.add(attr_name)
-                    print(f"EV {active.unique_id} dequeued at {self.name} at {attr_name} and is in state: {active.machine.state}. Charging started")
-                    active.charge_rate = worker.get_power_value_for_cp(station_config=model.station_params, route_name=active.route, cs_name = self.name, cp_name = worker.cp_name_to_cp_number(attr_name))
-                    print(f"EV {active.unique_id} is assigned to charge point {attr_name} at CS {self.unique_id} with charge rate {active.charge_rate} kW.")
-                    print(f"EV {active.unique_id} is in state: {active.machine.state}.")
-                    return True
-                # break
-                elif attr_value is not None:
-                    print(f"Charge point {attr_name} at CS {self.unique_id} is occupied.")
-                    self.queue.insert(0, active)
-                    print(f"EV {active.unique_id} remains in queue at CS {self.unique_id} and is in state: {active.machine.state}.")
-                    return False
-                
-            # if all charge points are occupied, reinsert active into queue
-            # use break to exit loop ?
-            # To DO Focus
-            # problem is, for loop in block below evaluates to true because ev has just been assigned to cp. 
-
-            # for attr_name in [a for a in dir(self) if a.startswith("cp_")]:
-            #     attr_value = getattr(self, attr_name)
-            #     if attr_value is not None:
-            #         self.queue.insert(0, active)
-            #         print(f"EV {active.unique_id} remains in queue at CS {self.unique_id} and is in state: {active.machine.state}.")
-            #         return False
-        except IndexError:
-            print(f"The queue at ChargeStation {self.unique_id} is empty.")
-            return False
-        except Exception as e:
-            print(f"Error assigning EV to charge point: {e}")
-            return False
    
-  
     def finish_charge(self) -> None:
         """Finish charging the EV at the ChargeStation."""
         try:
@@ -185,7 +142,7 @@ class ChargeStation(Agent):
                             setattr(self, attr_name, None)
                             # new change
                             self.occupied_cps.remove(attr_name)
-                            print(f"EV at CS {self.unique_id} at CP {attr_name} has finished charging. CP is now empty.")
+                            print(f"EV at CS {self.unique_id} at CP {attr_name} has finished charging. CP is now free to use.")
         except:
             pass
 
@@ -199,8 +156,6 @@ class ChargeStation(Agent):
         """Stage 2 of the charge station's step function."""
         self.finish_charge()
   
-
-
 class EV(Agent):
     """An agent used to model an electric vehicle (EV).
     Attributes:
@@ -278,7 +233,7 @@ class EV(Agent):
         charge_overnight: Charge the EV overnight at its home charge station.
         join_cs_queue: Join the queue at the charge station.
         
-        # dailies:
+        dailies:
         add_soc_eod: Add the state of charge of the EV at the end of the day to a list.
         increment_day_count: Increment the day count of the EV.
         reset_odometer: Reset the odometer of the EV.
@@ -585,7 +540,7 @@ class EV(Agent):
         """Moves the EV towards its destination."""
         scaling_factor = 2 # helps visuals map to underlying numbers.
         distance = self._distance_goal
-        print(f"EV {self.unique_id} is moving. Distance to destination: {self._distance_goal}.")
+        # print(f"EV {self.unique_id} is moving. Distance to destination: {self._distance_goal}.")
         if distance == 0:
             # The EV has reached its destination
             self.dest_pos = None
@@ -826,7 +781,7 @@ class EV(Agent):
             self._in_queue = False
             self.charge()
             # print(f"EV {self.unique_id} is charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
-            if self.battery >= self._soc_charging_thresh:
+            if self.battery >= self._soc_charging_thresh:   
                 self.machine.end_charge()
                 print(f"EV {self.unique_id} has finished charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
                 self._at_station = False

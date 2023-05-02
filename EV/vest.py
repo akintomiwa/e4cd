@@ -1,3 +1,8 @@
+# 02-05-2023
+# rate = worker.get_power_value_for_cp(station_config=model.station_params, route_name=active.route, cs_name=self.name, cp_name=worker.cp_name_to_cp_number(attr_name))
+# rate = route_rates[worker.cp_name_to_cp_number(attr_name)]
+
+
 # 28-04-2023
 # print(attr_value)
                 # print(f"{attr_value} is currently assigned to charge point {attr_name} at CS {self.unique_id}")

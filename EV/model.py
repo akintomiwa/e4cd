@@ -260,7 +260,7 @@ class EVModel(Model):
             ev.reset_odometer()
             ev.increment_day_count()
             # print out ev locations
-            print(f"EV {ev.unique_id}, State: {ev.machine.state}, Route: {ev.route}, Current Location (LSM): {ev.loc_machine.state}, Distance Goal: {ev._distance_goal}")
+            print(f"EV {ev.unique_id}, State: {ev.machine.state}, Route: {ev.route}, Current Location (LSM): {ev.loc_machine.state}")
             # print(f"EV {ev.unique_id}, Route: {ev.route}, Destination: {ev.destination}, Distance Goal: {ev._distance_goal}, Checkpoint List: {ev.checkpoint_list}")
     
     def model_start_day_evs(self) -> None: 

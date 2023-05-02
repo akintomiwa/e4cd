@@ -371,6 +371,9 @@ def reverse_strings(string_list):
 #     return post_value * points_value
 
 def get_cp_rating_by_index(obj, index):
+    """
+    Returns the rating of the charge point at the given index.
+    """
     post_attrs = sorted([key for key in vars(obj) if key.startswith('cp_')], key=lambda x: int(x.split('_')[1]))
     post_key = post_attrs[index]
     post_value = getattr(obj, post_key)
@@ -423,19 +426,22 @@ def get_combinations(lst):
     return result
 
 def find_key(tup, dictionary):
+    """
+    Returns the key of a given tuple in a dictionary.
+    If the tuple is not found, returns None.
+    """
     for key, value in dictionary.items():
         if value == tup:
             return key
     # if the string is not found in the dictionary values, return None
     return None
 
-
-
-def get_location_coordinates_by_name(locations, location_name):
+def get_location_coordinates_by_name(locations, location_name)  -> tuple:
+    """Returns the coordinates of a location given its name."""
     return locations.get(location_name)
 
 
-def get_power_value_for_cp(station_config, route_name, cs_name, cp_name):
+def get_power_value_for_cp(station_config, route_name, cs_name, cp_name) -> int:
     """Returns the power value for a specific charge point."""
     power_dict = get_power_values_for_route(station_config, route_name)
     for key, value in power_dict.items():
@@ -445,3 +451,19 @@ def get_power_value_for_cp(station_config, route_name, cs_name, cp_name):
 def cp_name_to_cp_number(cp_no):
     """Returns the charge point number from the charge point name."""
     return int(cp_no.split('_')[1])
+
+def get_power_values_route(station_config, route_name):
+    """Returns a dict with Charge station name as key and list of power values for each charge point in the station, for a given route."""
+    power_dict = {}
+    for station in station_config[route_name]:
+        cp_power = []
+        for charger in station_config[route_name][station]:
+            cp_power.append(int(charger['Power']))
+        power_dict[station] = cp_power
+    return power_dict
+
+def get_cp_value(route_rates, cs_name, index):
+    for key in route_rates:
+        if cs_name in key:
+            return route_rates[key][index - 1]
+    return None
