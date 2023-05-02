@@ -1,4 +1,7 @@
 # 02-05-2023
+# self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
+# self.base_cp_count = 0
+
 # rate = worker.get_power_value_for_cp(station_config=model.station_params, route_name=active.route, cs_name=self.name, cp_name=worker.cp_name_to_cp_number(attr_name))
 # rate = route_rates[worker.cp_name_to_cp_number(attr_name)]
 

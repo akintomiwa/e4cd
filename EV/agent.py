@@ -56,8 +56,6 @@ class ChargeStation(Agent):
         self.occupied_cps = set()
         self.no_cps = 0
         self._is_active = False
-        # self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
-        # self.base_cp_count = 0
         self.checkpoint_id = 0 # was 0 
 
         # new
@@ -102,18 +100,18 @@ class ChargeStation(Agent):
                     self.occupied_cps.add(attr_name)
                     print(f"EV {active.unique_id} dequeued at {self.name} at {attr_name} and is in state: {active.machine.state}. Charging started")
                     route_rates = worker.get_power_values_route(station_config=model.station_params, route_name=self.route)
-                    print(f"\nCP assignment summary:")
+                    print("\n")
+                    print(f"CP assignment summary:")
                     print(f"CS name: {self.name}, Route charge rates: {route_rates}, CP number: {worker.cp_name_to_cp_number(attr_name)}")
                     rate = worker.get_cp_value(route_rates, self.name, worker.cp_name_to_cp_number(attr_name))
-                    # print(f"rate: {rate}")
                     active.charge_rate = rate
                     # active.charge_rate = 22 if active.charge_rate is None else rate
-                    print(f"EV {active.unique_id} has been assigned to {attr_name} at {self.name} with charge rate {active.charge_rate} kW.")
+                    print(f"EV {active.unique_id} has been assigned to {attr_name} at {self.name}. Charge rate: {active.charge_rate} kW.")
                     print(f"EV {active.unique_id} is in state: {active.machine.state}.")
                     return True
                 elif attr_value is not None:
-                    print(f"Charge point {attr_name} at CS {self.unique_id} is occupied.")
-            # if all charge points are occupied, reinsert active into queue
+                    print(f"Charge point {attr_name} at {self.name} is occupied.")
+            # if all charge points are occupied, reinsert active EV into queue
             self.queue.insert(0, active)
             print(f"EV {active.unique_id} remains in queue at CS {self.unique_id} and is in state: {active.machine.state}.")
             return False
@@ -131,7 +129,7 @@ class ChargeStation(Agent):
                 if attr_name.startswith("cp_"):
                     attr_value = getattr(self, attr_name)
                     if attr_value is None:
-                        print(f"This CP, {attr_name} at ChargeStation {self.unique_id} is empty.")
+                        print(f"CP {attr_name} at ChargeStation {self.unique_id} is empty.")
                     else:
                         if attr_value.battery < attr_value._soc_charging_thresh:
                             # attr_value.charge()
