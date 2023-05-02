@@ -183,7 +183,6 @@ class EV(Agent):
         ev_consumption_rate: The energy consumption rate of the EV.
         tick_energy_usage: The energy usage of the EV in a tick.
         battery_eod: The state of charge of the EV at the end of the day.
-        current_day_count: The current day count of the EV.
         start_time: The start time of the EV.
         _chosen_cs: The chosen charge station of the EV.
         checkpoint_list: The list of checkpoints the EV will pass through.
@@ -233,7 +232,6 @@ class EV(Agent):
         
         dailies:
         add_soc_eod: Add the state of charge of the EV at the end of the day to a list.
-        increment_day_count: Increment the day count of the EV.
         reset_odometer: Reset the odometer of the EV.
         relaunch_base: Base EV relaunch process.
         relaunch_travel: Relaunch process for travelling EVs.
@@ -291,7 +289,6 @@ class EV(Agent):
         self.ev_consumption_rate = 0
         self.tick_energy_usage = 0
         self.battery_eod = []
-        self.current_day_count = 1
         self.start_time = 0
         self._chosen_cs = 0 
         self.checkpoint_list = []
@@ -465,13 +462,14 @@ class EV(Agent):
     def set_start_time(self) -> None:
         """Sets the start time for the EV to travel. Sets start time based on distance goal - if distance goal is greater than or equal to 90 miles, start time is earlier.
         """
-        # self.start_time = random.randint(6, 12)
-
         if self._distance_goal < 90:
             self.start_time = random.randint(10, 14)
 
         elif self._distance_goal >= 90:
             self.start_time = random.randint(6, 9)
+
+        if self.model.current_day_count > 1:
+            self.start_time = self.model.current_day_count * 24 + self.start_time
     
     # Range Anxiety charging behavior
     def increase_range_anxiety(self) -> None:
@@ -497,7 +495,6 @@ class EV(Agent):
         self.range_anxiety -= abs(margin)
   
     # Core EV Functions
-
     def select_initial_coord(self, model) -> None:
         """Given model, selects the initial coordinates of the EV from the model's locations.
         
@@ -654,11 +651,6 @@ class EV(Agent):
         """Adds the battery level at the end of the day to a list."""
         self.battery_eod.append(self.battery)
         print(f"EV {self.unique_id} Battery level at end of day: {self.battery_eod[-1]}")
-    
-    
-    def increment_day_count(self) -> None:
-        """ Increments current_day_count by 1. """
-        self.current_day_count += 1
 
     def reset_odometer(self) -> None:
         """Resets the EV odometer to 0."""
@@ -678,9 +670,9 @@ class EV(Agent):
             destination: Destination for the EV.
         """
         self.set_start_time() 
-        marker = (n * 24)
-        self.start_time += marker
-        print(f"\nEV {self.unique_id} relaunch prep successful. New start time: {self.start_time}")
+        # marker = (n * 24)
+        # self.start_time += marker
+        # print(f"\nEV {self.unique_id} relaunch prep successful. New start time: {self.start_time}")
         # self.initialization_report(self.model)
         self._journey_complete = False
 

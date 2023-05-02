@@ -254,11 +254,9 @@ class EVModel(Model):
         Reset the EVs at the end of the day. Calls the EV.add_soc_eod() and EV.finish_day() methods.
         """
         for ev in self.evs:
-            # print(f"At end of day {self.current_day_count}...")
             print("\n")
             ev.add_soc_eod()
             ev.reset_odometer()
-            ev.increment_day_count()
             # print out ev locations
             print(f"EV {ev.unique_id}, State: {ev.machine.state}, Route: {ev.route}, Current Location (LSM): {ev.loc_machine.state}")
             # print(f"EV {ev.unique_id}, Route: {ev.route}, Destination: {ev.destination}, Distance Goal: {ev._distance_goal}, Checkpoint List: {ev.checkpoint_list}")
@@ -273,7 +271,6 @@ class EVModel(Model):
             ev.route = choice(possibilities)
             print(f"\nEV {ev.unique_id}, Location: {ev.loc_machine.state}, Route possibilities: {possibilities}")
             print(f"EV {ev.unique_id}, New Route: {ev.route}")
-
             ev.select_initial_coord(self)
             ev.select_destination_coord(self)
             ev.set_source_loc_mac_from_route(ev.route)

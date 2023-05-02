@@ -417,7 +417,7 @@ def get_possible_journeys_long(current_position):
 
 def get_combinations(lst):
     """
-    Returns all possible combinations of the input list's elements as a string in the form.
+    Returns all possible combinations of the input list's elements as a string in the form of "a-b".
     """
     result = []
     for a, b in permutations(lst, 2):
