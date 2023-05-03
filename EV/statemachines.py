@@ -11,7 +11,7 @@ class EVSM(Machine):
     Can be deployed as EvState object.
 
     States:
-    Idle, Travel, Seek_queue, Travel_low, In_queue, Charge, Travel_low, Battery_dead, Home_Charge
+    Idle, Travel, Seek_queue, Travel_low, In_queue, Charge, Travel_low, Battery_dead, Home_charge
     Transitions:
     start_travel: Idle -> Travel
     get_low: Travel -> Travel_low
@@ -30,11 +30,11 @@ class EVSM(Machine):
 
     """
 
-states = ['Idle', 'Travel', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead', 'Home_Charge']
+states = ['Idle', 'Travel', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead', 'Home_charge']
 transitions = [
-    {'trigger': 'start_home_charge', 'source': 'Idle', 'dest': 'Home_Charge'},
-    {'trigger': 'continue_home_charge', 'source': 'Home_Charge', 'dest': 'Home_Charge'},
-    {'trigger': 'end_home_charge', 'source': 'Home_Charge', 'dest': 'Idle'},
+    {'trigger': 'start_home_charge', 'source': 'Idle', 'dest': 'Home_charge'},
+    {'trigger': 'continue_home_charge', 'source': 'Home_charge', 'dest': 'Home_charge'},
+    {'trigger': 'end_home_charge', 'source': 'Home_charge', 'dest': 'Idle'},
     {'trigger': 'start_travel', 'source': 'Idle', 'dest': 'Travel'},
     {'trigger': 'get_low', 'source': 'Travel', 'dest': 'Travel_low'},
     {'trigger': 'deplete_battery', 'source': 'Travel_low', 'dest': 'Battery_dead'},
@@ -99,11 +99,11 @@ class TModel():
         return True
 
 model = TModel()
-machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead', 'Home_Charge'],
+machine = GraphMachine(model=model, states=['Idle', 'Travel', 'Seek_queue', 'In_queue', 'Charge', 'Travel_low', 'Battery_dead', 'Home_charge'],
                         transitions= [
-                        {'trigger': 'start_home_charge', 'source': 'Idle', 'dest': 'Home_Charge'},
-                        {'trigger': 'continue_home_charge', 'source': 'Home_Charge', 'dest': 'Home_Charge'},
-                        {'trigger': 'end_home_charge', 'source': 'Home_Charge', 'dest': 'Idle'},
+                        {'trigger': 'start_home_charge', 'source': 'Idle', 'dest': 'Home_charge'},
+                        {'trigger': 'continue_home_charge', 'source': 'Home_charge', 'dest': 'Home_charge'},
+                        {'trigger': 'end_home_charge', 'source': 'Home_charge', 'dest': 'Idle'},
                         {'trigger': 'start_travel', 'source': 'Idle', 'dest': 'Travel'},
                         {'trigger': 'get_low', 'source': 'Travel', 'dest': 'Travel_low'},
                         {'trigger': 'seek_charge_queue', 'source': 'Travel_low', 'dest': 'Seek_queue'},

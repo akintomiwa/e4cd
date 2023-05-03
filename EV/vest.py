@@ -1,3 +1,96 @@
+# 03-05-2023
+
+      # # reference 
+        # if self.machine.state == 'Home_Charge':
+        #     self._is_charging = True
+        #     self.charge_overnight()
+        #     if self.battery >= self._soc_usage_thresh:
+        #         self.machine.end_home_charge()
+        #         print(f"EV {self.unique_id} has finished Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+        #         self._is_charging = False
+        #     elif self.battery < self._soc_usage_thresh:
+        #         self.machine.continue_home_charge()
+        #         print(f"EV {self.unique_id} is still charging at home. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+# if self.machine.state == 'Battery_dead':
+        #     pass
+        # else:
+        #     self.start_travel() 
+
+
+    # marker = (n * 24)
+    # self.start_time += marker
+    # print(f"\nEV {self.unique_id} relaunch prep successful. New start time: {self.start_time}")
+    # self.initialization_report(self.model)
+
+
+# active.charge_rate = 22 if active.charge_rate is None else rate
+
+    # def set_destination(self) -> None:
+    #     """Sets the destination of the EV.
+        
+    #     Args:
+    #         destination: Destination of the EV.
+    #     """
+    #     self.destination = worker.find_key(self.dest_pos, self.model.location_params)
+      # print(f"EV Source: {self.source}")
+        # print(f"Model locations: {self.model.location_params}")
+
+    # self.loc_machine.set_state(self.get_initial_location_from_route(route))
+
+    # def step(self, shuffle_types = True, shuffle_agents = True) -> None:
+    # ev.select_initial_coord(self)
+            # ev.select_destination_coord(self)
+            # # ev.set_source_loc_mac_from_route(ev.route)
+            # ev.set_source_loc_mac_from_source(ev.source)
+            # ev.get_destination_from_route(ev.route)
+            # ev.get_distance_goal_and_coord_from_dest()
+            # ev.set_start_time()
+            # ev.initialization_report(self)
+            # # # place ev agent on grid
+            # self.grid.place_agent(ev, ev.pos)
+            
+            
+            # ev.set_start_time()
+            # ev.select_initial_coord(self)
+            # ev.select_destination_coord(self)
+            # # set source attribute from route.
+            # ev.get_initial_location_from_route(ev.route) 
+            # # extract destination from route. Set destination attribute from route.
+            # ev.get_destination_from_route(ev.route)
+            # # set LSM source location from route
+            # # ev.set_source_loc_mac_from_route(ev.route)  
+            # ev.set_source_loc_mac_from_source(ev.source)
+            # ev.get_distance_goal_and_coord_from_dest()
+            # ev.initialization_report(self)
+            # # place ev agent on grid
+            # self.grid.place_agent(ev, ev.pos)
+      # for ev in self.evs:
+            
+        #     ev.route = choice(self.routes)
+        #     ev.set_start_time()
+        #     ev.select_initial_coord(self)
+        #     ev.select_destination_coord(self)
+        #     # set source attribute from route.
+        #     ev.get_initial_location_from_route(ev.route) 
+        #     # extract destination from route. Set destination attribute from route.
+        #     ev.get_destination_from_route(ev.route)
+        #     # set LSM source location from route
+        #     # ev.set_source_loc_mac_from_route(ev.route)  
+        #     ev.set_source_loc_mac_from_source(ev.source)
+        #     ev.get_distance_goal_and_coord_from_dest()
+        #     ev.initialization_report(self)
+        #     # place ev agent on grid
+        #     self.grid.place_agent(ev, ev.pos)
+            
+            # print(f"EV {ev.unique_id}, EV Checkpoint list: {ev.checkpoint_list}")
+            # print(f"EV Location: {ev.location}, Position: {ev.pos}, Direction: {ev.direction}")
+
+
+    # def set_distance_goal(self) -> None:
+    #     # self._distance_goal = self.checkpoint_list[-1]
+    #     print("distance goal not set")
+
+
 # 02-05-2023
 # self._charge_rate = choice([7, 15, 100, 300]) #different charge rates
 # self.base_cp_count = 0
