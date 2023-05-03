@@ -31,7 +31,7 @@ date_str = str(datetime.today())
 
 
 def run() -> object:
-    model_run = model.EVModel(ticks=cfg.ticks, no_evs=cfg.no_evs, station_params=cfg.station_config, location_params=cfg.location_config, station_location_param=cfg.station_location_config)
+    model_run = model.EVModel(ticks=cfg.ticks, no_evs=cfg.no_evs, station_params=cfg.station_config, location_params=cfg.location_config, station_location_param=cfg.station_location_config, overnight_charging=cfg.overnight_charging)
     for i in range(cfg.ticks):
         model_run.step()
     return model_run
@@ -46,7 +46,7 @@ def export_data(model, format) -> None:
     if format == 'csv':
         run_stats.to_csv(cfg.DATA_PATH + 'data_' + date_str[0:10] + '_' + str(cfg.no_evs) + '_EV_agent_model_output.csv')
         print('Model data exported to csv')
-    elif format == 'csv':
+    elif format == 'xlsx' or 'xls':
         run_stats.to_excel(cfg.DATA_PATH + 'data_' + date_str[0:10] + '_' + str(cfg.no_evs) + '_EV_agent_model_output.xlsx', index=False)
         print('Model data exported to xlsx')
 

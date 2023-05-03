@@ -1,8 +1,8 @@
 # import mesa
 from EV.model import EVModel
 from EV.agent import EV, ChargeStation, Location
-# from EV.model_config import model_config
-import EV.model_config as model_config
+# from EV.cfg import cfg
+import EV.model_config as cfg
 from mesa.visualization.ModularVisualization import ModularServer, VisualizationElement
 from mesa.visualization.UserParam import UserSettableParameter
 from mesa.visualization.modules import CanvasGrid, ChartModule, BarChartModule, TextElement
@@ -111,10 +111,11 @@ server = ModularServer(EVModel,
                     [grid, chart, bar_chart, EVLegend(), StationLegend(), LocationLegend()],
                     "ec4d EV Model",
                     {'no_evs': 3, 
-                     'station_params':model_config.station_config, 
-                     'location_params':model_config.location_config,
-                     'station_location_param':model_config.station_location_config, 
-                     'ticks': 27})
+                     'station_params':cfg.station_config, 
+                     'location_params':cfg.location_config,
+                     'station_location_param':cfg.station_location_config, 
+                     'overnight_charging':cfg.overnight_charging, 
+                     'ticks': cfg.ticks})
 
 server.port = 8521
 server.launch()
