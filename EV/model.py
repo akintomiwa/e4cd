@@ -32,7 +32,7 @@ class EVModel(Model):
             
     """
 
-    def __init__(self, no_evs, station_params, location_params, station_location_param, ticks) -> None:
+    def __init__(self, no_evs, station_params, location_params, station_location_param, overnight_charging, ticks) -> None:
         """
         Initialise the model.
         
@@ -57,6 +57,7 @@ class EVModel(Model):
         self.station_params = station_params
         self.location_params = OrderedDict(location_params)
         self.station_locations = OrderedDict(station_location_param)
+        self.overnight_charging = overnight_charging
         
         # print(f"location params {self.location_params}")                          #OK
         self.no_css = len(self.station_locations) # number of charging stations
@@ -100,16 +101,13 @@ class EVModel(Model):
             setattr(self,f"distances_{route}", worker.cumulative_cs_distances(worker.get_dict_values(worker.get_charging_stations_along_route(self.station_params, route))))
             # Assign route checkpoints to model attributes
             setattr(self,f"checkpoints_{route}", list(worker.get_route_from_config(route, self.station_params)))
-            # Make duplicates of the above for later assignment to EVs.
+            # Make duplicate of 'distances_{route}' the above for later assignment to EVs.
             setattr(self,f"ev_distances_{route}", worker.cumulative_cs_distances(worker.get_dict_values(worker.get_charging_stations_along_route(self.station_params, route))))
-          
 
         # create cs.routes list to assign routes to CSs from.
         for route in worker.select_route_as_key(self.cs_route_choices):
             self.csroutes.append(route)
         
-       
-
         print(f"\nRoute choice space for ChargeStation agents: {self.csroutes}")
 
         print(f"\nRoute choice space for EV agents: {self.routes}")
@@ -142,8 +140,6 @@ class EVModel(Model):
         
         print("\nUpdating agents with particulars - route (EV and CS), destination (EV), charge point count (CS), grid locations ...")
 
-    
-
         # assign routes to chargestations using model chargestations and csroutes lists.
         for  i, cs in enumerate(self.chargestations):
             cs.route = self.csroutes[i]        
@@ -170,32 +166,37 @@ class EVModel(Model):
             # Display Charge stations and their routes  
             print(f"CS {cs.unique_id}, Route: {cs.route}, Position: {cs.pos}, CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}. Number of charge points: {cs.no_cps}. CP rates: {cs.cprates} ") 
             # dynamically create chargepoints per charge station lists vars. Each element is charge rate for each cp.
-            # for i in range(cs.no_cps):
-            #     setattr(cs, f"cp_{i}", [])
             for i in range(1,cs.no_cps+1):
+                # setattr(cs, f"cp_{i}", [])
                 setattr(cs, f"cp_{i}", None)
-            # # place ev agent on grid
+                
+            # place CS agent on grid
             self.grid.place_agent(cs, cs.pos)
         
         # loop to update distance goal, route_name, total_route_length
-        # amend charge function to use the charge rate of the charge point.
 
         # Route assignment for EVs as in CSs above. improve to spead evenly amongst routes.
-        # Perform every day at relaunch?
+        # Perform every day at relaunch? Currently in evs_relaunch() method.
         
         print("\n")
-        for ev in self.evs:
-            ev.set_start_time()
-            ev.route = choice(self.routes)
-            ev.select_initial_coord(self)
-            ev.select_destination_coord(self)
-            # ev.set_destination()
-            ev.set_source_loc_mac_from_route(ev.route)
-            ev.get_destination_from_route(ev.route)
-            ev.get_distance_goal_and_coord_from_dest()
-            ev.initialization_report(self)
-            # # place ev agent on grid
-            self.grid.place_agent(ev, ev.pos)
+        self.ev_launch_sequence()
+        # for ev in self.evs:
+            
+        #     ev.route = choice(self.routes)
+        #     ev.set_start_time()
+        #     ev.select_initial_coord(self)
+        #     ev.select_destination_coord(self)
+        #     # set source attribute from route.
+        #     ev.get_initial_location_from_route(ev.route) 
+        #     # extract destination from route. Set destination attribute from route.
+        #     ev.get_destination_from_route(ev.route)
+        #     # set LSM source location from route
+        #     # ev.set_source_loc_mac_from_route(ev.route)  
+        #     ev.set_source_loc_mac_from_source(ev.source)
+        #     ev.get_distance_goal_and_coord_from_dest()
+        #     ev.initialization_report(self)
+        #     # place ev agent on grid
+        #     self.grid.place_agent(ev, ev.pos)
             
             # print(f"EV {ev.unique_id}, EV Checkpoint list: {ev.checkpoint_list}")
             # print(f"EV Location: {ev.location}, Position: {ev.pos}, Direction: {ev.direction}")
@@ -265,22 +266,76 @@ class EVModel(Model):
         """
         Sets up the EVs at the start of the day.
         """
-        print("EVs reset for new day. Assigning new routes, destinations and distance goals... \n")
+        print("\nEVs reset for new day. Assigning new routes, destinations and distance goals... \n")
+        # for ev in self.evs:
+        #     possibilities = worker.get_possible_journeys_long(ev.loc_machine.state)
+        #     ev.route = choice(possibilities)
+        self.ev_launch_sequence()
+            # ev.select_initial_coord(self)
+            # ev.select_destination_coord(self)
+            # # ev.set_source_loc_mac_from_route(ev.route)
+            # ev.set_source_loc_mac_from_source(ev.source)
+            # ev.get_destination_from_route(ev.route)
+            # ev.get_distance_goal_and_coord_from_dest()
+            # ev.set_start_time()
+            # ev.initialization_report(self)
+            # # # place ev agent on grid
+            # self.grid.place_agent(ev, ev.pos)
+            
+            
+            # ev.set_start_time()
+            # ev.select_initial_coord(self)
+            # ev.select_destination_coord(self)
+            # # set source attribute from route.
+            # ev.get_initial_location_from_route(ev.route) 
+            # # extract destination from route. Set destination attribute from route.
+            # ev.get_destination_from_route(ev.route)
+            # # set LSM source location from route
+            # # ev.set_source_loc_mac_from_route(ev.route)  
+            # ev.set_source_loc_mac_from_source(ev.source)
+            # ev.get_distance_goal_and_coord_from_dest()
+            # ev.initialization_report(self)
+            # # place ev agent on grid
+            # self.grid.place_agent(ev, ev.pos)
+
+
+    def ev_launch_sequence(self) -> None:
+        """
+        Launches the EVs at the start of the simulation. Called at the start of the simulation.
+        """
         for ev in self.evs:
-            possibilities = worker.get_possible_journeys_long(ev.loc_machine.state)
-            ev.route = choice(possibilities)
-            print(f"\nEV {ev.unique_id}, Location: {ev.loc_machine.state}, Route possibilities: {possibilities}")
-            print(f"EV {ev.unique_id}, New Route: {ev.route}")
+            if self.current_day_count == 0:
+                ev.route = choice(self.routes)
+                
+            elif self.current_day_count >= 1:
+                possibilities = worker.get_possible_journeys_long(ev.loc_machine.state)
+                ev.route = choice(possibilities)
+                print(f"\nEV {ev.unique_id}, Location: {ev.loc_machine.state}, Route possibilities: {possibilities}")
+                print(f"EV {ev.unique_id}, New Route: {ev.route}")
+
+            # ev.route = choice(self.routes)
+            ev.set_start_time()
+           
+            # set source attribute from route.
+            ev.get_initial_location_from_route(ev.route) 
+            # extract destination from route. Set destination attribute from route.
+            ev.get_destination_from_route(ev.route)
+            # set LSM source location from route
+            # ev.set_source_loc_mac_from_route(ev.route)  
+            ev.set_source_loc_mac_from_source(ev.source)
+            # coords 
             ev.select_initial_coord(self)
             ev.select_destination_coord(self)
-            ev.set_source_loc_mac_from_route(ev.route)
-            ev.get_destination_from_route(ev.route)
             ev.get_distance_goal_and_coord_from_dest()
-            ev.set_start_time()
-            ev.initialization_report(self)
-            # # place ev agent on grid
-            self.grid.place_agent(ev, ev.pos)
             
+            # place ev agent on grid
+            self.grid.place_agent(ev, ev.pos)
+
+            # possibilities = worker.get_possible_journeys_long(ev.loc_machine.state)
+            # ev.route = choice(possibilities)
+
+            ev.initialization_report(self)
+        
 
     def update_day_count(self) -> None:
         """Increments the day count of the simulation. Called at the end of each day."""
@@ -350,18 +405,24 @@ class EVModel(Model):
             #     print("Some other error.")
         
         # start overnight charging. Every day at 02:00
-        # overnight charging integration with relaunch??
-        # if self._current_tick > 24 and self._current_tick % 24 == 2:
-        #         try:
-        #             self.start_overnight_charge_evs()
-        #         except MachineError:
-        #             print("Error in charging EVs overnight. EV is in a state other than Idle or Battery_Dead.")
-        #         except Exception:
-        #             print("Some other error occurred when attempting to charge EVs overnight.")
+        # overnight charging integration with relaunch?
+        if self._current_tick > 24 and self._current_tick % 24 == 2:
+            if self.overnight_charging == True:
+                try:
+                    self.start_overnight_charge_evs()
+                except MachineError:
+                    print("Error in charging EVs overnight. EV is in a state other than Idle or Battery_Dead.")
+                except Exception:
+                    print("Some other error occurred when attempting to charge EVs overnight.")
         
-        # # end overnight charging. Every day at 05:00
+        # end overnight charging. Every day at 05:00
+        # rewrite overnight charging stop to be individual for EVs.
+        # Also, dependent on model time and start time of EV.
+
         # if self._current_tick > 24 and self._current_tick % 24 == 5:
-        #     self.end_overnight_charge_evs()
+        if self._current_tick > 24 and self._current_tick % 24 == 5:
+            self.end_overnight_charge_evs()
+
         
         # Last step of the day
         self._current_tick += 1

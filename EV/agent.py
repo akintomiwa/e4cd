@@ -174,6 +174,7 @@ class EV(Agent):
         odometer: The odometer of the EV.
         _distance_goal: The distance the EV needs to travel to reach its destination.
         journey_type: The type of journey the EV is undertaking.
+        source: The source of the EV.
         destination: The destination of the EV.
         battery: The battery of the EV.
         max_battery: The maximum battery capacity of the EV.
@@ -276,6 +277,7 @@ class EV(Agent):
         self.odometer = 0
         self._distance_goal = 0 #just cahnged to none, 0 before.
         self.journey_type = None
+        self.source = None
         self.destination = None
         self.battery = random.randint(30, 60) #kWh (40, 70) 
         self.max_battery = self.battery
@@ -326,12 +328,13 @@ class EV(Agent):
         print(f"\nEV info: ID: {self.unique_id}, max_battery: {self.max_battery:.2f}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
         print(f"EV info (Cont'd): Start time: {self.start_time},  soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}.")
         print(f"EV Grid info: current position: {self.pos}, destination position: {self.dest_pos}, Distance goal: {self._distance_goal}.")        
-        print(f"Location info: current location (LSM): {self.loc_machine.state}, destination: {self.destination}, route: {self.route}.")
+        print(f"Location info: current location (LSM): {self.loc_machine.state}, source: {self.source}, destination: {self.destination}, route: {self.route}.")
 
     # Internal functions
-    def set_source_loc_mac_from_route(self, route:str) -> None:
+    def set_source_loc_mac_from_source(self, source:str) -> None:
         """Sets the EV's location machine state to the initial location on arrival."""
-        self.loc_machine.set_state(self.get_initial_location_from_route(route))
+        # self.loc_machine.set_state(self.get_initial_location_from_route(route))
+        self.loc_machine.set_state(source)
 
     def update_loc_mac_with_destination(self, destination:str) -> None:
         """Updates the EV's location machine state to the destination on arrival.
@@ -347,15 +350,16 @@ class EV(Agent):
         Args:
             route (str): The route of the EV's journey.
         Returns:
-            location (str): The location of the EV's journey.
+            initial_location (str): The start location of the EV's journey.
                 """
-        location = worker.get_string_before_hyphen(route)                        # separate get and set
-        return location
+        initial_location = worker.get_string_before_hyphen(route) 
+        self.source = initial_location                       # separate get and set
+        return initial_location
 
     def get_destination_from_route(self, route:str) -> str:
         """
         Extracts and returns the destination of the EV from its assigned route.
-
+        Sets the EV's destination to the destination of the assigned route.
         Args:
             route (str): The route of the EV's journey.
         Returns:        
@@ -447,7 +451,7 @@ class EV(Agent):
         # assumes EV overruning is doing interuban trip
         # self.loc_machine.set_state(f"{self.destination}")
     def charge_intervention(self) -> None:
-        """Intervention for when the EV is charging. The EV is set to Idle and will be transported to its destination.
+        """Intervention for when the EV is at a Charge Station. The EV is set to Idle and will be transported to its destination.
         """
         if self.machine.state == "Charge":
             self.machine.end_charge_abrupt()
@@ -501,8 +505,18 @@ class EV(Agent):
         Returns:
             coord: Initial coordinate for the EV.
         """
-        coord = random.choice(model.locations).pos
-        self.pos = coord
+        print(f"EV Source: {self.source}")
+        print(f"Model locations: {self.model.location_params}")
+
+        self.pos = worker.get_location_coordinates_by_name(locations = model.location_params, location_name = self.source)
+        # if self.model.current_day_count == 0:
+        #     # coord = random.choice(model.locations).pos
+        #     # coord = random.choice(self.model.locations) 
+        #     # self.pos = coord
+        #     self.pos = worker.get_location_coordinates_by_name(self.source, model.location_params)
+        # else:
+        #     # function to get pos from destination name 
+        #     self.pos = worker.get_location_coordinates_by_name(self.source, model.location_params)
 
     def select_destination_coord(self,model) -> None:
         """Gets the destination of the EV.
@@ -510,10 +524,20 @@ class EV(Agent):
         Returns:
             destination: Destination of the EV.
         """
+        print(f"EV Destination: {self.destination}")
+        print(f"Model locations: {self.model.location_params}")
+        self.dest_pos = worker.get_location_coordinates_by_name(locations = model.location_params, location_name = self.destination)
+
+        # if self.model.current_day_count == 0:
+        #     coord = random.choice(model.locations).pos
+        #     self.dest_pos = coord
+        # else:
+        #     # function to get pos from destination name 
+        #     self.dest_pos = worker.get_location_coordinates_by_name(self.destination, model.location_params)
         # If the EV has not set a destination yet, randomly choose one of the other locations
-        if self.dest_pos is None:
-            locations = [l.pos for l in model.locations if l.pos != self.pos]
-            self.dest_pos = random.choice(locations)
+        # if self.dest_pos is None:
+        #     locations = [l.pos for l in model.locations if l.pos != self.pos]
+        #     self.dest_pos = random.choice(locations)
     
     # def set_destination(self) -> None:
     #     """Sets the destination of the EV.
@@ -638,7 +662,7 @@ class EV(Agent):
             battery: Battery level for the EV.
         """
         self.battery += self.home_cs_rate
-        print(f"EV {self.unique_id} at Home CS. state: {self.machine.state}, Battery: {self.battery}")
+        print(f"EV {self.unique_id} charging at Home CS. state: {self.machine.state}, Battery: {self.battery}")
     
     def join_cs_queue(self) -> None:
         """Join the queue at the chosen Charge Station."""
@@ -717,8 +741,6 @@ class EV(Agent):
             self.machine.start_travel()
             print(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
     
- 
-    
     # Define a function to calculate the Euclidean distance between two points
     def euc_distance(self, x1, y1, x2, y2)-> float:
         """Calculates the Euclidean distance between two points."""
@@ -763,14 +785,34 @@ class EV(Agent):
 
     
     def stage_2(self):
-        """Stage 2: EV waits in queue until it is the active EV."""
+        """Stage 2:
+        Interaction with the Charge Station.
+        - EVs will search for a charge station if they are low on charge.
+        - EVs will charge at the station until they reach the charge threshold.
+
+        
+        """
         if self.machine.state == 'Travel_low':
             self.search_for_charge_station(self.model)
         
         if self.machine.state == 'Charge':
             self._in_queue = False
+            self._is_charging = True
             self.charge()
             # print(f"EV {self.unique_id} is charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+            if self.battery >= self._soc_charging_thresh:   
+                self.machine.end_charge()
+                self._is_charging = False
+                print(f"EV {self.unique_id} has finished charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+                self._at_station = False
+            elif self.battery < self._soc_charging_thresh:
+                self.machine.continue_charge()
+                print(f"EV {self.unique_id} is still charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+       
+       
+        if self.model.overnight_charging == True:
+            self._is_charging = True
+            self.charge_overnight()
             if self.battery >= self._soc_charging_thresh:   
                 self.machine.end_charge()
                 print(f"EV {self.unique_id} has finished charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
@@ -778,7 +820,7 @@ class EV(Agent):
             elif self.battery < self._soc_charging_thresh:
                 self.machine.continue_charge()
                 print(f"EV {self.unique_id} is still charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
-        
+        # reference 
         if self.machine.state == 'Home_Charge':
             self._is_charging = True
             self.charge_overnight()
