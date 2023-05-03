@@ -180,27 +180,7 @@ class EVModel(Model):
         
         print("\n")
         self.ev_launch_sequence()
-        # for ev in self.evs:
-            
-        #     ev.route = choice(self.routes)
-        #     ev.set_start_time()
-        #     ev.select_initial_coord(self)
-        #     ev.select_destination_coord(self)
-        #     # set source attribute from route.
-        #     ev.get_initial_location_from_route(ev.route) 
-        #     # extract destination from route. Set destination attribute from route.
-        #     ev.get_destination_from_route(ev.route)
-        #     # set LSM source location from route
-        #     # ev.set_source_loc_mac_from_route(ev.route)  
-        #     ev.set_source_loc_mac_from_source(ev.source)
-        #     ev.get_distance_goal_and_coord_from_dest()
-        #     ev.initialization_report(self)
-        #     # place ev agent on grid
-        #     self.grid.place_agent(ev, ev.pos)
-            
-            # print(f"EV {ev.unique_id}, EV Checkpoint list: {ev.checkpoint_list}")
-            # print(f"EV Location: {ev.location}, Position: {ev.pos}, Direction: {ev.direction}")
-      
+
         # same done for EVs in earlier loop above
 
         print("\n")
@@ -248,9 +228,8 @@ class EVModel(Model):
         c = worker.cumulative_cs_distances(b)
         print(c)
         return c
-  
     
-    def model_finish_day_evs(self) -> None: 
+    def model_finish_day_evs_css(self) -> None: 
         """
         Reset the EVs at the end of the day. Calls the EV.add_soc_eod() and EV.finish_day() methods.
         """
@@ -261,42 +240,17 @@ class EVModel(Model):
             # print out ev locations
             print(f"EV {ev.unique_id}, State: {ev.machine.state}, Route: {ev.route}, Current Location (LSM): {ev.loc_machine.state}")
             # print(f"EV {ev.unique_id}, Route: {ev.route}, Destination: {ev.destination}, Distance Goal: {ev._distance_goal}, Checkpoint List: {ev.checkpoint_list}")
+        
+        for cs in self.chargestations:
+            print(f"\nCS ID {cs.unique_id}, Name {cs.name},Route: {cs.route}, Position: {cs.pos}, CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}. Occupancy: {cs.location_occupancy}, Length of Occupied CPs {len(cs.occupied_cps)} , Length of Queue: {len(cs.queue)}")
     
     def model_start_day_evs(self) -> None: 
         """
         Sets up the EVs at the start of the day.
         """
         print("\nEVs reset for new day. Assigning new routes, destinations and distance goals... \n")
-        # for ev in self.evs:
-        #     possibilities = worker.get_possible_journeys_long(ev.loc_machine.state)
-        #     ev.route = choice(possibilities)
+
         self.ev_launch_sequence()
-            # ev.select_initial_coord(self)
-            # ev.select_destination_coord(self)
-            # # ev.set_source_loc_mac_from_route(ev.route)
-            # ev.set_source_loc_mac_from_source(ev.source)
-            # ev.get_destination_from_route(ev.route)
-            # ev.get_distance_goal_and_coord_from_dest()
-            # ev.set_start_time()
-            # ev.initialization_report(self)
-            # # # place ev agent on grid
-            # self.grid.place_agent(ev, ev.pos)
-            
-            
-            # ev.set_start_time()
-            # ev.select_initial_coord(self)
-            # ev.select_destination_coord(self)
-            # # set source attribute from route.
-            # ev.get_initial_location_from_route(ev.route) 
-            # # extract destination from route. Set destination attribute from route.
-            # ev.get_destination_from_route(ev.route)
-            # # set LSM source location from route
-            # # ev.set_source_loc_mac_from_route(ev.route)  
-            # ev.set_source_loc_mac_from_source(ev.source)
-            # ev.get_distance_goal_and_coord_from_dest()
-            # ev.initialization_report(self)
-            # # place ev agent on grid
-            # self.grid.place_agent(ev, ev.pos)
 
 
     def ev_launch_sequence(self) -> None:
@@ -320,20 +274,14 @@ class EVModel(Model):
             ev.get_initial_location_from_route(ev.route) 
             # extract destination from route. Set destination attribute from route.
             ev.get_destination_from_route(ev.route)
-            # set LSM source location from route
-            # ev.set_source_loc_mac_from_route(ev.route)  
+            # set LSM source location from route  
             ev.set_source_loc_mac_from_source(ev.source)
             # coords 
             ev.select_initial_coord(self)
             ev.select_destination_coord(self)
             ev.get_distance_goal_and_coord_from_dest()
-            
             # place ev agent on grid
             self.grid.place_agent(ev, ev.pos)
-
-            # possibilities = worker.get_possible_journeys_long(ev.loc_machine.state)
-            # ev.route = choice(possibilities)
-
             ev.initialization_report(self)
         
 
@@ -345,7 +293,6 @@ class EVModel(Model):
     def set_max_days(self) -> None:
         """Set the max number of days for the simulation."""
         self.max_days = self.ticks / 24
-        # print(f"Max days: {self.max_days}")
 
     def evs_relaunch(self) -> None:
         """
@@ -361,14 +308,13 @@ class EVModel(Model):
             elif ev.machine.state == 'Charge':
                 ev.relaunch_charge()
                 pass
-            # ev.update_home_charge_prop()
     
     def start_overnight_charge_evs(self) -> None:
         """Calls the EV.charge_overnight() method for all EVs in the model."""
         for ev in self.evs:
             try:
                 ev.machine.start_home_charge()
-                # ev.charge_overnight()
+                ev.charge_overnight()
             except MachineError:
                 print(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle or Battery_Dead.")
     
@@ -381,7 +327,6 @@ class EVModel(Model):
             except MachineError:
                 print(f"Error in ending overnight charging. EV {ev.unique_id} is in a state other than Idle or Battery_Dead.")
 
-    # def step(self, shuffle_types = True, shuffle_agents = True) -> None:
     def step(self) -> None:
         """Advance model one step in time"""
         print(f"\nCurrent timestep (tick): {self._current_tick}.")
@@ -390,7 +335,7 @@ class EVModel(Model):
 
         # if self.schedule.steps % 24 == 0:
         if self._current_tick % 24 == 0:
-            self.model_finish_day_evs()
+            self.model_finish_day_evs_css()
             self.update_day_count()
             print(f"This is the end of day: {self.current_day_count} ")
 
