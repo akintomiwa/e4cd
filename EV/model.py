@@ -108,9 +108,8 @@ class EVModel(Model):
         for route in worker.select_route_as_key(self.cs_route_choices):
             self.csroutes.append(route)
         
-        print(f"\nRoute choice space for ChargeStation agents: {self.csroutes}")
-
-        print(f"\nRoute choice space for EV agents: {self.routes}")
+        # print(f"\nRoute choice space for ChargeStation agents: {self.csroutes}")
+        # print(f"\nRoute choice space for EV agents: {self.routes}")
 
         print("\nCreating agents...")
     
@@ -153,7 +152,8 @@ class EVModel(Model):
         for i, cs in enumerate(self.chargestations):
             cs.name = list(station_location_param.keys())[i]
             cs.pos = list(station_location_param.values())[i]
-        print(f"ChargeStation coordinates set.\n")
+
+        print(f"\nChargeStation coordinates set.")
          # Summarize ChargeStation information
 
         print("\nCharge stations, positions and associated routes:")
@@ -164,8 +164,8 @@ class EVModel(Model):
             cs.no_cps = worker.remove_list_item_seq(worker.get_dict_values(worker.count_charge_points_by_station(self.station_params, cs.route)))
             cs.cprates = worker.remove_list_item_seq(worker.get_dict_values(worker.get_power_values_for_route(self.station_params, cs.route)))
             # Display Charge stations and their routes  
-            print(f"CS {cs.unique_id}, Route: {cs.route}, Position: {cs.pos}, CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}. Number of charge points: {cs.no_cps}. CP rates: {cs.cprates} ") 
-            # dynamically create chargepoints per charge station lists vars. Each element is charge rate for each cp.
+            print(f"CS {cs.unique_id}, Route: {cs.route}, Position: {cs.pos}. Number of charge points: {cs.no_cps}. CP rates: {cs.cprates} ")  #CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}
+            # dynamically create chargepoints per charge station lists vars. Not zero indexed. Each element is charge rate for each cp.
             for i in range(1,cs.no_cps+1):
                 # setattr(cs, f"cp_{i}", [])
                 setattr(cs, f"cp_{i}", None)
@@ -177,8 +177,7 @@ class EVModel(Model):
 
         # Route assignment for EVs as in CSs above. improve to spead evenly amongst routes.
         # Perform every day at relaunch? Currently in evs_relaunch() method.
-        
-        print("\n")
+      
         self.ev_launch_sequence()
 
         # same done for EVs in earlier loop above
@@ -316,16 +315,35 @@ class EVModel(Model):
                 ev.machine.start_home_charge()
                 ev.charge_overnight()
             except MachineError:
-                print(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle or Battery_Dead.")
+                print(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle.")
     
+    def start_overnight_charge_ev(self) -> None:
+        """
+        """
+        for ev in self.evs:
+            try:
+                ev.machine.start_home_charge()
+                ev.charge_overnight()
+            except MachineError:
+                print(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle.")
+
     def end_overnight_charge_evs(self) -> None:
         """Calls the EV.end_home_charge() method for all EVs in the model."""
         for ev in self.evs:
             try:
                 ev.machine.end_home_charge()
                 # ev.end_overnight_charge()
+                print(f"EV {ev.unique_id} has ended overnight charging and is now in State: {ev.machine.state}.")
             except MachineError:
-                print(f"Error in ending overnight charging. EV {ev.unique_id} is in a state other than Idle or Battery_Dead.")
+                print(f"Error in ending overnight charging. EV {ev.unique_id} is in a state other than Home_charge.")
+    
+    # def end_overnight_charge_ev(self) -> None:
+    #     for ev in self.evs:
+    #         if (ev.start_time - 1) == self._current_tick:
+    #             try:
+    #                 ev.machine.end_home_charge()
+    #             except MachineError:
+    #                 print(f"Error in ending overnight charging. EV {ev.unique_id} is in a state other than Home_charge.")
 
     def step(self) -> None:
         """Advance model one step in time"""
@@ -346,29 +364,32 @@ class EVModel(Model):
                 self.model_start_day_evs()
             except MachineError:
                 print("Error in relaunching EVs. EV is in a state other than Idle or Battery_Dead.")
-            # else:
-            #     print("Some other error.")
+            else:
+                print("Some other error.")
         
         # start overnight charging. Every day at 02:00
         # overnight charging integration with relaunch?
-        if self._current_tick > 24 and self._current_tick % 24 == 2:
-            if self.overnight_charging == True:
+        
+        if self.overnight_charging == True:
+            if self._current_tick > 24 and self._current_tick % 24 == 2:
                 try:
                     self.start_overnight_charge_evs()
                 except MachineError:
                     print("Error in charging EVs overnight. EV is in a state other than Idle or Battery_Dead.")
                 except Exception:
                     print("Some other error occurred when attempting to charge EVs overnight.")
-        
+            # elif self._current_tick > 24 and self._current_tick % 24 == 8:
+            #     self.end_overnight_charge_evs()
+
         # end overnight charging. Every day at 05:00
         # rewrite overnight charging stop to be individual for EVs.
         # Also, dependent on model time and start time of EV.
 
         # if self._current_tick > 24 and self._current_tick % 24 == 5:
-        if self._current_tick > 24 and self._current_tick % 24 == 5:
-            self.end_overnight_charge_evs()
+        # if self._current_tick > 24 and self._current_tick % 24 == 5:
+        #     if self.overnight_charging == True:
+        #         self.end_overnight_charge_evs()
 
-        
         # Last step of the day
         self._current_tick += 1
                 

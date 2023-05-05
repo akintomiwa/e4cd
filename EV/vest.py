@@ -1,4 +1,61 @@
 # 03-05-2023
+# in model.py 
+        # attempted fix for overnight charging
+        # if self.overnight_charging == True:
+        #     self.schedule.step()
+        #     self.datacollector.collect(self)
+        #     # if self.schedule.steps % 24 == 0:
+        #     if self._current_tick % 24 == 0:
+        #         self.model_finish_day_evs_css()
+        #         self.update_day_count()
+        #         print(f"This is the end of day: {self.current_day_count} ")
+
+        #     # relaunch at beginning of day
+        #     if self._current_tick > 24 and self._current_tick % 24 == 1:
+        #         try: 
+        #             self.evs_relaunch() #current no of days
+        #             self.model_start_day_evs()
+        #         except MachineError:
+        #             print("Error in relaunching EVs. EV is in a state other than Idle or Battery_Dead.")
+        #         else:
+        #             print("Some other error.")
+        #     if self._current_tick % 24 == 2:
+        #         try:
+        #             # self.start_overnight_charge_evs()
+        #             self.start_overnight_charge_ev()
+        #         except MachineError:
+        #             print("Error in charging EVs overnight. EV is in a state other than Idle or Battery_Dead.")
+        #         except Exception:
+        #             print("Some other error occurred when attempting to charge EVs overnight.")
+        #     self._current_tick += 1
+        # else:
+        #     self.schedule.step()
+        #     self.datacollector.collect(self)
+        #     # if self.schedule.steps % 24 == 0:
+        #     if self._current_tick % 24 == 0:
+        #         self.model_finish_day_evs_css()
+        #         self.update_day_count()
+        #         print(f"This is the end of day: {self.current_day_count} ")
+
+            # # relaunch at beginning of day
+            # if self._current_tick > 24 and self._current_tick % 24 == 1:
+            #     try: 
+            #         self.evs_relaunch() #current no of days
+            #         self.model_start_day_evs()
+            #     except MachineError:
+            #         print("Error in relaunching EVs. EV is in a state other than Idle or Battery_Dead.")
+            #     else:
+            #         print("Some other error.")
+            # if self._current_tick % 24 == 2:
+            #     try:
+            #         # self.start_overnight_charge_evs()
+            #         self.start_overnight_charge_ev()
+            #     except MachineError:
+            #         print("Error in charging EVs overnight. EV is in a state other than Idle or Battery_Dead.")
+            #     except Exception:
+            #         print("Some other error occurred when attempting to charge EVs overnight.")
+            # self._current_tick += 1
+            
 
       # # reference 
         # if self.machine.state == 'Home_Charge':

@@ -54,10 +54,8 @@ class ChargeStation(Agent):
         # new
         self.route = None
         self.cplist = None
-
         self.name = None
         self.pos = None
-
         self.cprates = []  #kW
         self._charge_rate = 0
         self.location_occupancy = 0
@@ -102,7 +100,7 @@ class ChargeStation(Agent):
                     print(f"Charge point {attr_name} at {self.name} is occupied.")
             # if all charge points are occupied, reinsert active EV into queue
             self.queue.insert(0, active)
-            print(f"EV {active.unique_id} remains in queue at CS {self.unique_id} and is in state: {active.machine.state}.")
+            print(f"EV {active.unique_id} remains in queue at CS {self.name} and is in state: {active.machine.state}.")
             return False
         except IndexError:
             print(f"The queue at ChargeStation {self.unique_id} is empty.")
@@ -122,17 +120,22 @@ class ChargeStation(Agent):
                     else:
                         if attr_value.battery < attr_value._soc_charging_thresh:
                             attr_value.machine.continue_charge()
-                            print(f"EV {(attr_value.unique_id)} at CS {self.unique_id} at CP {attr_name} is in state: {attr_value.machine.state}. Charging continues.")
+                            print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} is in state: {attr_value.machine.state}. SOC: {attr_value.battery} kWh.")
                         elif attr_value.battery >= attr_value._soc_charging_thresh:
-                            attr_value.machine.end_charge()
-                            setattr(self, attr_name, None)
                             # new change
+                            attr_value.machine.end_charge()
+                            attr_value._is_charging = False
+                            print(f"EV {attr_value.unique_id} has finished charging. EV State: {attr_value.machine.state}. Current charge: {attr_value.battery} kWh.")
+                            attr_value._at_station = False
                             self.occupied_cps.remove(attr_name)
-                            attr_name.location_occupancy -= 1
-                            print(f"EV at CS {self.unique_id} at CP {attr_name} has finished charging. CP is now free to use.")
-        except:
-            pass
-
+                            self.location_occupancy_list.remove(attr_value.unique_id)
+                            self.location_occupancy -= 1
+                            print(f"EV {attr_value} at CS {self.unique_id} at {attr_name} has finished charging. EV departed.")
+                            setattr(self, attr_name, None)
+                            print(f"CP is now free to use.")
+        except AttributeError as A:
+            print(f"CP unavailable. Reason unclear: {A}")
+            
 
     def stage_1(self):
         """Stage 1 of the charge station's step function."""
@@ -164,7 +167,7 @@ class EV(Agent):
         journey_type: The type of journey the EV is undertaking.
         source: The source of the EV.
         destination: The destination of the EV.
-        battery: The battery of the EV.
+        battery: The SOC of the EV battery.
         max_battery: The maximum battery capacity of the EV.
         range_anxiety: The range anxiety of the EV.
         _soc_usage_thresh: The state of charge threshold at which the EV will start looking for a charge station.
@@ -249,8 +252,8 @@ class EV(Agent):
     """
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-        self._charge_rate = 7.5# kW 7200W
-        self.charge_rate = None
+        
+        self.charge_rate = 0
         self._in_queue = False
         self._in_garage = False
         self._is_charging = False
@@ -295,7 +298,7 @@ class EV(Agent):
 
         # Home Charging Station 
         self.home_cs_rate = 10 #kW
-    
+ 
         # Initialisation Report
         self.prelim_report()
         # self.initalization_report()
@@ -366,7 +369,7 @@ class EV(Agent):
     
     def set_speed(self) -> None:
         """Sets the speed of the EV."""
-        base_speed = 10
+        base_speed = 20 # km/h. Was 10
         self._speed = base_speed
     
     def set_ev_consumption_rate(self) -> None:
@@ -575,7 +578,7 @@ class EV(Agent):
 
         # use station selection process instead
     def search_for_charge_station(self, model) -> None:
-        """EV in 'Travel_low checks for Chargestations in neighbourhood."""
+        """EV in 'Travel_low' checks for Chargestations in neighbourhood."""
         neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 3, include_center=True)
         for neighbour in neighbours:
             if isinstance(neighbour, ChargeStation):
@@ -594,7 +597,7 @@ class EV(Agent):
         Returns:
             battery: Battery level for the EV.
         """
-        self.battery += self.charge_rate 
+        self.battery += self.charge_rate
 
     def charge_overnight(self):
         """
@@ -604,13 +607,13 @@ class EV(Agent):
             battery: Battery level for the EV.
         """
         self.battery += self.home_cs_rate
-        print(f"EV {self.unique_id} charging at Home CS. state: {self.machine.state}, Battery: {self.battery}")
+        print(f"EV {self.unique_id} is charging at Home CS. State: {self.machine.state}, Battery: {self.battery}, Rate: {self.home_cs_rate}.")
     
     def join_cs_queue(self) -> None:
         """Join the queue at the chosen Charge Station."""
         self._chosen_cs.queue.append(self)
         self.machine.join_charge_queue()
-        print(f"EV {(self.unique_id)} joined queue at Charge Station. CS Name: {(self._chosen_cs.name)} UID: {(self._chosen_cs.unique_id)}")
+        # print(f"EV {(self.unique_id)} joined queue at Charge Station. CS Name: {(self._chosen_cs.name)} UID: {(self._chosen_cs.unique_id)}")
   
     # Model env functions
     def add_soc_eod(self) -> None:
@@ -731,27 +734,34 @@ class EV(Agent):
             self.charge()
             # print(f"EV {self.unique_id} is charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
             # Transition Case 6: EV is at a charge station and charging. Charge -> Travel
-            if self.battery >= self._soc_charging_thresh:   
-                self.machine.end_charge()
-                self._is_charging = False
-                print(f"EV {self.unique_id} has finished charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
-                self._at_station = False
-            # Transition Case 7: EV is at a charge station and charging. Charge -> Charge
-            elif self.battery < self._soc_charging_thresh:
-                self.machine.continue_charge()
-                print(f"EV {self.unique_id} is still charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+            # Duplicated in CS class. Consider removing permanently.
+            # if self.battery >= self._soc_charging_thresh:   
+            #     self.machine.end_charge()
+            #     self._is_charging = False
+            #     print(f"EV {self.unique_id} has finished charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+            #     self._at_station = False
+            # # Transition Case 7: EV is at a charge station and charging. Charge -> Charge
+            # elif self.battery < self._soc_charging_thresh:
+            #     self.machine.continue_charge()
+            #     print(f"EV {self.unique_id} is still charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
        
-       # Transition Case 8: EV is at a charge station and charging. Idle -> Home_charge
-        if self.model.overnight_charging == True:
-            self._is_charging = True
-            self.charge_overnight()
+       # Transition Case 8: EV is at a Home charge point and charging. Idle -> Home_charge
+        # if self.model.overnight_charging == True:
+        #     self._is_charging = True
+        #     self.charge_overnight()
+        if self.machine.state == 'Home_charge':
             if self.battery >= self._soc_charging_thresh:   
                 self.machine.end_home_charge()
                 self._is_charging = False
                 print(f"EV {self.unique_id} has finished Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
             elif self.battery < self._soc_charging_thresh:
                 self.machine.continue_home_charge()
+                self.charge_overnight()
                 print(f"EV {self.unique_id} is still charging at home. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+            elif self.model.schedule.time == (self.start_time-1):
+                self.machine.end_home_charge()
+                self._is_charging = False
+                print(f"EV {self.unique_id}'s trip begins in the next timestep. EV ended Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
         
         # # Transition Case 9: Journey Complete. travel -> idle
         if (self.machine.state == 'Travel') and self.odometer >= self._distance_goal:
