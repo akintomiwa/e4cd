@@ -94,7 +94,7 @@ class LocationLegend(TextElement):
         return "Location: <span style='color:black;'>N/A</span>"
 
 
-grid = CanvasGrid(agent_portrayal, 100, 100,500, 500)
+grid = CanvasGrid(agent_portrayal, 400, 400,500, 500)
 
 # Define other visualization elements such as charts or text
 # text = TextElement(text="My Model")

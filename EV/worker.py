@@ -352,7 +352,7 @@ def get_power_values_for_route(station_config, route_name):
     for station in station_config[route_name]:
         cp_power = []
         for charger in station_config[route_name][station]:
-            cp_power.append(int(charger['Power']))
+            cp_power.append(float(charger['Power']))
         power_dict[station] = cp_power
     return power_dict
 

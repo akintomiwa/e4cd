@@ -130,7 +130,7 @@ class ChargeStation(Agent):
                             self.occupied_cps.remove(attr_name)
                             self.location_occupancy_list.remove(attr_value.unique_id)
                             self.location_occupancy -= 1
-                            print(f"EV {attr_value} at CS {self.unique_id} at {attr_name} has finished charging. EV departed.")
+                            print(f"EV {attr_value} at CS {self.name} at {attr_name} has finished charging. EV departed.")
                             setattr(self, attr_name, None)
                             print(f"CP is now free to use.")
         except AttributeError as A:
@@ -252,7 +252,7 @@ class EV(Agent):
     """
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-        
+        # EV attributes
         self.charge_rate = 0
         self._in_queue = False
         self._in_garage = False
@@ -266,14 +266,23 @@ class EV(Agent):
         self.machine = EVSM(initial='Idle', states=states, transitions=transitions)
         self.loc_machine = LSM(initial='City_A', states=lstates, transitions=ltransitions)
         self.odometer = 0
-        self._distance_goal = 0 #just cahnged to none, 0 before.
-        self.journey_type = None
+        self._distance_goal = 0 
+        self.start_time = 0
+        self._chosen_cs = None
+        self.checkpoint_list = []
+        
+        # set EV speed
+        self.set_speed()
+        # set energy consumption rate
+        self.set_ev_consumption_rate()
+
+        # Location attributes
         self.source = None
         self.destination = None
+
+        # energy
         self.battery = random.randint(30, 60) #kWh (40, 70) 
         self.max_battery = self.battery
-
-        # energy consumption
         self.range_anxiety = 0.5    #likelihood to charge at charge station 
         # battery soc level at which EV driver feels compelled to start charging at station.
         self._soc_usage_thresh = (self.range_anxiety * self.max_battery) 
@@ -282,20 +291,12 @@ class EV(Agent):
         self.ev_consumption_rate = 0
         self.tick_energy_usage = 0
         self.battery_eod = []
-        self.start_time = 0
-        self._chosen_cs = 0 
-        self.checkpoint_list = []
-        # set EV speed
-        self.set_speed()
-        # set energy consumption rate
-        self.set_ev_consumption_rate()
         
+    
         # mobility
         self.pos = None
-        # self.direction = None
         self.locations = []
         self.dest_pos = None
-
         # Home Charging Station 
         self.home_cs_rate = 10 #kW
  

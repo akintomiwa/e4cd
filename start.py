@@ -23,14 +23,19 @@ This is the main file for the EV ABM simulator.
 It is used to run the model and collect the data.
 
 """
-# Parameterisation
-# from config file
 
 # today's date as string
 date_str = str(datetime.today())
 
 
 def run() -> object:
+    """
+    Runs the model. Parameterisation - imported from model_config file
+
+    Returns:
+        model_run: The model object.
+
+    """
     model_run = model.EVModel(ticks=cfg.ticks, no_evs=cfg.no_evs, station_params=cfg.station_config, location_params=cfg.location_config, station_location_param=cfg.station_location_config, overnight_charging=cfg.overnight_charging)
     for i in range(cfg.ticks):
         model_run.step()
@@ -60,15 +65,6 @@ if __name__ == '__main__':
     if cfg.export_data == True:
         export_data(run(),format=cfg.output_format)
 
-    # if cfg.overnight_charging == True:
-    #     model_run = model.EVModel(ticks=cfg.ticks, no_evs=cfg.no_evs, station_params=cfg.station_config, location_params=cfg.location_config, station_location_param=cfg.station_location_config, overnight_charging = cfg.overnight_charging)
-    #     for i in range(cfg.ticks):
-    #         model_run.step()
-    #     # return model_run
- 
-
-#    if cfg.export_data:
-#         export_data(model_run)
 
 # def plot_data(model) -> None:
 #     run_stats = model.datacollector.get_model_vars_dataframe()
