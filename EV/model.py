@@ -268,7 +268,7 @@ class EVModel(Model):
 
             # ev.route = choice(self.routes)
             ev.set_start_time()
-           
+            ev.set_ev_consumption_rate()
             # set source attribute from route.
             ev.get_initial_location_from_route(ev.route) 
             # extract destination from route. Set destination attribute from route.
