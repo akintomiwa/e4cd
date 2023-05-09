@@ -36,7 +36,15 @@ def run() -> object:
         model_run: The model object.
 
     """
-    model_run = model.EVModel(ticks=cfg.ticks, no_evs=cfg.no_evs, station_params=cfg.station_config, location_params=cfg.location_config, station_location_param=cfg.station_location_config, overnight_charging=cfg.overnight_charging)
+    model_run = model.EVModel(
+        ticks=cfg.ticks, 
+        no_evs=cfg.no_evs, 
+        station_params=cfg.station_config, 
+        location_params=cfg.location_config, 
+        station_location_param=cfg.station_location_config, 
+        overnight_charging=cfg.overnight_charging,
+        grid_height=cfg.grid_height,
+        grid_width=cfg.grid_width)
     for i in range(cfg.ticks):
         model_run.step()
     return model_run

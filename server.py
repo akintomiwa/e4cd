@@ -12,36 +12,34 @@ def agent_portrayal(agent):
     if type(agent) is EV:
         portrayal = {"Shape": "circle",
                      "Filled": "true",
-                     "Layer": 1,
+                     "Layer": 0,
                      "Color": "green",
-                     "r": 1}
+                     "r": 50}
         # Add a label with the agent's unique id
         portrayal["text"] = f"EV: {agent.unique_id}, State: {agent.machine.state}, SOC: {agent.battery:.2f}"
         portrayal["text_color"] = "white"
         # portrayal["text_size"] = 12
         if agent.machine.state == 'Travel':
             portrayal["Color"] = "green"
-            portrayal["Layer"] = 1
+            portrayal["Layer"] = 0
         elif agent.machine.state == 'Travel_low':
             portrayal["Color"] = "orange"
-            portrayal["Layer"] = 1
+            portrayal["Layer"] = 0
             portrayal["r"] = 1
         elif agent.machine.state == 'Battery_dead':
             portrayal["Color"] = "red"
-            portrayal["Layer"] = 1
-            portrayal["r"] = 1
+            portrayal["Layer"] = 0
         elif agent.machine.state == 'Charge':
             portrayal["Color"] = "blue"
-            portrayal["Layer"] = 1
-            portrayal["r"] = 1
+            portrayal["Layer"] = 0
         
     elif type(agent) is ChargeStation:
         portrayal = {"Shape": "rect",
                      "Filled": "true",
                      "Layer": 0,
                      "Color": "blue",
-                     "w": 1,
-                     "h": 1}
+                     "w": 3,
+                     "h": 3}
         # Add a label with the agent's unique id
         portrayal["text"] = f"Location: {agent.name}, Queue Length: {len(agent.queue)}"
         portrayal["text_color"] = "white"
@@ -56,9 +54,9 @@ def agent_portrayal(agent):
         #              "h": 1}
         portrayal = {"Shape": "circle",
                      "Filled": "true",
-                     "Layer": 0,
+                     "Layer": 1,
                      "Color": "black",
-                     "r": 2}
+                     "r": 10}
         # Add a label with the agent's unique id
         portrayal["text"] = f"Location: {agent.name}, Count: {agent.location_occupancy}."
         portrayal["text_color"] = "white"
@@ -94,7 +92,7 @@ class LocationLegend(TextElement):
         return "Location: <span style='color:black;'>N/A</span>"
 
 
-grid = CanvasGrid(agent_portrayal, 400, 400,500, 500)
+grid = CanvasGrid(agent_portrayal, grid_width=cfg.grid_width, grid_height=cfg.grid_height, canvas_height=800, canvas_width=800)
 
 # Define other visualization elements such as charts or text
 # text = TextElement(text="My Model")
@@ -105,17 +103,23 @@ chart = ChartModule([{"Label": "EV status", "Color": "green"},
 bar_chart = BarChartModule([{"Label": "Count", "Color": "black"}])
 
 # Define user parameters if necessary
-user_param = UserSettableParameter('slider', "My Parameter", 5, 1, 10, 1)
+user_ev_param = UserSettableParameter(param_type='slider', name ="cfg.no_evs", value= 2, min_value=1, max_value=10, step = 1)
+# user_ticks_option = UserSettableParameter('number', 'My Number', value=123)
+# static_text = UserSettableParameter('static_text', value="This is a descriptive textbox")
 
 server = ModularServer(EVModel,
                     [grid, chart, bar_chart, EVLegend(), StationLegend(), LocationLegend()],
                     "ec4d EV Model",
-                    {'no_evs': 3, 
+                    {'no_evs': cfg.no_evs, 
                      'station_params':cfg.station_config, 
                      'location_params':cfg.location_config,
                      'station_location_param':cfg.station_location_config, 
                      'overnight_charging':cfg.overnight_charging, 
-                     'ticks': cfg.ticks})
+                     'ticks': cfg.ticks,
+                     'grid_height':cfg.grid_height,
+                     'grid_width':cfg.grid_width,
+                     }
+                    )
 
 server.port = 8521
 server.launch()

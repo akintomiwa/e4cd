@@ -1,3 +1,35 @@
+# 05-05-2023
+# import csv
+
+# def generate_lsm(csv_file):
+#     # Read in the CSV data
+#     with open(csv_file, 'r') as file:
+#         reader = csv.DictReader(file)
+#         data = [row for row in reader]
+
+#     # Get the states from the data
+#     states = [row['location'] for row in data]
+
+#     # Generate the transition dictionary
+#     transitions = {}
+#     for source in states:
+#         for dest in states:
+#             if source != dest:
+#                 transitions[f"city_{source.lower()}_2_{dest.lower()}"] = {
+#                     'source': source,
+#                     'dest': dest
+#                 }
+
+#     # Create the LSM object
+#     lsm = LSM(states=states, transitions=transitions)
+
+#     # Set the location attributes for each state
+#     for row in data:
+#         setattr(lsm, f"{row['location']}_location", (int(row['x']), int(row['y'])))
+
+#     return lsm
+
+
 # 03-05-2023
 # in model.py 
         # attempted fix for overnight charging
