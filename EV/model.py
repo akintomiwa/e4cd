@@ -32,7 +32,7 @@ class EVModel(Model):
             
     """
 
-    def __init__(self, no_evs, station_params, location_params, station_location_param, overnight_charging, ticks) -> None:
+    def __init__(self, no_evs, station_params, location_params, station_location_param, overnight_charging, ticks, grid_height, grid_width) -> None:
         """
         Initialise the model.
         
@@ -68,7 +68,7 @@ class EVModel(Model):
         
         # other key model attr 
         self.schedule = mesa.time.StagedActivation(self, shuffle=False, shuffle_between_stages=False, stage_list=['stage_1','stage_2'])
-        self.grid = mesa.space.MultiGrid(400, 400, torus=True) # torus=True means the grid wraps around. TO-DO: remove hardcoding of grid size.
+        self.grid = mesa.space.MultiGrid(height=grid_height, width=grid_width, torus=True) # torus=True means the grid wraps around. TO-DO: remove hardcoding of grid size.
         # create core model structures
         self.evs = []
         self.chargestations = []
