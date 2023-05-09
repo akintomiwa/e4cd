@@ -130,7 +130,7 @@ class ChargeStation(Agent):
                             self.occupied_cps.remove(attr_name)
                             self.location_occupancy_list.remove(attr_value.unique_id)
                             self.location_occupancy -= 1
-                            print(f"EV {attr_value} at CS {self.name} at {attr_name} has finished charging. EV departed.")
+                            print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} has finished charging. EV departed.")
                             setattr(self, attr_name, None)
                             print(f"CP is now free to use.")
         except AttributeError as A:
@@ -370,7 +370,7 @@ class EV(Agent):
     
     def set_speed(self) -> None:
         """Sets the speed of the EV."""
-        base_speed = 20 # km/h. Was 10
+        base_speed = 10 # km/h. Was 10
         self._speed = base_speed
     
     def set_ev_consumption_rate(self) -> None:
@@ -506,7 +506,7 @@ class EV(Agent):
 
     def move(self, model) -> None:
         """Moves the EV towards its destination."""
-        scaling_factor = 2 # helps visuals map to underlying numbers.
+        scaling_factor = 2                                           # helps visuals map to underlying numbers.
         distance = self._distance_goal
         if distance == 0:
             # The EV has reached its destination
@@ -529,6 +529,9 @@ class EV(Agent):
         if (0 <= next_pos[0] < model.grid.width) and (0 <= next_pos[1] < model.grid.height):
             # Move the EV to the next position
             model.grid.move_agent(self, next_pos)
+    
+    # must be dynamically created
+    # make version for new data 
 
     def update_lsm(self, route:str) -> None:
         """Updates the location state machine for the EV, using the route variable."""
