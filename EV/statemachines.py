@@ -53,47 +53,10 @@ transitions = [
     ]
 
 
-# class LSM(Machine):
-#     """A state machine for managing location status of EV agent in AB model.
-    
-#     States: A, B, C, D
-#     Transitions:
-#     city_a_2_b: A -> B
-#     city_a_2_c: A -> C
-#     city_a_2_d: A -> D
-#     city_b_2_a: B -> A
-#     city_b_2_c: B -> C
-#     city_b_2_d: B -> D
-#     city_c_2_a: C -> A
-#     city_c_2_b: C -> B
-#     city_c_2_d: C -> D
-#     city_d_2_a: D -> A
-#     city_d_2_b: D -> B
-#     city_d_2_c: D -> C
-
-#     """
-
-# lstates = ['A', 'B', 'C', 'D']
-# ltransitions = [
-#     {'trigger': 'city_a_2_b', 'source': 'A', 'dest': 'B'},
-#     {'trigger': 'city_a_2_c', 'source': 'A', 'dest': 'C'},
-#     {'trigger': 'city_a_2_d', 'source': 'A', 'dest': 'D'},
-#     {'trigger': 'city_b_2_a', 'source': 'B', 'dest': 'A'},
-#     {'trigger': 'city_b_2_c', 'source': 'B', 'dest': 'C'},
-#     {'trigger': 'city_b_2_d', 'source': 'B', 'dest': 'D'},
-#     {'trigger': 'city_c_2_a', 'source': 'C', 'dest': 'A'},
-#     {'trigger': 'city_c_2_b', 'source': 'C', 'dest': 'B'},
-#     {'trigger': 'city_c_2_d', 'source': 'C', 'dest': 'D'},
-#     {'trigger': 'city_d_2_a', 'source': 'D', 'dest': 'A'},
-#     {'trigger': 'city_d_2_b', 'source': 'D', 'dest': 'B'},
-#     {'trigger': 'city_d_2_c', 'source': 'D', 'dest': 'C'},
-#     ]
-
-
 class LSM(Machine):
     """A state machine for managing location status of EV agent in AB model.
     
-    States: A, B, C, D, E, F
+    States: A, B, C, D
     Transitions:
     city_a_2_b: A -> B
     city_a_2_c: A -> C
@@ -107,12 +70,10 @@ class LSM(Machine):
     city_d_2_a: D -> A
     city_d_2_b: D -> B
     city_d_2_c: D -> C
-    city_e_2_f: E -> F
-    city_f_2_e: F -> E
 
     """
 
-lstates = ['A', 'B', 'C', 'D', 'E', 'F']
+lstates = ['A', 'B', 'C', 'D']
 ltransitions = [
     {'trigger': 'city_a_2_b', 'source': 'A', 'dest': 'B'},
     {'trigger': 'city_a_2_c', 'source': 'A', 'dest': 'C'},
@@ -126,6 +87,45 @@ ltransitions = [
     {'trigger': 'city_d_2_a', 'source': 'D', 'dest': 'A'},
     {'trigger': 'city_d_2_b', 'source': 'D', 'dest': 'B'},
     {'trigger': 'city_d_2_c', 'source': 'D', 'dest': 'C'},
-    {'trigger': 'city_e_2_f', 'source': 'E', 'dest': 'F'},
-    {'trigger': 'city_f_2_e', 'source': 'F', 'dest': 'E'},
     ]
+
+
+# class LSM(Machine):
+#     """A state machine for managing location status of EV agent in AB model.
+    
+#     States: A, B, C, D, E, F
+#     Transitions:
+#     city_a_2_b: A -> B
+#     city_a_2_c: A -> C
+#     city_a_2_d: A -> D
+#     city_b_2_a: B -> A
+#     city_b_2_c: B -> C
+#     city_b_2_d: B -> D
+#     city_c_2_a: C -> A
+#     city_c_2_b: C -> B
+#     city_c_2_d: C -> D
+#     city_d_2_a: D -> A
+#     city_d_2_b: D -> B
+#     city_d_2_c: D -> C
+#     city_e_2_f: E -> F
+#     city_f_2_e: F -> E
+
+#     """
+
+# lstates = ['A', 'B', 'C', 'D', 'E', 'F']
+# ltransitions = [
+#     {'trigger': 'city_a_2_b', 'source': 'A', 'dest': 'B'},
+#     {'trigger': 'city_a_2_c', 'source': 'A', 'dest': 'C'},
+#     {'trigger': 'city_a_2_d', 'source': 'A', 'dest': 'D'},
+#     {'trigger': 'city_b_2_a', 'source': 'B', 'dest': 'A'},
+#     {'trigger': 'city_b_2_c', 'source': 'B', 'dest': 'C'},
+#     {'trigger': 'city_b_2_d', 'source': 'B', 'dest': 'D'},
+#     {'trigger': 'city_c_2_a', 'source': 'C', 'dest': 'A'},
+#     {'trigger': 'city_c_2_b', 'source': 'C', 'dest': 'B'},
+#     {'trigger': 'city_c_2_d', 'source': 'C', 'dest': 'D'},
+#     {'trigger': 'city_d_2_a', 'source': 'D', 'dest': 'A'},
+#     {'trigger': 'city_d_2_b', 'source': 'D', 'dest': 'B'},
+#     {'trigger': 'city_d_2_c', 'source': 'D', 'dest': 'C'},
+#     {'trigger': 'city_e_2_f', 'source': 'E', 'dest': 'F'},
+#     {'trigger': 'city_f_2_e', 'source': 'F', 'dest': 'E'},
+#     ]
