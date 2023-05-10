@@ -103,7 +103,7 @@ class ChargeStation(Agent):
             print(f"EV {active.unique_id} remains in queue at CS {self.name} and is in state: {active.machine.state}.")
             return False
         except IndexError:
-            print(f"The queue at ChargeStation {self.unique_id} is empty.")
+            # print(f"The queue at ChargeStation {self.unique_id} is empty.")
             return False
         except Exception as e:
             print(f"Error assigning EV to charge point: {e}")
@@ -116,7 +116,8 @@ class ChargeStation(Agent):
                 if attr_name.startswith("cp_"):
                     attr_value = getattr(self, attr_name)
                     if attr_value is None:
-                        print(f"CP {attr_name} at ChargeStation {self.unique_id} is vacant.")
+                        # print(f"CP {attr_name} at ChargeStation {self.unique_id} is vacant.")
+                        pass
                     else:
                         if attr_value.battery < attr_value._soc_charging_thresh:
                             attr_value.machine.continue_charge()
@@ -270,6 +271,9 @@ class EV(Agent):
         self.loc_machine = LSM(initial='City_A', states=lstates, transitions=ltransitions)
         self.odometer = 0
         self._distance_goal = 0 
+        self.distance_margin = 0
+        self.static_distance_goal = 0
+        self.step_distance = 0
         self.start_time = 0
         self._chosen_cs = None
         self.checkpoint_list = []
@@ -284,7 +288,7 @@ class EV(Agent):
         self.destination = None
 
         # energy
-        self.battery = random.randint(30, 60) #kWh (40, 70) 
+        self.battery = random.randint(40, 70) #kWh (40, 70) 
         self.max_battery = self.battery
         self.soc = 0
         self.range_anxiety = 0.5    #likelihood to charge at charge station 
@@ -403,6 +407,7 @@ class EV(Agent):
             usage: Energy consumption for each tick.
         """
         usage = (self.ev_consumption_rate * self._speed)
+        # usage = (self.ev_consumption_rate * self.distance_margin)
         return usage
 
     def delta_battery_neg(self) -> float:
@@ -507,11 +512,17 @@ class EV(Agent):
         dx = self.dest_pos[0] - self.pos[0]
         dy = self.dest_pos[1] - self.pos[1]
         self._distance_goal = math.sqrt(dx*dx + dy*dy)
+        # record initial distance goal. Reset at relaunch
+        if self.static_distance_goal == 0: #from initalisation i.e active step one
+            self.static_distance_goal = self._distance_goal
+        elif self.static_distance_goal != 0:
+            self.static_distance_goal = self.static_distance_goal
+        # self.margin = self.static_goal
         return dx, dy, self._distance_goal
 
     def move(self, model) -> None:
         """Moves the EV towards its destination."""
-        scaling_factor = 1.2 # np.sqrt(2)                                           # helps visuals map to underlying numbers.
+        scaling_factor = 1 # np.sqrt(2)                                           # helps visuals map to underlying numbers.
         distance = self._distance_goal
         if distance == 0:
             # The EV has reached its destination
@@ -520,10 +531,11 @@ class EV(Agent):
             return
         
         dx,dy,distance = self.get_distance_goal_and_coord_from_dest()
+ 
         # Normalize the vector to get a unit vector
         dx /= distance
         dy /= distance
-
+        
         scaled_x = dx * self._speed * scaling_factor
         scaled_y = dy * self._speed * scaling_factor
         
@@ -534,44 +546,11 @@ class EV(Agent):
         if (0 <= next_pos[0] < model.grid.width) and (0 <= next_pos[1] < model.grid.height):
             # Move the EV to the next position
             model.grid.move_agent(self, next_pos)
+
+        self.distance_margin = math.sqrt((scaled_x*scaled_x) + (scaled_y*scaled_y))
+        print(f"Step distance: {self.distance_margin}")
     
-    # must be dynamically created
-    # make version for new data 
-
-    def update_lsm(self, route:str) -> None:
-        """Updates the location state machine for the EV, using the route variable."""
-        source = worker.get_string_after_hyphen(route)
-        dest = worker.get_string_after_hyphen(route)
-        if source == 'A':
-            if dest == 'B':
-                self.loc_machine.city_a_2_b()
-            elif dest == 'C':
-                self.loc_machine.city_a_2_c()
-            elif dest == 'D':
-                self.loc_machine.city_a_2_d()
-        elif source == 'B':
-            if dest == 'A':
-                self.loc_machine.city_b_2_a()
-            elif dest == 'C':
-                self.loc_machine.city_b_2_c()
-            elif dest == 'D':
-                self.loc_machine.city_b_2_d()
-        elif source == 'C':
-            if dest == 'A':
-                self.loc_machine.city_c_2_a()
-            elif dest == 'B':
-                self.loc_machine.city_c_2_b()
-            elif dest == 'D':
-                self.loc_machine.city_c_2_d()
-        elif source == 'D':
-            if dest == 'A':
-                self.loc_machine.city_d_2_a()
-            elif dest == 'B':
-                self.loc_machine.city_d_2_b()
-            elif dest == 'C':
-                self.loc_machine.city_d_2_c()
-        print(f"EV {self.unique_id} is at location (LSM): {self.loc_machine.state}")
-
+    
     def travel(self) -> None:
         """
         Travel function. Moves EV along the road. Updates odometer and battery level.
@@ -581,10 +560,13 @@ class EV(Agent):
             battery: Battery level for the EV.
         """
         self.move(self.model)
-        self.odometer += self._speed
+        # self.odometer += self._speed
+        self.odometer += self.distance_margin
         self.battery -= self.energy_usage_tick()
         self.calculate_soc()
-        print(f"EV {self.unique_id} is travelling. State: {self.machine.state}, Odometer: {self.odometer}, SOC: {self.soc:.1f}%, Battery: {self.battery:.2f}, Location: {self.pos}, Destination: {self.destination}.")
+        print(f"EV {self.unique_id} is travelling. State: {self.machine.state}, Odometer: {self.odometer:.2f}, SOC: {self.soc:.1f}%, Battery: {self.battery:.2f}, Location: {self.pos}, Destination: {self.destination})")
+        print(f"Total distance: {self.static_distance_goal:.2f}, Distance covered in timestep: {self.distance_margin}, New distance goal: {self._distance_goal:.2f}.")
+        self.distance_margin = 0
 
         # use station selection process instead
     def search_for_charge_station(self, model) -> None:
@@ -708,6 +690,46 @@ class EV(Agent):
         """Calculates the state of charge of the EV."""
         self.soc = (self.battery / self.max_battery) * 100
         return self.soc
+    
+    def reset_static_distance_goal(self) -> None:
+        """Resets the static distance goal of the EV."""
+        self.static_distance_goal = 0
+
+    # must be dynamically created
+    # make version for new data 
+    def update_lsm(self, route:str) -> None:
+        """Updates the location state machine for the EV, using the route variable."""
+        source = worker.get_string_after_hyphen(route)
+        dest = worker.get_string_after_hyphen(route)
+        if source == 'A':
+            if dest == 'B':
+                self.loc_machine.city_a_2_b()
+            elif dest == 'C':
+                self.loc_machine.city_a_2_c()
+            elif dest == 'D':
+                self.loc_machine.city_a_2_d()
+        elif source == 'B':
+            if dest == 'A':
+                self.loc_machine.city_b_2_a()
+            elif dest == 'C':
+                self.loc_machine.city_b_2_c()
+            elif dest == 'D':
+                self.loc_machine.city_b_2_d()
+        elif source == 'C':
+            if dest == 'A':
+                self.loc_machine.city_c_2_a()
+            elif dest == 'B':
+                self.loc_machine.city_c_2_b()
+            elif dest == 'D':
+                self.loc_machine.city_c_2_d()
+        elif source == 'D':
+            if dest == 'A':
+                self.loc_machine.city_d_2_a()
+            elif dest == 'B':
+                self.loc_machine.city_d_2_b()
+            elif dest == 'C':
+                self.loc_machine.city_d_2_c()
+        print(f"EV {self.unique_id} is at location (LSM): {self.loc_machine.state}")
 
     # staged step functions
     def stage_1(self):
@@ -718,31 +740,41 @@ class EV(Agent):
         # EV will start travelling at the assigned start time.
         if self.machine.state == 'Idle':
             self.start_travel() 
-    
-        # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
-        if self.machine.state == 'Travel' and self.battery <= self._soc_usage_thresh:
-            self.machine.get_low()
-            # print(f"EV: {self.unique_id} has travelled: {str(self.odometer)} miles and is now {self.machine.state}. Current charge level is: {self.battery} kwh")
+        
+        # TO:DO - remove block below
+
+        # # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
+        # if self.machine.state == 'Travel' and self.battery <= self._soc_usage_thresh:
+        #     self.machine.get_low()
+        #     print(f"EV: {self.unique_id} has travelled: {self.odometer} km and is now running out of power. State: {self.machine.state}. SOC: {self.soc:.2f}%. Battery: {self.battery} kwh.")
+        #     # print(f"EV: {self.unique_id} has travelled: {self.odometer} km. State: {self.machine.state}. Current charge level is: {self.battery} kwh")
 
         # Transition Case 3: Still travelling. Travel -> Travel
         # Transition Case 4: Still travelling, battery low. Travel -> Travel_low
         # Transition Case 5: Still travelling, battery dies. Travel_low -> Battery_dead
-        if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and (self.odometer < self._distance_goal):
+        
+        if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and (self.odometer < self.static_distance_goal):
         # if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and (self.pos != self.dest_pos):
             if self.machine.state == 'Travel':
                 self.travel()
                 self.machine.continue_travel()
                 # print(f"EV {self.unique_id} has travelled: {self.odometer} miles. State: {self.machine.state}. Battery: {self.battery:.2f} kWh")
+                # # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
+                # New code - replacement for transition case 2 above 
+                if self.battery <= self._soc_usage_thresh:
+                    self.machine.get_low()
+                    print(f"EV: {self.unique_id} has travelled: {self.odometer} km and is now running out of power. State: {self.machine.state}. SOC: {self.soc:.2f}%. Battery: {self.battery} kwh.")
             elif self.machine.state == 'Travel_low':
                 # TO-DO: consider tweaking conditional below to compare battery level to energy usage per tick. Minimum 'allowed' battery level for travel.
-                # if self.battery > self.energy_usage_tick():
-                if self.battery > 0:
+                if self.battery > self.energy_usage_tick():
+                # if self.battery > 0:
                     self.travel()
-                    print(f"EV {self.unique_id} is still travelling, but is low on charge and is seeking a charge station. Current charge: {self.battery} kWh")
-                elif self.battery <= 0:
+                    self.machine.continue_travel_low()
+                    print(f"EV {self.unique_id} is still travelling, but is low on charge and is seeking a charge station. SOC: {self.soc:.2f}%. Current charge: {self.battery} kWh.")
+                elif self.battery < self.energy_usage_tick():
                     self.machine.deplete_battery()
                     self._journey_complete = True
-                    print(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh")
+                    print(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh.")
 
     def stage_2(self):
         """Stage 2:
@@ -794,7 +826,7 @@ class EV(Agent):
                 print(f"EV {self.unique_id}'s trip begins in the next timestep. EV ended Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
         
         # # Transition Case 9: Journey Complete. travel -> idle
-        if (self.machine.state == 'Travel') and self.odometer >= self._distance_goal:
+        if (self.machine.state == 'Travel') and self.odometer >= self.static_distance_goal:
             self.machine.end_travel()
             self._journey_complete = True
             self.decrease_range_anxiety()
@@ -807,7 +839,7 @@ class EV(Agent):
             # print(f"EV {self.unique_id} has been removed from the grid. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh. Range anxiety: {self.range_anxiety}")
         
         # Transition Case 10: Journey complete, battery low. travel_low -> idle
-        if (self.machine.state == 'Travel_low') and self.odometer >= self._distance_goal:
+        if (self.machine.state == 'Travel_low') and self.odometer >= self.static_distance_goal:
             self.machine.end_travel_low()
             self._journey_complete = True
             # decrease range anxiety
