@@ -4,7 +4,7 @@ from mesa.datacollection import DataCollector
 
 # Attribute and Flag based functions for EV agents
 def get_evs_charge_level(model):
-    evs_levels = [ev.battery for ev in model.evs]
+    evs_levels = [ev.soc for ev in model.evs]
     # no_evs_active = np.sum(evs_active)
     return evs_levels
 
@@ -18,12 +18,20 @@ def get_evs_at_station_flag(model):
     no_evs_charging = np.sum(evs_charging)
     return no_evs_charging
 
-def get_ev_distance_covered(model):
+def get_evs_odometer(model):
+    total_distance = [ev.odometer for ev in model.evs]
+    return total_distance
+
+def get_ev_day_distance_covered(model):
     eod_socs = [ev.battery_eod for ev in model.evs]
     total_distance = np.sum(eod_socs)
     return total_distance
 
 # State machine based functions for EV agents
+def get_evs_state(model):
+    evstates= [ev.machine.state for ev in model.evs]
+    return evstates
+
 def get_evs_travel(model):
     evs_travel = [ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low' for ev in model.evs]
     no_evs_travel = np.sum(evs_travel)
@@ -63,9 +71,7 @@ def get_eod_evs_socs(model):
     eod_soc = [ev.battery_eod for ev in model.evs]
     return eod_soc
 
-def get_state_evs(model):
-    eod_soc = [ev.machine.state for ev in model.evs]
-    return eod_soc
+
 
 def get_evs_destinations(model):
     evs_destinations = [ev.destination for ev in model.evs]

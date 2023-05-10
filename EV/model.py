@@ -156,7 +156,7 @@ class EVModel(Model):
         print(f"\nChargeStation coordinates set.")
          # Summarize ChargeStation information
 
-        print("\nCharge stations, positions and associated routes:")
+        print("\nCharge stations, positions and associated routes:\n")
         # Assign checkpoint_id, no_cps and cp_rates attributes to CSs from config file. Also, assign charge point count and create cps.
         for cs in self.chargestations:
             # cs.checkpoint_list = getattr(self, f"distances_{cs.route}")
@@ -176,8 +176,9 @@ class EVModel(Model):
         # loop to update distance goal, route_name, total_route_length
 
         # Route assignment for EVs as in CSs above. improve to spead evenly amongst routes.
+        print("\nEVs - details, positions and associated routes:")
         # Perform every day at relaunch? Currently in evs_relaunch() method.
-      
+        
         self.ev_launch_sequence()
 
         # same done for EVs in earlier loop above
@@ -193,19 +194,14 @@ class EVModel(Model):
          
         # data collector
         self.datacollector = DataCollector(
-            model_reporters={'EVs Charging': mq.get_evs_charge,
+            model_reporters={'EVs Charge Level': mq.get_evs_charge_level,
+                             'EV State': mq.get_evs_state,
+                             'EVs Odometer': mq.get_evs_odometer,
+                             'EVs Charging': mq.get_evs_charge,  
                              'EVs Activated': mq.get_evs_active,
                              'EVs Travelling': mq.get_evs_travel,
-                             'EVs Queued': mq.get_evs_queue,
-                             'EVs Dead': mq.get_evs_dead,
-                             'EVs Charge Level': mq.get_evs_charge_level,
                              'EVs Range Anxiety': mq.get_evs_range_anxiety,
-                             'EVs Not Idle': mq.get_evs_not_idle,
-                             'EVs EOD Battery SOC': mq.get_eod_evs_socs,
-                             'EVs Destinations': mq.get_evs_destinations,
                              'EVs at Charging Station - S': mq.get_evs_at_station_state,
-                             'Length of Queue at Charging Stations': mq.get_queue_length,
-                             'EV State': mq.get_state_evs,
                              },
             # agent_reporters={'Battery': 'battery',
             #                 'Battery EOD': 'battery_eod',
@@ -215,7 +211,7 @@ class EVModel(Model):
                              )
         print(f"\nModel initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks or {self.max_days} day(s).\n")
 
-
+        # 'EVs Dead': mq.get_evs_dead, 'EVs Queued': mq.get_evs_queue, 'EVs Not Idle': mq.get_evs_not_idle, 'Length of Queue at Charging Stations': mq.get_queue_length,
 
     def _set_up_routes(self) -> None:
         for route in self.routes:
@@ -279,6 +275,7 @@ class EVModel(Model):
             ev.select_initial_coord(self)
             ev.select_destination_coord(self)
             ev.get_distance_goal_and_coord_from_dest()
+            ev.reset_static_distance_goal()
             # place ev agent on grid
             self.grid.place_agent(ev, ev.pos)
             ev.initialization_report(self)
