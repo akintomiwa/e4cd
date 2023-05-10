@@ -82,23 +82,31 @@ class LocationLegend(TextElement):
         return "Location: <span style='color:black;'>N/A</span>"
 
 
-grid = CanvasGrid(agent_portrayal, grid_width=cfg.grid_width, grid_height=cfg.grid_height, canvas_height=800, canvas_width=800)
+grid = CanvasGrid(agent_portrayal, grid_width=cfg.grid_width, grid_height=cfg.grid_height, canvas_height=cfg.canvas_height, canvas_width=cfg.canvas_width)
 
 # Define other visualization elements such as charts or text
 # text = TextElement(text="My Model")
-chart = ChartModule([{"Label": "EV status", "Color": "green"}, 
-                     {"Label": "ChargeStation occupancy", "Color": "red"}])
+chart = ChartModule([{"Label": "EVs Charge Level", "Color": "green"}, 
+                     {"Label": "EVs Odometer", "Color": "red"}],
+                      data_collector_name='datacollector')
+# chart = ChartModule([{"Label": "Gini",
+#                       "Color": "Black"}],
+#                     data_collector_name='datacollector')
 
-
-bar_chart = BarChartModule([{"Label": "Count", "Color": "black"}])
+bar_chart = BarChartModule([{"Label": "EV State", "Color": "black"}], 
+                           data_collector_name='datacollector')
 
 # Define user parameters if necessary
-user_ev_param = UserSettableParameter(param_type='slider', name ="cfg.no_evs", value= 2, min_value=1, max_value=10, step = 1)
+
+
+user_ev_param = UserSettableParameter('number', 'Number of EVs', value=123)
+# user_ev_param = UserSettableParameter( param_type='slider', name ="cfg.no_evs", value= 2, min_value=1, max_value=10, step = 1)
 # user_ticks_option = UserSettableParameter('number', 'My Number', value=123)
 # static_text = UserSettableParameter('static_text', value="This is a descriptive textbox")
+# [grid, chart, bar_chart, EVLegend(), StationLegend(), LocationLegend()],
 
 server = ModularServer(EVModel,
-                    [grid, chart, bar_chart, EVLegend(), StationLegend(), LocationLegend()],
+                    [grid, chart, EVLegend(), StationLegend(), LocationLegend(), bar_chart],  #user_ev_param
                     "ec4d EV Model",
                     {'no_evs': cfg.no_evs, 
                      'station_params':cfg.station_config, 
