@@ -1,3 +1,9 @@
+# 11-05-2023
+# def extract_data(model) -> None:
+#     run_stats = model.datacollector.get_model_vars_dataframe()
+#     print(run_stats)
+
+
 # 05-05-2023
 # import csv
 

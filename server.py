@@ -12,13 +12,13 @@ def agent_portrayal(agent):
     if type(agent) is EV:
         portrayal = {"Shape": "circle",
                      "Filled": "true",
-                     "Layer": 0,
+                     "Layer": 1,
                      "Color": "green",
-                     "r": 3}
+                     "r": 5}
         # Add a label with the agent's unique id
         # portrayal["text"] = f"EV: {agent.unique_id}, State: {agent.machine.state}, SOC: {agent.battery:.2f}"
         portrayal["text"] = f"{agent.unique_id}"
-        portrayal["text_color"] = "white"
+        portrayal["text_color"] = "black"
         # portrayal["text_size"] = 12
         if agent.machine.state == 'Travel':
             portrayal["Color"] = "green"
@@ -39,7 +39,7 @@ def agent_portrayal(agent):
         # Add a label with the agent's unique id
         # portrayal["text"] = f"N: {agent.name}, Q: {len(agent.queue)}"
         portrayal["text"] = f"{agent.name}"
-        portrayal["text_color"] = "white"
+        portrayal["text_color"] = "black"
         portrayal["text_size"] = 12
 
     elif type(agent) is Location:

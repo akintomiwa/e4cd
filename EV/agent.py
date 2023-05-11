@@ -117,28 +117,44 @@ class ChargeStation(Agent):
                     attr_value = getattr(self, attr_name)
                     if attr_value is None:
                         # print(f"CP {attr_name} at ChargeStation {self.unique_id} is vacant.")
-                        pass
+                        # pass
+                        return None
                     else:
-                        if attr_value.battery < attr_value._soc_charging_thresh:
+                        if attr_value.machine.state == 'Charge' and (attr_value.battery < attr_value._soc_charging_thresh):
                             attr_value.machine.continue_charge()
                             attr_value.calculate_soc()
-                            print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} is in state: {attr_value.machine.state}. SOC: {attr_value.soc}, Battery: {attr_value.battery} kWh.")
-                        elif attr_value.battery >= attr_value._soc_charging_thresh:
-                            # new change
-                            attr_value.machine.end_charge()
-                            attr_value._is_charging = False
-                            attr_value.calculate_soc()
-                            print(f"EV {attr_value.unique_id} has finished charging. EV State: {attr_value.machine.state}. SOC: {attr_value.soc}, Current charge: {attr_value.battery} kWh.")
+                            print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} is in state: {attr_value.machine.state}. SOC: {attr_value.soc:.2f}%, Battery: {attr_value.battery:.2f} kWh.")
+                        elif attr_value.machine.state == 'Idle':
+                            # self.remove_ev(attr_value)
                             attr_value._at_station = False
                             self.occupied_cps.remove(attr_name)
                             self.location_occupancy_list.remove(attr_value.unique_id)
                             self.location_occupancy -= 1
+                            print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} has had charging interrupted. EV removed.")
+                            setattr(self, attr_name, None)
+                        elif attr_value.machine.state == 'Charge' and (attr_value.battery >= attr_value._soc_charging_thresh):
+                            # new change
+                            attr_value.machine.end_charge()
+                            attr_value._is_charging = False
+                            attr_value.calculate_soc()
+                            print(f"EV {attr_value.unique_id} has finished charging. EV State: {attr_value.machine.state}. SOC: {attr_value.soc}%, Current charge: {attr_value.battery:.2f} kWh.")
+                            attr_value._at_station = False
+                            self.occupied_cps.remove(attr_name)
+                            self.location_occupancy_list.remove(attr_value.unique_id)
+                            self.location_occupancy -= 1
+                            # self.remove_ev(ev=attr_value) #doesnt work, cant reach CP using function, OOL. Use repitition temporarily.
                             print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} has finished charging. EV departed.")
                             setattr(self, attr_name, None)
                             print(f"CP is now free to use.")
         except AttributeError as A:
-            print(f"CP unavailable. Reason unclear: {A}")
+            print(f"CP unavailable. Reason: {A}")
             
+    # def remove_ev(self,ev):
+    #     ev._at_station = False
+    #     print("Flag change executed.")
+    #     self.occupied_cps.remove(ev) #attr name, not value. From Cp, not EV
+    #     self.location_occupancy_list.remove(ev.unique_id)
+    #     self.location_occupancy -= 1
 
     def stage_1(self):
         """Stage 1 of the charge station's step function."""
@@ -427,22 +443,18 @@ class EV(Agent):
         self.battery = self.max_battery
         self.increase_range_anxiety()
         self.machine.emergency_intervention()
-        model.grid.remove_agent(self)
+        self.transport_ev_to_destination(model)
         print(f"\nEV {self.unique_id} has been removed from the grid, recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Range anxiety has increased to: {self.range_anxiety}")
         # transport EV back to random location. source?
-        self.select_initial_coord(model)
-        model.grid.place_agent(self, self.dest_pos) 
-        print(f"EV {self.unique_id} has been transported to {self.pos} and is now in state: {self.machine.state}.")
-        # set location machine state to destination
-        self.loc_machine.set_state(f"{self.destination}")
 
-    def travel_intervention(self) -> None:
-        """Intervention for when the EV is traveling. The EV is set to Idle and will be transported to its destination.
+    def travel_intervention(self,model) -> None:
+        """Intervention for when the EV is travelling. The EV is set to Idle and will be transported to its destination.
         """
         self.machine.end_travel()
-        print(f"EV {self.unique_id} was forced to end its trip due to overrun. It is now in state: {self.machine.state}. ")
+        self.transport_ev_to_destination(model)
+        print(f"EV {self.unique_id} was forced to end its trip due to overrun. It is now in state: {self.machine.state}.")
     
-    def charge_intervention(self) -> None:
+    def charge_intervention(self,model) -> None:
         """Intervention for when the EV is at a Charge Station. The EV is set to Idle and will be transported to its destination.
         """
         if self.machine.state == "Charge":
@@ -451,8 +463,33 @@ class EV(Agent):
             self.machine.end_queue_abrupt()
         elif self.machine.state == "Seek_queue":
             self.machine.end_seek_queue_abrupt()
+        self.transport_ev_to_destination(model)
+        self._chosen_cs = None
+
         print(f"EV {self.unique_id} was forced to end its charge due to time overrun. It is now in state: {self.machine.state}.")
 
+    # def charge_intervention(self,model) -> None:
+    #     """Intervention for when the EV is at a Charge Station. The EV is set to Idle and will be transported to its destination.
+    #     """
+    #     if self.machine.state == "Charge":
+    #         self.machine.end_charge_abrupt()
+    #     elif self.machine.state == "In_queue":
+    #         self.machine.end_queue_abrupt()
+    #     elif self.machine.state == "Seek_queue":
+    #         self.machine.end_seek_queue_abrupt()
+    #     self.transport_ev_to_destination(model)
+    #     self._chosen_cs = None
+        
+    #     print(f"EV {self.unique_id} was forced to end its charge due to time overrun. It is now in state: {self.machine.state}.")
+    
+    def transport_ev_to_destination(self, model) -> None:
+        """Transport the EV to its destination."""
+        model.grid.remove_agent(self)
+        model.grid.place_agent(self, self.dest_pos)
+        print(f"EV {self.unique_id} has been transported to Location {self.destination}. Coord: {self.pos}. State: {self.machine.state}.")
+        # set location machine state to destination
+        self.loc_machine.set_state(f"{self.destination}")
+        # self.select_initial_coord(model)
 
     def set_start_time(self) -> None:
         """Sets the start time for the EV to travel. Sets start time based on distance goal - if distance goal is greater than or equal to 90 miles, start time is earlier.
@@ -476,7 +513,8 @@ class EV(Agent):
         mu, sigma = 0.1, 0.01 # mean and standard deviation
         margin = np.random.default_rng().normal(mu, sigma)
         # margin = 0.1
-        self.range_anxiety += abs(margin)
+        # self.range_anxiety += abs(margin)
+        self.range_anxiety = max(min(self.range_anxiety + (abs(margin)), 1), 0)
 
     def decrease_range_anxiety(self) -> None:
         """
@@ -487,7 +525,8 @@ class EV(Agent):
         mu, sigma = 0.05, 0.01 # mean and standard deviation
         margin = np.random.default_rng().normal(mu, sigma)
         # margin = 0.1
-        self.range_anxiety -= abs(margin)
+        # self.range_anxiety -= abs(margin)
+        self.range_anxiety = max(min(self.range_anxiety - (abs(margin)), 1), 0)
   
     # Core EV Functions
     def select_initial_coord(self, model) -> None:
@@ -562,7 +601,9 @@ class EV(Agent):
         self.move(self.model)
         # self.odometer += self._speed
         self.odometer += self.distance_margin
-        self.battery -= self.energy_usage_tick()
+        # self.battery -= self.energy_usage_tick()
+        self.battery = max(min(self.battery - self.energy_usage_tick(), self.max_battery), 0)
+
         self.calculate_soc()
         print(f"EV {self.unique_id} is travelling. State: {self.machine.state}, Odometer: {self.odometer:.2f}, SOC: {self.soc:.1f}%, Battery: {self.battery:.2f}, Location: {self.pos}, Destination: {self.destination})")
         print(f"Total distance: {self.static_distance_goal:.2f}, Distance covered in timestep: {self.distance_margin}, New distance goal: {self._distance_goal:.2f}.")
@@ -589,7 +630,10 @@ class EV(Agent):
         Returns:
             battery: Battery level for the EV.
         """
-        self.battery += self.charge_rate
+        # self.battery += self.charge_rate
+        # self.battery = max(min(self.battery,self.max_battery),0)
+        self.battery = max(min(self.battery + self.charge_rate, self.max_battery), 0)
+
 
     def charge_overnight(self):
         """
@@ -617,6 +661,10 @@ class EV(Agent):
         """Resets the EV odometer to 0."""
         self.odometer = 0
     
+    def reset_static_distance_goal(self) -> None:
+        """Resets the static distance goal of the EV."""
+        self.static_distance_goal = 0
+    
     def relaunch_base(self,n) -> None:
         """
         Relaunches the EV at the end of the day. Sets the start time to the next day, and chooses a new journey type and destination. Finally, generates an initialization report.
@@ -632,19 +680,19 @@ class EV(Agent):
         self.set_start_time() 
         self._journey_complete = False
 
-    def relaunch_travel(self)-> None:
+    def relaunch_travel(self, model)-> None:
         """
         Relaunches EVs still in the travel state at the end of the day. 
         Calls the travel_intervention method, followed by the relaunch_base method.
         """
-        self.travel_intervention()
+        self.travel_intervention(model)
         self.relaunch_base(n = self.model.current_day_count)
 
-    def relaunch_charge(self) -> None:
+    def relaunch_charge(self,model) -> None:
         """
         Relaunches charging EVs by calling the charge_intervention method, followed by the relaunch_base method.
         """
-        self.charge_intervention()
+        self.charge_intervention(model)
         self.relaunch_base(n = self.model.current_day_count)
 
     def relaunch_dead(self,model) -> None:
@@ -672,9 +720,10 @@ class EV(Agent):
     def euc_distance(self, x1, y1, x2, y2)-> float:
         """Calculates the Euclidean distance between two points."""
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    
     def register_ev_arrival(self, model) -> None:
         """Registers EV arrival at Location."""
-        neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 15, include_center=True)
+        neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 20, include_center=True)
         for neighbour in neighbours:
             if isinstance(neighbour, Location):
                 if self.machine.state == 'Idle' and self._journey_complete == True:  
@@ -691,9 +740,6 @@ class EV(Agent):
         self.soc = (self.battery / self.max_battery) * 100
         return self.soc
     
-    def reset_static_distance_goal(self) -> None:
-        """Resets the static distance goal of the EV."""
-        self.static_distance_goal = 0
 
     # must be dynamically created
     # make version for new data 
@@ -753,7 +799,7 @@ class EV(Agent):
         # Transition Case 4: Still travelling, battery low. Travel -> Travel_low
         # Transition Case 5: Still travelling, battery dies. Travel_low -> Battery_dead
         
-        if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and (self.odometer < self.static_distance_goal):
+        if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low'): #and (self.odometer < self.static_distance_goal):
         # if (self.machine.state == 'Travel' or self.machine.state == 'Travel_low') and (self.pos != self.dest_pos):
             if self.machine.state == 'Travel':
                 self.travel()
@@ -763,14 +809,14 @@ class EV(Agent):
                 # New code - replacement for transition case 2 above 
                 if self.battery <= self._soc_usage_thresh:
                     self.machine.get_low()
-                    print(f"EV: {self.unique_id} has travelled: {self.odometer} km and is now running out of power. State: {self.machine.state}. SOC: {self.soc:.2f}%. Battery: {self.battery} kwh.")
+                    print(f"EV: {self.unique_id} has travelled: {self.odometer} km and is now running out of power. State: {self.machine.state}. SOC: {self.soc:.2f}%. Battery: {self.battery:.2f} kwh.")
             elif self.machine.state == 'Travel_low':
                 # TO-DO: consider tweaking conditional below to compare battery level to energy usage per tick. Minimum 'allowed' battery level for travel.
                 if self.battery > self.energy_usage_tick():
                 # if self.battery > 0:
                     self.travel()
                     self.machine.continue_travel_low()
-                    print(f"EV {self.unique_id} is still travelling, but is low on charge and is seeking a charge station. SOC: {self.soc:.2f}%. Current charge: {self.battery} kWh.")
+                    print(f"EV {self.unique_id} is still travelling, but is low on charge and is seeking a charge station. SOC: {self.soc:.2f}%. Current charge: {self.battery:.2f} kWh.")
                 elif self.battery < self.energy_usage_tick():
                     self.machine.deplete_battery()
                     self._journey_complete = True
@@ -849,6 +895,7 @@ class EV(Agent):
             self.calculate_soc()
             print(f"EV {self.unique_id} narrowly completed its journey to Location {self.destination}. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. SOC: {self.soc:.2f}%, Battery: {self.battery:.2f} kWh. Range anxiety: {self.range_anxiety:.2f}.")
             print(f"EV Location (LSM): {self.loc_machine.state}")
+            self.register_ev_arrival(self.model)
 
 class Location(Agent):
     """A location agent. This agent represents a location in the model, and is used to store information about the location.
@@ -895,14 +942,14 @@ class Location(Agent):
     def ev_departure(self):
         """Removes an EV from the location's occupancy list."""
         for ev_id in self.location_occupancy_list:
-                ev = self.model.schedule.agents[ev_id]
-                # if (ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low') and ev._journey_complete == False:
-                # if (ev.machine.state == 'Idle') and ev._journey_complete == False:
-                if ev.start_time == self.model.schedule.time:
-                    self.location_occupancy -= 1
-                    self.location_occupancy_list.remove(ev_id)
-                    print(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
-                    break 
+            ev = self.model.schedule.agents[ev_id]
+            # if (ev.machine.state == 'Travel' or ev.machine.state == 'Travel_low') and ev._journey_complete == False:
+            # if (ev.machine.state == 'Idle') and ev._journey_complete == False:
+            if ev.start_time == self.model.schedule.time:
+                self.location_occupancy -= 1
+                self.location_occupancy_list.remove(ev_id)
+                print(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
+                break 
 
     def stage_1(self):
         """Stage 1 of the location agent's step function."""

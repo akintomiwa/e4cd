@@ -227,24 +227,33 @@ class EVModel(Model):
     def model_finish_day_evs_css(self) -> None: 
         """
         Reset the EVs at the end of the day. Calls the EV.add_soc_eod() and EV.finish_day() methods.
+        
         """
         for ev in self.evs:
             print("\n")
             ev.add_soc_eod()
             ev.reset_odometer()
+            ev.reset_static_distance_goal()
             # print out ev locations
             print(f"EV {ev.unique_id}, State: {ev.machine.state}, Route: {ev.route}, Current Location (LSM): {ev.loc_machine.state}")
             # print(f"EV {ev.unique_id}, Route: {ev.route}, Destination: {ev.destination}, Distance Goal: {ev._distance_goal}, Checkpoint List: {ev.checkpoint_list}")
         
         for cs in self.chargestations:
             print(f"\nCS ID {cs.unique_id}, Name {cs.name},Route: {cs.route}, Position: {cs.pos}, CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}. Occupancy: {cs.location_occupancy}, Length of Occupied CPs {len(cs.occupied_cps)} , Length of Queue: {len(cs.queue)}")
-    
+        
+        # self.clear_grid()
+
+    def clear_grid(self) -> None:
+        """Clears the grid of all EV agents."""
+        # self.grid.clear()
+        for ev in self.evs:
+            self.grid.remove_agent(ev)
+
     def model_start_day_evs(self) -> None: 
         """
         Sets up the EVs at the start of the day.
         """
         print("\nEVs reset for new day. Assigning new routes, destinations and distance goals... \n")
-
         self.ev_launch_sequence()
 
 
@@ -275,7 +284,7 @@ class EVModel(Model):
             ev.select_initial_coord(self)
             ev.select_destination_coord(self)
             ev.get_distance_goal_and_coord_from_dest()
-            ev.reset_static_distance_goal()
+            
             # place ev agent on grid
             self.grid.place_agent(ev, ev.pos)
             ev.initialization_report(self)
@@ -296,13 +305,13 @@ class EVModel(Model):
         """
         for ev in self.evs:
             if ev.machine.state == 'Battery_dead':
-                ev.relaunch_dead(ev.model)
+                ev.relaunch_dead(self) #ev.model
             elif ev.machine.state == 'Idle':
                 ev.relaunch_idle()
             elif ev.machine.state == 'Travel':
-                ev.relaunch_travel()
+                ev.relaunch_travel(self)
             elif ev.machine.state == 'Charge':
-                ev.relaunch_charge()
+                ev.relaunch_charge(self)
                 pass
     
     def start_overnight_charge_evs(self) -> None:
