@@ -104,7 +104,7 @@ class LSM(Machine):
     city_b_2_c: B -> C
     city_c_2_b: C -> B
     city_c_2_d: C -> D
-    city_d_2_b: B -> B
+    city_d_2_b: D -> B
     city_d_2_c: D -> C
     city_d_2_e: D -> E
     city_d_2_f: D -> F
