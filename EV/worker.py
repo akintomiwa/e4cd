@@ -402,20 +402,60 @@ def get_string_before_hyphen(string):
     else:
         return ''
 
+# TO-DO REWORK FOR DYANMIC ROUTES
 def get_possible_journeys_long(current_position, model_locations):
     """
     Returns a list of all possible journeys from the current position.
     """
-    cities = [location.name for location in model_locations if location.name != current_position]
+    # cities = [location.name for location in model_locations if location.name != current_position]
     journeys = []
     
-    for city in cities:
-        if city == current_position:
-            continue
-        else:
-            journeys.append(current_position + '-' + city)
+    # for city in cities:
+    #     if city == current_position:
+    #         continue
+    #     else:
+    #         journeys.append(current_position + '-' + city)
+    
+    if current_position == 'A':
+        journeys = []
+        journeys = ['A-B', 'A-F']
+
+    if current_position == 'B':
+        journeys = []
+        journeys = ['B-A', 'B-C']
+    
+    if current_position == 'C':
+        journeys = []
+        journeys = ['C-B', 'C-D']
+
+    if current_position == 'D':
+        journeys = []
+        journeys = ['D-C', 'D-E', 'D-F'] 
+
+    if current_position == 'E':
+        journeys = []
+        journeys = ['E-D', 'E-F']
+    
+    if current_position == 'F':
+        journeys = []
+        journeys = ['F-D', 'F-A']
     
     return journeys
+
+# def get_possible_journeys_long(current_position, model_locations):
+#     """
+#     Returns a list of all possible journeys from the current position.
+#     """
+#     cities = [location.name for location in model_locations if location.name != current_position]
+#     journeys = []
+    
+#     for city in cities:
+#         if city == current_position:
+#             continue
+#         else:
+#             journeys.append(current_position + '-' + city)
+    
+#     return journeys
 
 def get_combinations(lst):
     """
