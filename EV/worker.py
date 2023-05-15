@@ -430,11 +430,11 @@ def get_possible_journeys_long(current_position, model_locations):
 
     if current_position == 'D':
         journeys = []
-        journeys = ['D-C', 'D-E', 'D-F'] 
+        journeys = ['D-C', 'D-E', 'D-F', 'D-B'] 
 
     if current_position == 'E':
         journeys = []
-        journeys = ['E-D', 'E-F']
+        journeys = ['E-D', 'E-F', 'E-B']
     
     if current_position == 'F':
         journeys = []
