@@ -763,12 +763,6 @@ class EV(Agent):
         if source == 'A':
             if dest == 'B':
                 self.loc_machine.city_a_2_b()
-            elif dest == 'C':
-                self.loc_machine.city_a_2_c()
-            elif dest == 'D':
-                self.loc_machine.city_a_2_d()
-            elif dest == 'E':
-                self.loc_machine.city_a_2_e()
             elif dest == 'F':
                 self.loc_machine.city_a_2_f()
         elif source == 'B':
@@ -776,54 +770,28 @@ class EV(Agent):
                 self.loc_machine.city_b_2_a()
             elif dest == 'C':
                 self.loc_machine.city_b_2_c()
-            elif dest == 'D':
-                self.loc_machine.city_b_2_d()
-            elif dest == 'E':
-                self.loc_machine.city_b_2_e()
-            elif dest == 'F':
-                self.loc_machine.city_b_2_f() 
         elif source == 'C':
-            if dest == 'A':
-                self.loc_machine.city_c_2_a()
-            elif dest == 'B':
+            if dest == 'B':
                 self.loc_machine.city_c_2_b()
             elif dest == 'D':
                 self.loc_machine.city_c_2_d()
-            elif dest == 'E':
-                self.loc_machine.city_c_2_e()
-            elif dest == 'F':
-                self.loc_machine.city_c_2_f()
         elif source == 'D':
-            if dest == 'A':
-                self.loc_machine.city_d_2_a()
-            elif dest == 'B':
-                self.loc_machine.city_d_2_b()
-            elif dest == 'C':
+            if dest == 'C':
                 self.loc_machine.city_d_2_c()
             elif dest == 'E':
                 self.loc_machine.city_d_2_e()
             elif dest == 'F':
                 self.loc_machine.city_d_2_f()
         elif source == 'E':
-            if dest == 'A':
-                self.loc_machine.city_e_2_a()
-            elif dest == 'B':
-                self.loc_machine.city_e_2_b()   
-            elif dest == 'D':
+            if dest == 'D':
                 self.loc_machine.city_e_2_d()
             elif dest == 'F':
                 self.loc_machine.city_e_2_f()
         elif source == 'F':
-            if dest == 'A':
-                self.loc_machine.city_f_2_a()
-            elif dest == 'B':
-                self.loc_machine.city_f_2_b()
-            elif dest == 'C':
-                self.loc_machine.city_f_2_c()
-            elif dest == 'D':
+            if dest == 'D':
                 self.loc_machine.city_f_2_d()
-            elif dest == 'E':
-                self.loc_machine.city_f_2_e()
+            elif dest == 'A':
+                self.loc_machine.city_f_2_a()
         print(f"EV {self.unique_id} is at location (LSM): {self.loc_machine.state}")
 
     # staged step functions
