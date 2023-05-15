@@ -104,9 +104,11 @@ class LSM(Machine):
     city_b_2_c: B -> C
     city_c_2_b: C -> B
     city_c_2_d: C -> D
+    city_d_2_b: B -> B
     city_d_2_c: D -> C
     city_d_2_e: D -> E
     city_d_2_f: D -> F
+    city_e_2_b: E -> B
     city_e_2_d: E -> D
     city_e_2_f: E -> F
     city_f_2_d: F -> D
@@ -122,9 +124,11 @@ ltransitions = [
     {'trigger': 'city_b_2_c', 'source': 'B', 'dest': 'C'},
     {'trigger': 'city_c_2_b', 'source': 'C', 'dest': 'B'},
     {'trigger': 'city_c_2_d', 'source': 'C', 'dest': 'D'},
+    {'trigger': 'city_d_2_b', 'source': 'D', 'dest': 'B'},
     {'trigger': 'city_d_2_c', 'source': 'D', 'dest': 'C'},
     {'trigger': 'city_d_2_e', 'source': 'D', 'dest': 'E'},
     {'trigger': 'city_d_2_f', 'source': 'D', 'dest': 'F'},
+    {'trigger': 'city_e_2_b', 'source': 'E', 'dest': 'B'},
     {'trigger': 'city_e_2_d', 'source': 'E', 'dest': 'D'},
     {'trigger': 'city_e_2_f', 'source': 'E', 'dest': 'F'},
     {'trigger': 'city_f_2_d', 'source': 'F', 'dest': 'D'},
