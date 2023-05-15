@@ -400,11 +400,11 @@ def get_string_before_hyphen(string):
     else:
         return ''
 
-def get_possible_journeys_long(current_position):
+def get_possible_journeys_long(current_position, model_locations):
     """
     Returns a list of all possible journeys from the current position.
     """
-    cities = ['A', 'B', 'C', 'D']
+    cities = [location.name for location in model_locations if location.name != current_position]
     journeys = []
     
     for city in cities:
@@ -414,6 +414,21 @@ def get_possible_journeys_long(current_position):
             journeys.append(current_position + '-' + city)
     
     return journeys
+
+# def get_possible_journeys_long(current_position):
+#     """
+#     Returns a list of all possible journeys from the current position.
+#     """
+#     cities = ['A', 'B', 'C', 'D']
+#     journeys = []
+    
+#     for city in cities:
+#         if city == current_position:
+#             continue
+#         else:
+#             journeys.append(current_position + '-' + city)
+    
+#     return journeys
 
 def get_combinations(lst):
     """

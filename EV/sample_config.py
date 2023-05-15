@@ -61,7 +61,7 @@ def read_location_names(file_path):
 # Model Parameterisation
 
 # number of electric vehicles (EVs in the model
-no_evs = 100
+no_evs = 10
 # number of timesteps or ticks in the model
 ticks = 72
 # 1 day = 24 ticks, 3 days = 72 ticks, 7 days = 168 ticks, 30 days = 720 ticks, 1 year = 8760 ticks

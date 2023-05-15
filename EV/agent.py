@@ -486,6 +486,7 @@ class EV(Agent):
         """Transport the EV to its destination."""
         model.grid.remove_agent(self)
         model.grid.place_agent(self, self.dest_pos)
+        self.pos = self.dest_pos
         print(f"EV {self.unique_id} has been transported to Location {self.destination}. Coord: {self.pos}. State: {self.machine.state}.")
         # set location machine state to destination
         self.loc_machine.set_state(f"{self.destination}")
@@ -535,7 +536,20 @@ class EV(Agent):
         Returns:
             coord: Initial coordinate for the EV.
         """
-        self.pos = worker.get_location_coordinates_by_name(locations = model.location_params, location_name = self.source)
+        try:
+            self.pos = worker.get_location_coordinates_by_name(locations = model.location_params, location_name = self.source)
+
+        except Exception as e:
+            print(f"Error selecting initial coordinates from 'source' variable: {e}")
+            print(f"EV is trying to select initial coordinates for Location using 'current_location' {self.current_location}.")
+            self.pos = worker.get_location_coordinates_by_name(locations = model.location_params, location_name = self.current_location)
+            print(f"EV has selected initial coordinates for Location using 'current_location' {self.current_location}.")
+
+        # except TypeError as TErr:
+        #     print(f"Error selecting initial coordinates from 'source' variable: {TErr}")
+        #     print(f"EV is trying to select initial coordinates for Location using 'current_location' {self.current_location}.")
+        #     self.pos = worker.get_location_coordinates_by_name(locations = model.location_params, location_name = self.current_location)
+        #     print(f"EV has selected initial coordinates for Location using 'current_location' {self.current_location}.")
 
     def select_destination_coord(self,model) -> None:
         """Gets the destination of the EV.
@@ -631,7 +645,6 @@ class EV(Agent):
             battery: Battery level for the EV.
         """
         # self.battery += self.charge_rate
-        # self.battery = max(min(self.battery,self.max_battery),0)
         self.battery = max(min(self.battery + self.charge_rate, self.max_battery), 0)
 
 
@@ -673,9 +686,7 @@ class EV(Agent):
             n (int): Day number.
 
         Returns:
-            start_time: Start time for the EV.
-            journey_type: Journey type for the EV.
-            destination: Destination for the EV.
+            start_time: Start time for the EV. [imp]
         """
         self.set_start_time() 
         self._journey_complete = False
@@ -730,6 +741,7 @@ class EV(Agent):
                     self.current_location = neighbour
                     self.current_location.location_occupancy += 1
                     self.current_location.location_occupancy_list.append(self.unique_id)
+                    # self.pos = self.current_location.pos #new
                     print(f"EV {self.unique_id} has arrived at {self.current_location.name}. Current occupancy: {self.current_location.location_occupancy}")
                     self.model.grid.remove_agent(self)
                     print(f"EV {self.unique_id} has been removed from grid on arrival at {self.current_location.name}. Current state: {self.machine.state}")
@@ -743,6 +755,7 @@ class EV(Agent):
 
     # must be dynamically created
     # make version for new data 
+    # fix for new data 
     def update_lsm(self, route:str) -> None:
         """Updates the location state machine for the EV, using the route variable."""
         source = worker.get_string_after_hyphen(route)
@@ -754,6 +767,10 @@ class EV(Agent):
                 self.loc_machine.city_a_2_c()
             elif dest == 'D':
                 self.loc_machine.city_a_2_d()
+            elif dest == 'E':
+                self.loc_machine.city_a_2_e()
+            elif dest == 'F':
+                self.loc_machine.city_a_2_f()
         elif source == 'B':
             if dest == 'A':
                 self.loc_machine.city_b_2_a()
@@ -761,6 +778,10 @@ class EV(Agent):
                 self.loc_machine.city_b_2_c()
             elif dest == 'D':
                 self.loc_machine.city_b_2_d()
+            elif dest == 'E':
+                self.loc_machine.city_b_2_e()
+            elif dest == 'F':
+                self.loc_machine.city_b_2_f() 
         elif source == 'C':
             if dest == 'A':
                 self.loc_machine.city_c_2_a()
@@ -768,6 +789,10 @@ class EV(Agent):
                 self.loc_machine.city_c_2_b()
             elif dest == 'D':
                 self.loc_machine.city_c_2_d()
+            elif dest == 'E':
+                self.loc_machine.city_c_2_e()
+            elif dest == 'F':
+                self.loc_machine.city_c_2_f()
         elif source == 'D':
             if dest == 'A':
                 self.loc_machine.city_d_2_a()
@@ -775,6 +800,30 @@ class EV(Agent):
                 self.loc_machine.city_d_2_b()
             elif dest == 'C':
                 self.loc_machine.city_d_2_c()
+            elif dest == 'E':
+                self.loc_machine.city_d_2_e()
+            elif dest == 'F':
+                self.loc_machine.city_d_2_f()
+        elif source == 'E':
+            if dest == 'A':
+                self.loc_machine.city_e_2_a()
+            elif dest == 'B':
+                self.loc_machine.city_e_2_b()   
+            elif dest == 'D':
+                self.loc_machine.city_e_2_d()
+            elif dest == 'F':
+                self.loc_machine.city_e_2_f()
+        elif source == 'F':
+            if dest == 'A':
+                self.loc_machine.city_f_2_a()
+            elif dest == 'B':
+                self.loc_machine.city_f_2_b()
+            elif dest == 'C':
+                self.loc_machine.city_f_2_c()
+            elif dest == 'D':
+                self.loc_machine.city_f_2_d()
+            elif dest == 'E':
+                self.loc_machine.city_f_2_e()
         print(f"EV {self.unique_id} is at location (LSM): {self.loc_machine.state}")
 
     # staged step functions
@@ -782,19 +831,11 @@ class EV(Agent):
         """Stage 1: EV travels until it reaches the distance goal or runs out of battery. 
         If it needs to charge during the journey, it will execute he necessary actions in Stage 2.
         """
-        # Transition Case 1: Start travelling. idle -> travel
-        # EV will start travelling at the assigned start time.
-        if self.machine.state == 'Idle':
+        # Transition Case 1: Start travelling. idle -> travel. EV will start travelling at the assigned start time.
+        # if self.machine.state == 'Idle':
+        if self.machine.state == 'Idle' and self._journey_complete == False:
             self.start_travel() 
-        
-        # TO:DO - remove block below
-
-        # # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
-        # if self.machine.state == 'Travel' and self.battery <= self._soc_usage_thresh:
-        #     self.machine.get_low()
-        #     print(f"EV: {self.unique_id} has travelled: {self.odometer} km and is now running out of power. State: {self.machine.state}. SOC: {self.soc:.2f}%. Battery: {self.battery} kwh.")
-        #     # print(f"EV: {self.unique_id} has travelled: {self.odometer} km. State: {self.machine.state}. Current charge level is: {self.battery} kwh")
-
+  
         # Transition Case 3: Still travelling. Travel -> Travel
         # Transition Case 4: Still travelling, battery low. Travel -> Travel_low
         # Transition Case 5: Still travelling, battery dies. Travel_low -> Battery_dead

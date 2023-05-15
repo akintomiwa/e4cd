@@ -1,7 +1,19 @@
+# 15-05-2023
+
+
+# # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
+# if self.machine.state == 'Travel' and self.battery <= self._soc_usage_thresh:
+#     self.machine.get_low()
+#     print(f"EV: {self.unique_id} has travelled: {self.odometer} km and is now running out of power. State: {self.machine.state}. SOC: {self.soc:.2f}%. Battery: {self.battery} kwh.")
+#     # print(f"EV: {self.unique_id} has travelled: {self.odometer} km. State: {self.machine.state}. Current charge level is: {self.battery} kwh")
+
+
 # 11-05-2023
 # def extract_data(model) -> None:
 #     run_stats = model.datacollector.get_model_vars_dataframe()
 #     print(run_stats)
+
+# self.battery = max(min(self.battery,self.max_battery),0)
 
 
 # 05-05-2023

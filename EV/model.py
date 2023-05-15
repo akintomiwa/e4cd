@@ -235,19 +235,30 @@ class EVModel(Model):
             ev.reset_odometer()
             ev.reset_static_distance_goal()
             # print out ev locations
-            print(f"EV {ev.unique_id}, State: {ev.machine.state}, Route: {ev.route}, Current Location (LSM): {ev.loc_machine.state}")
+            print(f"EV {ev.unique_id}, State: {ev.machine.state}, Route: {ev.route}, Position: {ev.pos}, Current Location (LSM): {ev.loc_machine.state}")
             # print(f"EV {ev.unique_id}, Route: {ev.route}, Destination: {ev.destination}, Distance Goal: {ev._distance_goal}, Checkpoint List: {ev.checkpoint_list}")
         
         for cs in self.chargestations:
             print(f"\nCS ID {cs.unique_id}, Name {cs.name},Route: {cs.route}, Position: {cs.pos}, CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}. Occupancy: {cs.location_occupancy}, Length of Occupied CPs {len(cs.occupied_cps)} , Length of Queue: {len(cs.queue)}")
-        
+
         # self.clear_grid()
 
+    # needs reworking 
     def clear_grid(self) -> None:
         """Clears the grid of all EV agents."""
         # self.grid.clear()
-        for ev in self.evs:
-            self.grid.remove_agent(ev)
+        # all_agents = self.grid.get_all_cell_contents()
+        # all_agents = self.grid.get_neighborhood()
+        for agent in self.schedule.agents:
+            if isinstance(agent, EV):
+                self.grid.remove_agent(agent)
+        
+        # for agent in self.schedule.agents:
+        # # print(f"Agent {agent.unique_id}, State: {agent.machine.state}, Position: {agent.pos}")
+        #     if type(agent) == EV:
+        #         if agent.pos != agent.dest_pos:
+        #             self.grid.remove_agent(agent)
+        #             print(f"Remnant EV {agent.unique_id} removed from grid.")
 
     def model_start_day_evs(self) -> None: 
         """
@@ -266,7 +277,7 @@ class EVModel(Model):
                 ev.route = choice(self.routes)
                 
             elif self.current_day_count >= 1:
-                possibilities = worker.get_possible_journeys_long(ev.loc_machine.state)
+                possibilities = worker.get_possible_journeys_long(ev.loc_machine.state, model_locations=self.locations)
                 ev.route = choice(possibilities)
                 print(f"\nEV {ev.unique_id}, Location: {ev.loc_machine.state}, Route possibilities: {possibilities}")
                 print(f"EV {ev.unique_id}, New Route: {ev.route}")
@@ -361,6 +372,7 @@ class EVModel(Model):
         if self._current_tick % 24 == 0:
             self.model_finish_day_evs_css()
             self.update_day_count()
+            # new
             print(f"This is the end of day: {self.current_day_count} ")
 
         # relaunch at beginning of day
@@ -370,8 +382,8 @@ class EVModel(Model):
                 self.model_start_day_evs()
             except MachineError:
                 print("Error in relaunching EVs. EV is in a state other than Idle or Battery_Dead.")
-            else:
-                print("Some other error.")
+            # else:
+            #     print("Some other error.")
         
         # start overnight charging. Every day at 02:00
         # overnight charging integration with relaunch?
@@ -382,10 +394,20 @@ class EVModel(Model):
                     self.start_overnight_charge_evs()
                 except MachineError:
                     print("Error in charging EVs overnight. EV is in a state other than Idle or Battery_Dead.")
-                except Exception:
-                    print("Some other error occurred when attempting to charge EVs overnight.")
+        
             # elif self._current_tick > 24 and self._current_tick % 24 == 8:
             #     self.end_overnight_charge_evs()
+
+        # additional grid cleaning up
+        # if (len(self.evs) >= 100 and self._current_tick > 24) and self._current_tick % 24 == 23:
+        #     self.clear_grid()
+            
+        # if self.current_day_count % 5 == 0:
+        #     for agent in self.schedule.agents:
+        #         if(type(agent) == 'EV'):
+        #             if agent.pos == agent.dest_pos:
+        #                 self.grid.remove_agent(agent)
+        #             self.grid.remove_agent(agent)
 
         # end overnight charging. Every day at 05:00
         # rewrite overnight charging stop to be individual for EVs.

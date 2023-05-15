@@ -19,7 +19,7 @@ def agent_portrayal(agent):
         # portrayal["text"] = f"EV: {agent.unique_id}, State: {agent.machine.state}, SOC: {agent.battery:.2f}"
         portrayal["text"] = f"{agent.unique_id}"
         portrayal["text_color"] = "black"
-        # portrayal["text_size"] = 12
+        portrayal["text_size"] = 12
         if agent.machine.state == 'Travel':
             portrayal["Color"] = "green"
         elif agent.machine.state == 'Travel_low':
@@ -39,7 +39,7 @@ def agent_portrayal(agent):
         # Add a label with the agent's unique id
         # portrayal["text"] = f"N: {agent.name}, Q: {len(agent.queue)}"
         portrayal["text"] = f"{agent.name}"
-        portrayal["text_color"] = "black"
+        portrayal["text_color"] = "red"
         portrayal["text_size"] = 12
 
     elif type(agent) is Location:
@@ -47,12 +47,12 @@ def agent_portrayal(agent):
                      "Filled": "true",
                      "Layer": 1,
                      "Color": "black",
-                     "r": 5}
+                     "r": 10}
         # Add a label with the agent's unique id
-        # portrayal["text"] = f"Name {agent.name}, O: {agent.location_occupancy}."
-        portrayal["text"] = f"{agent.name}, {agent.location_occupancy}."
-        portrayal["text_color"] = "white"
-        portrayal["text_size"] = 6
+        portrayal["text"] = f"Loc: {agent.name}"
+        # portrayal["text"] = f"{agent.name}, {agent.location_occupancy}."
+        portrayal["text_color"] = "red"
+        portrayal["text_size"] = 12
         if len(agent.location_occupancy_list) > 2 and len(agent.location_occupancy_list) < 5:
             portrayal["r"] = 6
         elif len(agent.location_occupancy_list) >= 5:
