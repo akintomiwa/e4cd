@@ -101,19 +101,12 @@ def get_element_at_index(lst, index):
         return None
     return lst[index]
 
-
-
-
-
-# 24/03/2023
-
 def get_charge_points(route_name, data_dict):
     charge_points = []
     for station in data_dict.keys():
         if route_name in data_dict[station]['route']:
             charge_points.append(data_dict[station]['charge_points'])
     return charge_points
-
 
 def get_charge_points_2(route_name, data):
     charge_points = []
@@ -221,6 +214,10 @@ def count_charge_points_by_station(data, route_name):
 
 # # not working well 
 def get_route_from_config(route_id: str, station_config:dict) -> dict:
+    """
+    Returns a dictionary containing the configuration of charging stations and charge points for the specified route.
+    Returns None if the route is not found in the station_config dictionary.
+    """
     route_dict = {}
     try:
         for station_id in station_config[route_id]:
@@ -231,6 +228,7 @@ def get_route_from_config(route_id: str, station_config:dict) -> dict:
                     route_dict[cs['Distance']] = [cs]
         return route_dict
     except KeyError:
+        print(f"Route {route_id} not found in station_config dictionary.")
         return None # type: ignore
 
 def get_distances_along_route(station_config, route_name):
@@ -260,6 +258,9 @@ def get_dict_values(d):
     return list(d.values())
 
 def cumulative_cs_distances(numbers):
+    """
+    Returns a list of cumulative distances for the given list of distances.
+    """
     result = []
     for i in range(len(numbers)):
         if i == 0:
@@ -357,6 +358,7 @@ def get_power_values_for_route(station_config, route_name):
     return power_dict
 
 def reverse_strings(string_list):
+    """Returns a list of reversed strings. """
     reversed_list = []
     for string in string_list:
         reversed_list.append(string[::-1])
@@ -414,21 +416,6 @@ def get_possible_journeys_long(current_position, model_locations):
             journeys.append(current_position + '-' + city)
     
     return journeys
-
-# def get_possible_journeys_long(current_position):
-#     """
-#     Returns a list of all possible journeys from the current position.
-#     """
-#     cities = ['A', 'B', 'C', 'D']
-#     journeys = []
-    
-#     for city in cities:
-#         if city == current_position:
-#             continue
-#         else:
-#             journeys.append(current_position + '-' + city)
-    
-#     return journeys
 
 def get_combinations(lst):
     """
