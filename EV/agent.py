@@ -13,6 +13,16 @@ from transitions import Machine, MachineError
 from functools import partial
 from EV.statemachines import EVSM, LSM, states, transitions, lstates, ltransitions
 import EV.worker as worker
+import logging
+
+
+logging.basicConfig(
+    level=logging.DEBUG
+    format='%(asctime)s %(levelname)s %(message)s',
+    datefmt='%Y-%M-%d %H:%M:%S',
+    filename='basic.log',
+    )
+
 
 class ChargeStation(Agent):
     """A charging station (CS) agent.
@@ -65,7 +75,8 @@ class ChargeStation(Agent):
     
     def prelim_report(self):
         """Prints a preliminary report of the agent's attributes."""
-        print(f"CS {(self.unique_id)}, initialized.")
+        # print(f"CS {(self.unique_id)}, initialized.")
+        logging.info(f"CS {(self.unique_id)}, initialized.")
 
     def init_report(self):
         """Prints a report of the agent's attributes."""
@@ -80,6 +91,7 @@ class ChargeStation(Agent):
             active = self.queue.pop(0)  # pick first EV in queue
             if active is None:
                 return False
+            
             # go through all charge points and assign the first one that is free
             for attr_name in [a for a in dir(self) if a.startswith("cp_")]:
                 attr_value = getattr(self, attr_name)
@@ -315,7 +327,10 @@ class EV(Agent):
         self.ev_consumption_rate = 0
         self.tick_energy_usage = 0
         self.battery_eod = []
-        
+        mu, sigma = 0.05, 0.1 # mean and standard deviation
+        self.margin = np.random.default_rng().normal(mu, sigma)
+        mu2, sigma2 = 0.01, 0.01 # mean and standard deviation
+        self.dec_margin= np.random.default_rng().normal(mu2, sigma2)
     
         # mobility
         self.pos = None
@@ -506,28 +521,12 @@ class EV(Agent):
     
     # Range Anxiety charging behavior
     def increase_range_anxiety(self) -> None:
-        """Increases the range anxiety (RA). Higher RA means that the EV is more likely to charge at a Charge Station, due to having a higher soc_usage threshold.
-        
-        Returns:
-            charge_prop: Propensity for charging behavior.
-        """
-        mu, sigma = 0.1, 0.01 # mean and standard deviation
-        margin = np.random.default_rng().normal(mu, sigma)
-        # margin = 0.1
-        # self.range_anxiety += abs(margin)
-        self.range_anxiety = max(min(self.range_anxiety + (abs(margin)), 1), 0)
+        """Increases the range anxiety (RA). Higher RA means that the EV is more likely to charge at a Charge Station, due to having a higher soc_usage threshold. """
+        self.range_anxiety = max(min(self.range_anxiety + (abs(self.margin)), 1), 0)
 
     def decrease_range_anxiety(self) -> None:
-        """
-        Decreases the range anxiety (RA). Lower RA means that the EV is less likely to charge at a Charge Station, due to having a lower soc_usage threshold.
-        Returns:/
-            charge_prop: Propensity for charging behavior.
-        """
-        mu, sigma = 0.05, 0.01 # mean and standard deviation
-        margin = np.random.default_rng().normal(mu, sigma)
-        # margin = 0.1
-        # self.range_anxiety -= abs(margin)
-        self.range_anxiety = max(min(self.range_anxiety - (abs(margin)), 1), 0)
+        """Decreases the range anxiety (RA). Lower RA means that the EV is less likely to charge at a Charge Station, due to having a lower soc_usage threshold."""
+        self.range_anxiety = max(min(self.range_anxiety - (abs(self.dec_margin)), 1), 0)
   
     # Core EV Functions
     def select_initial_coord(self, model) -> None:
@@ -970,10 +969,12 @@ class Location(Agent):
             self.ev_departure()
 
 
+
 #########
 # Logging
 #########
 
+# logging.getLogger('transitions').setLevel(logging.INFO)
 
 # logging.basicConfig(level=logging.DEBUG)
 # logging.debug('This is a debug message')
@@ -981,15 +982,3 @@ class Location(Agent):
 # logging.warning('This is a warning message')
 # logging.error('This is an error message')
 # logging.critical('This is a critical message')
-
-# To-D0
-# CPs at initialization - 2
-
-# check for CP at 0.3 and 0.6 of length
-# Charge point w/ two queues
-# EV initialisation time drawn from probability distribution
-# State Machine for managing CP charging status. Charging/NCharging
-
-# import logging
-# logging.basicConfig(level=logging.DEBUG)
-# logging.getLogger('transitions').setLevel(logging.INFO)
