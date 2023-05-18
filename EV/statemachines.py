@@ -55,7 +55,7 @@ transitions = [
     {'trigger': 'end_seek_abrupt', 'source': 'Seek_queue', 'dest': 'Idle'},
     ]
 
-
+# Four point data - 4 cities
 # class LSM(Machine):
 #     """A state machine for managing location status of EV agent in AB model.
     
@@ -92,7 +92,7 @@ transitions = [
 #     {'trigger': 'city_d_2_c', 'source': 'D', 'dest': 'C'},
 #     ]
 
-
+# SE England data - 6 cities
 class LSM(Machine):
     """A state machine for managing location status of EV agent in AB model.
     

@@ -17,7 +17,7 @@ import logging
 
 
 logging.basicConfig(
-    level=logging.DEBUG
+    level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(message)s',
     datefmt='%Y-%M-%d %H:%M:%S',
     filename='basic.log',
@@ -751,10 +751,43 @@ class EV(Agent):
         self.soc = (self.battery / self.max_battery) * 100
         return self.soc
     
+    # # for 4 point dataset 
+    # def update_lsm(self, route:str) -> None:
+    #     """Updates the location state machine for the EV, using the route variable."""
+    #     source = worker.get_string_after_hyphen(route)
+    #     dest = worker.get_string_after_hyphen(route)
+    #     if source == 'A':
+    #         if dest == 'B':
+    #             self.loc_machine.city_a_2_b()
+    #         elif dest == 'C':
+    #             self.loc_machine.city_a_2_c()
+    #     elif source == 'B':
+    #         if dest == 'A':
+    #             self.loc_machine.city_b_2_a()
+    #         elif dest == 'C':
+    #             self.loc_machine.city_b_2_c()
+    #         elif dest == 'D':
+    #             self.loc_machine.city_b_2_d()
+    #     elif source == 'C':
+    #         if dest == 'A':
+    #             self.loc_machine.city_c_2_a()
+    #         elif dest == 'B':
+    #             self.loc_machine.city_c_2_b()
+    #         elif dest == 'D':
+    #             self.loc_machine.city_c_2_d()
+    #     elif source == 'D':
+    #         if dest == 'A':
+    #             self.loc_machine.city_d_2_a()
+    #         elif dest == 'B':
+    #             self.loc_machine.city_d_2_b()
+    #         elif dest == 'C':
+    #             self.loc_machine.city_d_2_c()
+       
+    #     print(f"EV {self.unique_id} is at location (LSM): {self.loc_machine.state}")
 
-    # must be dynamically created
-    # make version for new data 
-    # fix for new data 
+    # TO-DO: must be dynamically created
+
+    # for new data set. SouthEast England
     def update_lsm(self, route:str) -> None:
         """Updates the location state machine for the EV, using the route variable."""
         source = worker.get_string_after_hyphen(route)

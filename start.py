@@ -4,6 +4,7 @@
 # warnings.simplefilter("ignore")
 # import cufflinks as cf
 # cf.go_offline()
+import pandas as pd
 
 from mesa.datacollection import DataCollector
 from EV.statemachines import EVSM, LSM
@@ -44,6 +45,7 @@ def run() -> object:
 
 def export_data(model, format) -> None:
     run_stats = model.datacollector.get_model_vars_dataframe()
+    run_stats = run_stats.explode(list('abcd'))
     if format == 'csv':
         run_stats.to_csv(cfg.DATA_PATH + 'data_' + date_str[0:10] + '_' + str(cfg.no_evs) + '_EV_agent_model_output.csv')
         print('Model data exported to csv')

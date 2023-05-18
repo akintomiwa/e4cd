@@ -194,14 +194,10 @@ class EVModel(Model):
          
         # data collector
         self.datacollector = DataCollector(
-            model_reporters={'EVs Charge Level': mq.get_evs_charge_level,
-                             'EV State': mq.get_evs_state,
-                             'EVs Odometer': mq.get_evs_odometer,
-                             'EVs Charging': mq.get_evs_charge,  
-                             'EVs Activated': mq.get_evs_active,
-                             'EVs Travelling': mq.get_evs_travel,
-                             'EVs Range Anxiety': mq.get_evs_range_anxiety,
-                             'EVs at Charging Station - S': mq.get_evs_at_station_state,
+            model_reporters={'a': mq.get_evs_charge_level,
+                             'b': mq.get_evs_state,
+                             'c': mq.get_evs_odometer,
+                             'd': mq.get_evs_range_anxiety,
                              },
             # agent_reporters={'Battery': 'battery',
             #                 'Battery EOD': 'battery_eod',

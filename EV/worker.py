@@ -403,19 +403,11 @@ def get_string_before_hyphen(string):
         return ''
 
 # TO-DO REWORK FOR DYANMIC ROUTES
+# for SE dataset
 def get_possible_journeys_long(current_position, model_locations):
     """
     Returns a list of all possible journeys from the current position.
     """
-    # cities = [location.name for location in model_locations if location.name != current_position]
-    journeys = []
-    
-    # for city in cities:
-    #     if city == current_position:
-    #         continue
-    #     else:
-    #         journeys.append(current_position + '-' + city)
-    
     if current_position == 'A':
         journeys = []
         journeys = ['A-B', 'A-F']
@@ -442,6 +434,7 @@ def get_possible_journeys_long(current_position, model_locations):
     
     return journeys
 
+# # for 4-point dataset
 # def get_possible_journeys_long(current_position, model_locations):
 #     """
 #     Returns a list of all possible journeys from the current position.
