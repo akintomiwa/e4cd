@@ -403,10 +403,10 @@ def get_string_before_hyphen(string):
         return ''
 
 # TO-DO REWORK FOR DYANMIC ROUTES
-# for SE dataset
+# for SE England dataset
 def get_possible_journeys_long(current_position, model_locations):
     """
-    Returns a list of all possible journeys from the current position.
+    Returns a list of possible journeys from the current position.
     """
     if current_position == 'A':
         journeys = []
@@ -450,7 +450,7 @@ def get_possible_journeys_long(current_position, model_locations):
     
 #     return journeys
 
-def get_combinations(lst):
+def get_combinations(lst:list):
     """
     Returns all possible combinations of the input list's elements as a string in the form of "a-b".
     """

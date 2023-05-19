@@ -2,27 +2,21 @@
 import numpy as np
 import math
 import random
-from random import choice
+# from random import choice
 import warnings
 warnings.simplefilter("ignore")
 import numpy as np
 from mesa import Agent
-import cufflinks as cf
-cf.go_offline()
+# import cufflinks as cf
+# cf.go_offline()
 from transitions import Machine, MachineError
-from functools import partial
+# from functools import partial
 from EV.statemachines import EVSM, LSM, states, transitions, lstates, ltransitions
 import EV.worker as worker
 import logging
+import EV.model_config as cfg
 
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s %(levelname)s %(message)s',
-    datefmt='%Y-%M-%d %H:%M:%S',
-    filename='basic.log',
-    )
-
+logger = logging.getLogger(__name__)
 
 class ChargeStation(Agent):
     """A charging station (CS) agent.
@@ -80,8 +74,10 @@ class ChargeStation(Agent):
 
     def init_report(self):
         """Prints a report of the agent's attributes."""
-        print(f"\nCS info: ID: {(self.unique_id)}, initialized. Charge rates for charge points: {self.cprates} kW.")
-        print(f"It has {self.no_cps} charging points.")
+        # print(f"\nCS info: ID: {(self.unique_id)}, initialized. Charge rates for charge points: {self.cprates} kW.")
+        # print(f"It has {self.no_cps} charging points.")
+        logging.info(f"\nCS info: ID: {(self.unique_id)}, initialized. Charge rates for charge points: {self.cprates} kW.")
+        logging.info(f"It has {self.no_cps} charging points.")
         for i in range(self.no_cps):
             print(f"CP_{i} is {(getattr(self, f'cp_id_{i}'))}")
 
@@ -99,26 +95,31 @@ class ChargeStation(Agent):
                     setattr(self, attr_name, active)
                     active.machine.start_charge()
                     self.occupied_cps.add(attr_name)
-                    print(f"EV {active.unique_id} dequeued at {self.name} at {attr_name} and is in state: {active.machine.state}. Charging started")
+                    # print(f"EV {active.unique_id} dequeued at {self.name} at {attr_name} and is in state: {active.machine.state}. Charging started")
+                    logging.info(f"EV {active.unique_id} dequeued at {self.name} at {attr_name} and is in state: {active.machine.state}. Charging started")
                     route_rates = worker.get_power_values_route(station_config=model.station_params, route_name=self.route)
                     print("\n")
-                    # print(f"CP assignment summary:")
                     # print(f"CS name: {self.name}, Route charge rates: {route_rates}, CP number: {worker.cp_name_to_cp_number(attr_name)}")
                     # Set EV charge rate
-                    active.charge_rate= worker.get_cp_value(route_rates, self.name, worker.cp_name_to_cp_number(attr_name))
-                    print(f"EV {active.unique_id} has been assigned to {attr_name} at {self.name}. State: {active.machine.state}. Charge rate: {active.charge_rate} kW.")
+                    active.charge_rate = worker.get_cp_value(route_rates, self.name, worker.cp_name_to_cp_number(attr_name))
+                    # print(f"EV {active.unique_id} has been assigned to {attr_name} at {self.name}. State: {active.machine.state}. Charge rate: {active.charge_rate} kW.")
+                    logging.info(f"EV {active.unique_id} has been assigned to {attr_name} at {self.name}. State: {active.machine.state}. Charge rate: {active.charge_rate} kW.")
                     return True
                 elif attr_value is not None:
-                    print(f"Charge point {attr_name} at {self.name} is occupied.")
+                    # print(f"Charge point {attr_name} at {self.name} is occupied.")
+                    logging.info(f"Charge point {attr_name} at {self.name} is occupied.")
             # if all charge points are occupied, reinsert active EV into queue
             self.queue.insert(0, active)
-            print(f"EV {active.unique_id} remains in queue at CS {self.name} and is in state: {active.machine.state}.")
+            # print(f"EV {active.unique_id} remains in queue at CS {self.name} and is in state: {active.machine.state}.")
+            logging.info(f"EV {active.unique_id} remains in queue at CS {self.name} and is in state: {active.machine.state}.")
             return False
         except IndexError:
             # print(f"The queue at ChargeStation {self.unique_id} is empty.")
+            # logging.info(f"The queue at ChargeStation {self.unique_id} is empty.")
             return False
         except Exception as e:
             print(f"Error assigning EV to charge point: {e}")
+            logging.warning(f"Error assigning EV to charge point: {e}")
             return False
    
     def finish_charge(self) -> None:
@@ -135,31 +136,37 @@ class ChargeStation(Agent):
                         if attr_value.machine.state == 'Charge' and (attr_value.battery < attr_value._soc_charging_thresh):
                             attr_value.machine.continue_charge()
                             attr_value.calculate_soc()
-                            print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} is in state: {attr_value.machine.state}. SOC: {attr_value.soc:.2f}%, Battery: {attr_value.battery:.2f} kWh.")
+                            # print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} is in state: {attr_value.machine.state}. SOC: {attr_value.soc:.2f}%, Battery: {attr_value.battery:.2f} kWh.")
+                            logging.info(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} is in state: {attr_value.machine.state}. SOC: {attr_value.soc:.2f}%, Battery: {attr_value.battery:.2f} kWh.")
                         elif attr_value.machine.state == 'Idle':
                             # self.remove_ev(attr_value)
                             attr_value._at_station = False
                             self.occupied_cps.remove(attr_name)
                             self.location_occupancy_list.remove(attr_value.unique_id)
                             self.location_occupancy -= 1
-                            print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} has had charging interrupted. EV removed.")
+                            # print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} has had charging interrupted. EV removed.")
+                            logging.info(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} has had charging interrupted. EV removed.")
                             setattr(self, attr_name, None)
                         elif attr_value.machine.state == 'Charge' and (attr_value.battery >= attr_value._soc_charging_thresh):
                             # new change
                             attr_value.machine.end_charge()
                             attr_value._is_charging = False
                             attr_value.calculate_soc()
-                            print(f"EV {attr_value.unique_id} has finished charging. EV State: {attr_value.machine.state}. SOC: {attr_value.soc}%, Current charge: {attr_value.battery:.2f} kWh.")
+                            # print(f"EV {attr_value.unique_id} has finished charging. EV State: {attr_value.machine.state}. SOC: {attr_value.soc}%, Current charge: {attr_value.battery:.2f} kWh.")
+                            logging.info(f"EV {attr_value.unique_id} has finished charging. EV State: {attr_value.machine.state}. SOC: {attr_value.soc}%, Current charge: {attr_value.battery:.2f} kWh.")
                             attr_value._at_station = False
                             self.occupied_cps.remove(attr_name)
                             self.location_occupancy_list.remove(attr_value.unique_id)
                             self.location_occupancy -= 1
                             # self.remove_ev(ev=attr_value) #doesnt work, cant reach CP using function, OOL. Use repitition temporarily.
-                            print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} has finished charging. EV departed.")
+                            # print(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} has finished charging. EV departed.")
+                            logging.info(f"EV {attr_value.unique_id} at CS {self.name} at {attr_name} has finished charging. EV departed.")
                             setattr(self, attr_name, None)
-                            print(f"CP is now free to use.")
+                            # print(f"CP is now free to use.")
+                            logging.info(f"CP is now free to use.")
         except AttributeError as A:
-            print(f"CP unavailable. Reason: {A}")
+            # print(f"CP unavailable. Reason: {A}")
+            logging.warning(f"CP unavailable. Reason: {A}")
             
     # def remove_ev(self,ev):
     #     ev._at_station = False
@@ -357,10 +364,14 @@ class EV(Agent):
 
     def initialization_report(self, model) -> None:
         """Prints the EV's initialisation report."""
-        print(f"\nEV info: ID: {self.unique_id}, max_battery: {self.max_battery:.2f}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
-        print(f"EV info (Cont'd): Start time: {self.start_time},  soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}.")
-        print(f"EV Grid info: current position: {self.pos}, destination position: {self.dest_pos}, Distance goal: {self._distance_goal}.")        
-        print(f"Location info: current location (LSM): {self.loc_machine.state}, source: {self.source}, destination: {self.destination}, route: {self.route}.")
+        # print(f"\nEV info: ID: {self.unique_id}, max_battery: {self.max_battery:.2f}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
+        # print(f"EV info (Cont'd): Start time: {self.start_time},  soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}.")
+        # print(f"EV Grid info: current position: {self.pos}, destination position: {self.dest_pos}, Distance goal: {self._distance_goal}.")        
+        # print(f"Location info: current location (LSM): {self.loc_machine.state}, source: {self.source}, destination: {self.destination}, route: {self.route}.")
+        logging.info(f"\nEV info: ID: {self.unique_id}, max_battery: {self.max_battery:.2f}, energy consumption rate: {self.ev_consumption_rate}, speed: {self._speed}, State: {self.machine.state}.")
+        logging.info(f"EV info (Cont'd): Start time: {self.start_time},  soc usage threshold: {self._soc_usage_thresh}, range anxiety {self.range_anxiety}.")
+        logging.info(f"EV Grid info: current position: {self.pos}, destination position: {self.dest_pos}, Distance goal: {self._distance_goal}.")        
+        logging.info(f"Location info: current location (LSM): {self.loc_machine.state}, source: {self.source}, destination: {self.destination}, route: {self.route}.")
 
     # Internal functions
     def set_source_loc_mac_from_source(self, source:str) -> None:
@@ -382,7 +393,7 @@ class EV(Agent):
             route (str): The route of the EV's journey.
         Returns:
             initial_location (str): The start location of the EV's journey.
-                """
+        """
         initial_location = worker.get_string_before_hyphen(route) 
         self.source = initial_location                                           # TO-DO separate get and set
         return initial_location
@@ -459,7 +470,8 @@ class EV(Agent):
         self.increase_range_anxiety()
         self.machine.emergency_intervention()
         self.transport_ev_to_destination(model)
-        print(f"\nEV {self.unique_id} has been removed from the grid, recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Range anxiety has increased to: {self.range_anxiety}")
+        # print(f"\nEV {self.unique_id} has been removed from the grid, recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Range anxiety has increased to: {self.range_anxiety}.")
+        logging.info(f"\nEV {self.unique_id} has been removed from the grid, recharged to {self.battery} by emergency services and is now in state: {self.machine.state}. Range anxiety has increased to: {self.range_anxiety}.")
         # transport EV back to random location. source?
 
     def travel_intervention(self,model) -> None:
@@ -467,7 +479,9 @@ class EV(Agent):
         """
         self.machine.end_travel()
         self.transport_ev_to_destination(model)
-        print(f"EV {self.unique_id} was forced to end its trip due to overrun. It is now in state: {self.machine.state}.")
+        # print(f"EV {self.unique_id} was forced to end its trip due to overrun. It is now in state: {self.machine.state}.")
+        logging.info(f"EV {self.unique_id} was forced to end its trip due to overrun. It is now in state: {self.machine.state}.")
+
     
     def charge_intervention(self,model) -> None:
         """Intervention for when the EV is at a Charge Station. The EV is set to Idle and will be transported to its destination.
@@ -481,7 +495,8 @@ class EV(Agent):
         self.transport_ev_to_destination(model)
         self._chosen_cs = None
 
-        print(f"EV {self.unique_id} was forced to end its charge due to time overrun. It is now in state: {self.machine.state}.")
+        # print(f"EV {self.unique_id} was forced to end its charge due to time overrun. It is now in state: {self.machine.state}.")
+        logging.info(f"EV {self.unique_id} was forced to end its charge due to time overrun. It is now in state: {self.machine.state}.")
 
     # def charge_intervention(self,model) -> None:
     #     """Intervention for when the EV is at a Charge Station. The EV is set to Idle and will be transported to its destination.
@@ -502,8 +517,9 @@ class EV(Agent):
         model.grid.remove_agent(self)
         model.grid.place_agent(self, self.dest_pos)
         self.pos = self.dest_pos
-        print(f"EV {self.unique_id} has been transported to Location {self.destination}. Coord: {self.pos}. State: {self.machine.state}.")
-        # set location machine state to destination
+        # print(f"EV {self.unique_id} has been transported to Location {self.destination}. Coord: {self.pos}. State: {self.machine.state}.")
+        logging.info(f"EV {self.unique_id} has been transported to Location {self.destination}. Coord: {self.pos}. State: {self.machine.state}.")
+        # set location machine state to destination. Use loc_machine.transition instead?
         self.loc_machine.set_state(f"{self.destination}")
         # self.select_initial_coord(model)
 
@@ -539,16 +555,13 @@ class EV(Agent):
             self.pos = worker.get_location_coordinates_by_name(locations = model.location_params, location_name = self.source)
 
         except Exception as e:
-            print(f"Error selecting initial coordinates from 'source' variable: {e}")
-            print(f"EV is trying to select initial coordinates for Location using 'current_location' {self.current_location}.")
+            # print(f"Error selecting initial coordinates from 'source' variable: {e}")
+            logging.warning(f"Error selecting initial coordinates from 'source' variable: {e}")
+            # print(f"EV is trying to select initial coordinates for Location using 'current_location' {self.current_location}.")
+            logging.info(f"EV is trying to select initial coordinates for Location using 'current_location' {self.current_location}.")
             self.pos = worker.get_location_coordinates_by_name(locations = model.location_params, location_name = self.current_location)
-            print(f"EV has selected initial coordinates for Location using 'current_location' {self.current_location}.")
-
-        # except TypeError as TErr:
-        #     print(f"Error selecting initial coordinates from 'source' variable: {TErr}")
-        #     print(f"EV is trying to select initial coordinates for Location using 'current_location' {self.current_location}.")
-        #     self.pos = worker.get_location_coordinates_by_name(locations = model.location_params, location_name = self.current_location)
-        #     print(f"EV has selected initial coordinates for Location using 'current_location' {self.current_location}.")
+            # print(f"EV has selected initial coordinates for Location using 'current_location' {self.current_location}.")
+            logging.info(f"EV has selected initial coordinates for Location using 'current_location' {self.current_location}.")
 
     def select_destination_coord(self,model) -> None:
         """Gets the destination of the EV.
@@ -600,7 +613,7 @@ class EV(Agent):
             model.grid.move_agent(self, next_pos)
 
         self.distance_margin = math.sqrt((scaled_x*scaled_x) + (scaled_y*scaled_y))
-        print(f"Step distance: {self.distance_margin}")
+        # print(f"Step distance: {self.distance_margin}")
     
     
     def travel(self) -> None:
@@ -618,8 +631,11 @@ class EV(Agent):
         self.battery = max(min(self.battery - self.energy_usage_tick(), self.max_battery), 0)
 
         self.calculate_soc()
-        print(f"EV {self.unique_id} is travelling. State: {self.machine.state}, Odometer: {self.odometer:.2f}, SOC: {self.soc:.1f}%, Battery: {self.battery:.2f}, Location: {self.pos}, Destination: {self.destination})")
-        print(f"Total distance: {self.static_distance_goal:.2f}, Distance covered in timestep: {self.distance_margin}, New distance goal: {self._distance_goal:.2f}.")
+        # print(f"EV {self.unique_id} is travelling. State: {self.machine.state}, Odometer: {self.odometer:.2f}, SOC: {self.soc:.1f}%, Battery: {self.battery:.2f}, Location: {self.pos}, Destination: {self.destination})")
+        # print(f"Total distance: {self.static_distance_goal:.2f}, Distance covered in timestep: {self.distance_margin}, New distance goal: {self._distance_goal:.2f}.")
+        logging.info(f"EV {self.unique_id} is travelling. State: {self.machine.state}, Odometer: {self.odometer:.2f}, SOC: {self.soc:.1f}%, Battery: {self.battery:.2f}, Location: {self.pos}, Destination: {self.destination})")
+        logging.info(f"Total distance: {self.static_distance_goal:.2f}, Distance covered in timestep: {self.distance_margin}, New distance goal: {self._distance_goal:.2f}.")
+        
         self.distance_margin = 0
 
         # use station selection process instead
@@ -629,23 +645,24 @@ class EV(Agent):
         for neighbour in neighbours:
             if isinstance(neighbour, ChargeStation):
                 self._chosen_cs = neighbour
-                print(f"EV {self.unique_id} has arrived at Charge Station {self._chosen_cs.name}.")
+                # print(f"EV {self.unique_id} has arrived at Charge Station {self._chosen_cs.name}.")
+                logging.info(f"EV {self.unique_id} has arrived at Charge Station {self._chosen_cs.name}.")
                 self.join_cs_queue()
                 self._chosen_cs.location_occupancy += 1
                 self._chosen_cs.location_occupancy_list.append(self.unique_id)
-                print(f"EV {self.unique_id} has joined the queue {self._chosen_cs.name}. Current CS occupancy: {self._chosen_cs.location_occupancy}")
+                # print(f"EV {self.unique_id} has joined the queue {self._chosen_cs.name}. Current CS occupancy: {self._chosen_cs.location_occupancy}")
+                logging.info(f"EV {self.unique_id} has joined the queue {self._chosen_cs.name}. Current CS occupancy: {self._chosen_cs.location_occupancy}")
                 break
 
     def charge(self):
-        """Charge the EV at the Charge Station. The EV is charged at the Charge Station's charge rate.
+        """
+        Charge the EV at the Charge Station at the charge point's charge rate.
         EV charge rate is set in chargepoint assignment loop in ChargeStation class, using data from the station data file.
         
         Returns:
             battery: Battery level for the EV.
         """
-        # self.battery += self.charge_rate
         self.battery = max(min(self.battery + self.charge_rate, self.max_battery), 0)
-
 
     def charge_overnight(self):
         """
@@ -655,7 +672,8 @@ class EV(Agent):
             battery: Battery level for the EV.
         """
         self.battery += self.home_cs_rate
-        print(f"EV {self.unique_id} is charging at Home CS. State: {self.machine.state}, SOC: {self.soc}, Battery: {self.battery}, Rate: {self.home_cs_rate}.")
+        # print(f"EV {self.unique_id} is charging at Home CS. State: {self.machine.state}, SOC: {self.soc}, Battery: {self.battery}, Rate: {self.home_cs_rate}.")
+        logging.info(f"EV {self.unique_id} is charging at Home CS. State: {self.machine.state}, SOC: {self.soc}, Battery: {self.battery}, Rate: {self.home_cs_rate}.")
     
     def join_cs_queue(self) -> None:
         """Join the queue at the chosen Charge Station."""
@@ -667,7 +685,8 @@ class EV(Agent):
     def add_soc_eod(self) -> None:
         """Adds the battery level at the end of the day to a list."""
         self.battery_eod.append(self.battery)
-        print(f"EV {self.unique_id} Battery level at end of day: {self.battery_eod[-1]}")
+        # print(f"EV {self.unique_id} Battery level at end of day: {self.battery_eod[-1]}")
+        logging.info(f"EV {self.unique_id} Battery level at end of day: {self.battery_eod[-1]}")
 
     def reset_odometer(self) -> None:
         """Resets the EV odometer to 0."""
@@ -724,7 +743,8 @@ class EV(Agent):
         """
         if self.model.schedule.time == self.start_time:
             self.machine.start_travel()
-            print(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
+            # print(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
+            logging.info(f"EV {self.unique_id} started travelling at {self.start_time} and is in state: {self.machine.state}")
     
     # Define a function to calculate the Euclidean distance between two points
     def euc_distance(self, x1, y1, x2, y2)-> float:
@@ -743,7 +763,8 @@ class EV(Agent):
                     # self.pos = self.current_location.pos #new
                     print(f"EV {self.unique_id} has arrived at {self.current_location.name}. Current occupancy: {self.current_location.location_occupancy}")
                     self.model.grid.remove_agent(self)
-                    print(f"EV {self.unique_id} has been removed from grid on arrival at {self.current_location.name}. Current state: {self.machine.state}")
+                    # print(f"EV {self.unique_id} has been removed from grid on arrival at {self.current_location.name}. Current state: {self.machine.state}")
+                    logging.info(f"EV {self.unique_id} has been removed from grid on arrival at {self.current_location.name}. Current state: {self.machine.state}")
                     break
     
     def calculate_soc(self) -> float:
@@ -824,7 +845,8 @@ class EV(Agent):
                 self.loc_machine.city_f_2_d()
             elif dest == 'A':
                 self.loc_machine.city_f_2_a()
-        print(f"EV {self.unique_id} is at location (LSM): {self.loc_machine.state}")
+        # print(f"EV {self.unique_id} is at location (LSM): {self.loc_machine.state}")
+        logging.info(f"EV {self.unique_id} is at location (LSM): {self.loc_machine.state}")
 
     # staged step functions
     def stage_1(self):
@@ -845,23 +867,26 @@ class EV(Agent):
             if self.machine.state == 'Travel':
                 self.travel()
                 self.machine.continue_travel()
-                # print(f"EV {self.unique_id} has travelled: {self.odometer} miles. State: {self.machine.state}. Battery: {self.battery:.2f} kWh")
                 # # Transition Case 2: Still travelling, battery low. Travel -> travel_low  
-                # New code - replacement for transition case 2 above 
                 if self.battery <= self._soc_usage_thresh:
                     self.machine.get_low()
-                    print(f"EV: {self.unique_id} has travelled: {self.odometer} km and is now running out of power. State: {self.machine.state}. SOC: {self.soc:.2f}%. Battery: {self.battery:.2f} kwh.")
+                    # print(f"EV: {self.unique_id} has travelled: {self.odometer} km and is now running out of power. State: {self.machine.state}. SOC: {self.soc:.2f}%. Battery: {self.battery:.2f} kwh.")
+                    logging.info(f"EV: {self.unique_id} has travelled: {self.odometer} km and is now running out of power. State: {self.machine.state}. SOC: {self.soc:.2f}%. Battery: {self.battery:.2f} kwh.")
             elif self.machine.state == 'Travel_low':
                 # TO-DO: consider tweaking conditional below to compare battery level to energy usage per tick. Minimum 'allowed' battery level for travel.
                 if self.battery > self.energy_usage_tick():
                 # if self.battery > 0:
                     self.travel()
                     self.machine.continue_travel_low()
-                    print(f"EV {self.unique_id} is still travelling, but is low on charge and is seeking a charge station. SOC: {self.soc:.2f}%. Current charge: {self.battery:.2f} kWh.")
+                    # print(f"EV {self.unique_id} is still travelling, but is low on charge and is seeking a charge station. SOC: {self.soc:.2f}%. Current charge: {self.battery:.2f} kWh.")
+                    logging.info(f"EV {self.unique_id} is still travelling, but is low on charge and is seeking a charge station. SOC: {self.soc:.2f}%. Current charge: {self.battery:.2f} kWh.")
+
+
                 elif self.battery < self.energy_usage_tick():
                     self.machine.deplete_battery()
                     self._journey_complete = True
-                    print(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh.")
+                    # print(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh.")
+                    logging.info(f"EV {self.unique_id} is out of charge and can no longer travel. State: {self.machine.state}. Current charge: {self.battery} kWh.")
 
     def stage_2(self):
         """Stage 2:
@@ -884,33 +909,25 @@ class EV(Agent):
             
             # Transition Case 6: EV is at a charge station and charging. Charge -> Travel
             # Duplicated in CS class. Consider removing permanently.
-            # if self.battery >= self._soc_charging_thresh:   
-            #     self.machine.end_charge()
-            #     self._is_charging = False
-            #     print(f"EV {self.unique_id} has finished charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
-            #     self._at_station = False
-            # # Transition Case 7: EV is at a charge station and charging. Charge -> Charge
-            # elif self.battery < self._soc_charging_thresh:
-            #     self.machine.continue_charge()
-            #     print(f"EV {self.unique_id} is still charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
-       
+            
        # Transition Case 8: EV is at a Home charge point and charging. Idle -> Home_charge
-        # if self.model.overnight_charging == True:
-        #     self._is_charging = True
-        #     self.charge_overnight()
+       # Overnight charging governed at model level
         if self.machine.state == 'Home_charge':
             if self.battery >= self._soc_charging_thresh:   
                 self.machine.end_home_charge()
                 self._is_charging = False
-                print(f"EV {self.unique_id} has finished Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+                # print(f"EV {self.unique_id} has finished Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+                logging.info(f"EV {self.unique_id} has finished Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
             elif self.battery < self._soc_charging_thresh:
                 self.machine.continue_home_charge()
                 self.charge_overnight()
-                print(f"EV {self.unique_id} is still charging at home. EV State: {self.machine.state}, SOC: {self.soc}, current charge: {self.battery} kWh")
+                # print(f"EV {self.unique_id} is still charging at home. EV State: {self.machine.state}, SOC: {self.soc}, current charge: {self.battery} kWh")
+                logging.info(f"EV {self.unique_id} is still charging at home. EV State: {self.machine.state}, SOC: {self.soc}, current charge: {self.battery} kWh")
             elif self.model.schedule.time == (self.start_time-1):
                 self.machine.end_home_charge()
                 self._is_charging = False
-                print(f"EV {self.unique_id}'s trip begins in the next timestep. EV ended Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+                # print(f"EV {self.unique_id}'s trip begins in the next timestep. EV ended Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
+                logging.info(f"EV {self.unique_id}'s trip begins in the next timestep. EV ended Home charging. EV State: {self.machine.state}. Current charge: {self.battery} kWh")
         
         # # Transition Case 9: Journey Complete. travel -> idle
         if (self.machine.state == 'Travel') and self.odometer >= self.static_distance_goal:
@@ -920,8 +937,10 @@ class EV(Agent):
             # update LSM state
             self.update_loc_mac_with_destination(self.destination)
             self.calculate_soc()
-            print(f"EV {self.unique_id} has completed its journey to Location {self.destination}. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. SOC: {self.soc:.2f}%, Battery: {self.battery:.2f} kWh. Range anxiety: {self.range_anxiety:.2f}.")
-            print(f"EV Location (LSM): {self.loc_machine.state}")
+            # print(f"EV {self.unique_id} has completed its journey to Location {self.destination}. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. SOC: {self.soc:.2f}%, Battery: {self.battery:.2f} kWh. Range anxiety: {self.range_anxiety:.2f}.")
+            # print(f"EV Location (LSM): {self.loc_machine.state}")
+            logging.info(f"EV {self.unique_id} has completed its journey to Location {self.destination}. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. SOC: {self.soc:.2f}%, Battery: {self.battery:.2f} kWh. Range anxiety: {self.range_anxiety:.2f}.")
+            logging.info(f"EV Location (LSM): {self.loc_machine.state}")
             self.register_ev_arrival(self.model)
             # print(f"EV {self.unique_id} has been removed from the grid. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. Battery: {self.battery} kWh. Range anxiety: {self.range_anxiety}")
         
@@ -934,8 +953,10 @@ class EV(Agent):
             # update LSM state
             self.update_loc_mac_with_destination(self.destination)
             self.calculate_soc()
-            print(f"EV {self.unique_id} narrowly completed its journey to Location {self.destination}. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. SOC: {self.soc:.2f}%, Battery: {self.battery:.2f} kWh. Range anxiety: {self.range_anxiety:.2f}.")
-            print(f"EV Location (LSM): {self.loc_machine.state}")
+            # print(f"EV {self.unique_id} narrowly completed its journey to Location {self.destination}. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. SOC: {self.soc:.2f}%, Battery: {self.battery:.2f} kWh. Range anxiety: {self.range_anxiety:.2f}.")
+            # print(f"EV Location (LSM): {self.loc_machine.state}")
+            logging.info(f"EV {self.unique_id} narrowly completed its journey to Location {self.destination}. State: {self.machine.state}. This EV has travelled: {self.odometer} miles. SOC: {self.soc:.2f}%, Battery: {self.battery:.2f} kWh. Range anxiety: {self.range_anxiety:.2f}.")
+            logging.info(f"EV Location (LSM): {self.loc_machine.state}")
             self.register_ev_arrival(self.model)
 
 class Location(Agent):
@@ -966,19 +987,21 @@ class Location(Agent):
         self.location_occupancy = 0
         self.location_occupancy_list = []
 
-    # def check_location_for_arrivals(self, model):
-    #     """Checks the location for arrivals."""
-    #     neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 3, include_center=True)
-    #     for neighbour in neighbours:
-    #         if isinstance(neighbour, EV):
-    #             if neighbour.machine.state == 'Idle' and neighbour._journey_complete == True:  
-    #             # if (neighbour.machine.state == 'Travel' or neighbour.machine.state == 'Travel_low') and neighbour._journey_complete == True:  
-    #                 self.location_occupancy += 1
-    #                 self.location_occupancy_list.append(neighbour.unique_id)
-    #                 print(f"EV {neighbour.unique_id} has arrived at {self.name}. Current occupancy: {self.location_occupancy}")
-    #                 model.grid.remove_agent(neighbour)
-    #                 print(f"EV {neighbour.unique_id} has been removed from grid on arrival at {self.name}. Current state: {neighbour.machine.state}")
-    #                 break
+    def check_location_for_arrivals(self, model):
+        """Checks the location for arrivals."""
+        neighbours = model.grid.get_neighbors(self.pos, moore=True, radius = 3, include_center=True)
+        for neighbour in neighbours:
+            if isinstance(neighbour, EV):
+                if neighbour.machine.state == 'Idle' and neighbour._journey_complete == True:  
+                # if (neighbour.machine.state == 'Travel' or neighbour.machine.state == 'Travel_low') and neighbour._journey_complete == True:  
+                    self.location_occupancy += 1
+                    self.location_occupancy_list.append(neighbour.unique_id)
+                    # print(f"EV {neighbour.unique_id} has arrived at {self.name}. Current occupancy: {self.location_occupancy}")
+                    logging.info(f"EV {neighbour.unique_id} has arrived at {self.name}. Current occupancy: {self.location_occupancy}")
+                    model.grid.remove_agent(neighbour)
+                    # print(f"EV {neighbour.unique_id} has been removed from grid on arrival at {self.name}. Current state: {neighbour.machine.state}")
+                    logging.info(f"EV {neighbour.unique_id} has been removed from grid on arrival at {self.name}. Current state: {neighbour.machine.state}")
+                    break
     
     def ev_departure(self):
         """Removes an EV from the location's occupancy list."""
@@ -989,7 +1012,8 @@ class Location(Agent):
             if ev.start_time == self.model.schedule.time:
                 self.location_occupancy -= 1
                 self.location_occupancy_list.remove(ev_id)
-                print(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
+                # print(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
+                logging.info(f"EV {ev_id} has left {self.name}. Current occupancy: {self.location_occupancy}")
                 break 
 
     def stage_1(self):
@@ -1000,18 +1024,3 @@ class Location(Agent):
         """Stage 2 of the location agent's step function."""
         if self.location_occupancy_list != []:
             self.ev_departure()
-
-
-
-#########
-# Logging
-#########
-
-# logging.getLogger('transitions').setLevel(logging.INFO)
-
-# logging.basicConfig(level=logging.DEBUG)
-# logging.debug('This is a debug message')
-# logging.info('This is an info message')
-# logging.warning('This is a warning message')
-# logging.error('This is an error message')
-# logging.critical('This is a critical message')

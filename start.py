@@ -5,7 +5,8 @@
 # import cufflinks as cf
 # cf.go_offline()
 import pandas as pd
-
+import logging
+import sys
 from mesa.datacollection import DataCollector
 from EV.statemachines import EVSM, LSM
 
@@ -30,6 +31,15 @@ def run() -> object:
         model_run: The model object.
 
     """
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(message)s',
+        datefmt='%Y-%M-%d %I:%M:%S %p',
+        filename='ec4dmodel.log',
+        )
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.INFO)
+    logging.info('Log Started')
     model_run = model.EVModel(
         ticks=cfg.ticks, 
         no_evs=cfg.no_evs, 
@@ -41,6 +51,7 @@ def run() -> object:
         grid_width=cfg.grid_width)
     for i in range(cfg.ticks):
         model_run.step()
+    logging.info('Model run finished.')
     return model_run
 
 def export_data(model, format) -> None:
@@ -49,9 +60,11 @@ def export_data(model, format) -> None:
     if format == 'csv':
         run_stats.to_csv(cfg.DATA_PATH + 'data_' + date_str[0:10] + '_' + str(cfg.no_evs) + '_EV_agent_model_output.csv')
         print('Model data exported to csv')
+        logging.info('Model data exported to csv')
     elif format == 'xlsx' or 'xls':
         run_stats.to_excel(cfg.DATA_PATH + 'data_' + date_str[0:10] + '_' + str(cfg.no_evs) + '_EV_agent_model_output.xlsx', index=False)
         print('Model data exported to xlsx')
+        logging.info('Model data exported to xlsx')
 
 if __name__ == '__main__':
     run()

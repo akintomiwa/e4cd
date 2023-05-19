@@ -10,9 +10,12 @@ import EV.modelquery as mq
 from datetime import datetime
 from collections import OrderedDict
 # from mesa.time import RandomActivation, SimultaneousActivation, RandomActivationByType
+import logging
+import EV.model_config as cfg
 
+# if cfg.logging == True:
 
-
+logger = logging.getLogger(__name__)
 class EVModel(Model):
     """Simulation Model with EV agents and Charging Points agents.
     
@@ -80,8 +83,8 @@ class EVModel(Model):
         # section 2 - create routes iterable
         self.routes = worker.get_routes(self.station_params)
         self.all_routes = set(worker.get_combinations(self.location_params)) #/locations .csv param file
-        print(f"\nAvailable routes: {self.routes}")
-        print("\n")
+        # print(f"\nAvailable routes: {self.routes}")
+        # print("\n")
     
         self.cs_route_choices = {route: len(self.station_params[route]) for route in self.station_params}
         self.checkpoints = 0
@@ -89,7 +92,9 @@ class EVModel(Model):
         # Building environment 
         print("\nWelcome to the ec4d EV ABM Simulator v 0.3.5-beta.")
         print(f"\nToday's date is: {str(datetime.today())}.")
-        print("\nBuilding model environment from input parameters...")
+        # print("\nBuilding model environment from input parameters...")
+        # print(f"\nAvailable routes: {self.routes}")
+        logger.info("\nBuilding model environment from input parameters...")
         print(f"\nAvailable routes: {self.routes}")
         
         # Dynamically create checkpoint_route list, distance list, and route checkpoint variables
@@ -103,6 +108,8 @@ class EVModel(Model):
             setattr(self,f"checkpoints_{route}", list(worker.get_route_from_config(route, self.station_params)))
             # Make duplicate of 'distances_{route}' the above for later assignment to EVs.
             setattr(self,f"ev_distances_{route}", worker.cumulative_cs_distances(worker.get_dict_values(worker.get_charging_stations_along_route(self.station_params, route))))
+        
+        logger.info("\nModel environment built successfully.")
 
         # create cs.routes list to assign routes to CSs from.
         for route in worker.select_route_as_key(self.cs_route_choices):
@@ -135,9 +142,11 @@ class EVModel(Model):
             self.schedule.add(location)
             self.locations.append(location)
       
-        print("\nAgents Created")
+        # print("\nAgents Created")
+        logger.info("\nAgents Created")
         
         print("\nUpdating agents with particulars - route (EV and CS), destination (EV), charge point count (CS), grid locations ...")
+        logger.info("\nUpdating agents with particulars - route (EV and CS), destination (EV), charge point count (CS), grid locations ...")
 
         # assign routes to chargestations using model chargestations and csroutes lists.
         for  i, cs in enumerate(self.chargestations):
@@ -154,9 +163,11 @@ class EVModel(Model):
             cs.pos = list(station_location_param.values())[i]
 
         print(f"\nChargeStation coordinates set.")
-         # Summarize ChargeStation information
+        logger.info(f"\nChargeStation coordinates set.")
+        # Summarize ChargeStation information
 
         print("\nCharge stations, positions and associated routes:\n")
+        logger.info("\nCharge stations, positions and associated routes:\n")
         # Assign checkpoint_id, no_cps and cp_rates attributes to CSs from config file. Also, assign charge point count and create cps.
         for cs in self.chargestations:
             # cs.checkpoint_list = getattr(self, f"distances_{cs.route}")
@@ -177,6 +188,8 @@ class EVModel(Model):
 
         # Route assignment for EVs as in CSs above. improve to spead evenly amongst routes.
         print("\nEVs - details, positions and associated routes:")
+        logger.info("\nEVs - details, positions and associated routes:")
+
         # Perform every day at relaunch? Currently in evs_relaunch() method.
         
         self.ev_launch_sequence()
@@ -191,6 +204,7 @@ class EVModel(Model):
 
         # end of update section
         print("\nAgents Updated")
+        logger.info("\nAgents Updated")
          
         # data collector
         self.datacollector = DataCollector(
@@ -275,8 +289,10 @@ class EVModel(Model):
             elif self.current_day_count >= 1:
                 possibilities = worker.get_possible_journeys_long(ev.loc_machine.state, model_locations=self.locations)
                 ev.route = choice(possibilities)
-                print(f"\nEV {ev.unique_id}, Location: {ev.loc_machine.state}, Route possibilities: {possibilities}")
-                print(f"EV {ev.unique_id}, New Route: {ev.route}")
+                # print(f"\nEV {ev.unique_id}, Location: {ev.loc_machine.state}, Route possibilities: {possibilities}")
+                # print(f"EV {ev.unique_id}, New Route: {ev.route}")
+                logger.info(f"\nEV {ev.unique_id}, Location: {ev.loc_machine.state}, Route possibilities: {possibilities}")
+                logger.info(f"EV {ev.unique_id}, New Route: {ev.route}")
 
             # ev.route = choice(self.routes)
             ev.set_start_time()
@@ -300,7 +316,8 @@ class EVModel(Model):
     def update_day_count(self) -> None:
         """Increments the day count of the simulation. Called at the end of each day."""
         self.current_day_count += 1
-        print(f"\nCurrent day: {self.current_day_count}.")
+        # print(f"\nCurrent day: {self.current_day_count}.")
+        logger.info(f"\nCurrent day: {self.current_day_count}.")
 
     def set_max_days(self) -> None:
         """Set the max number of days for the simulation."""
@@ -328,7 +345,8 @@ class EVModel(Model):
                 ev.machine.start_home_charge()
                 ev.charge_overnight()
             except MachineError:
-                print(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle.")
+                # print(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle.")
+                logger.warning(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle.")
     
     def start_overnight_charge_ev(self) -> None:
         """
@@ -338,7 +356,8 @@ class EVModel(Model):
                 ev.machine.start_home_charge()
                 ev.charge_overnight()
             except MachineError:
-                print(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle.")
+                # print(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle.")
+                logger.warning(f"Error in charging EVs overnight. EV {ev.unique_id} is in a state other than Idle.")
 
     def end_overnight_charge_evs(self) -> None:
         """Calls the EV.end_home_charge() method for all EVs in the model."""
