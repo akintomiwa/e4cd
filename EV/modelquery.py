@@ -71,8 +71,6 @@ def get_eod_evs_socs(model):
     eod_soc = [ev.battery_eod for ev in model.evs]
     return eod_soc
 
-
-
 def get_evs_destinations(model):
     evs_destinations = [ev.destination for ev in model.evs]
     return evs_destinations
