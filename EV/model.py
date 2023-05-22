@@ -57,7 +57,7 @@ class EVModel(Model):
         # section 1 - user station_params 
         self.no_evs = no_evs
         self.no_locations = len(location_params)
-        self.station_params = station_params
+        self.station_params = OrderedDict(station_params)
         self.location_params = OrderedDict(location_params)
         self.station_locations = OrderedDict(station_location_param)
         self.overnight_charging = overnight_charging
@@ -78,6 +78,8 @@ class EVModel(Model):
         self.locations = []
         self.csroutes = []
         self.evroutes = []
+        self.cpcounts = {}
+        self.cprates = {}
         
         # set up routes
         # section 2 - create routes iterable
@@ -88,6 +90,12 @@ class EVModel(Model):
     
         self.cs_route_choices = {route: len(self.station_params[route]) for route in self.station_params}
         self.checkpoints = 0
+
+        # new Monday 22/05
+        self.cs_name_choices = {station: len(self.station_params[station]) for station in self.station_params}
+        # generate CS names from station_params
+        self.cs_names = worker.generate_cs_name_strings(self.cs_name_choices)
+        # print(f"\nCharge Station names: {self.cs_names}")
         
         # Building environment 
         print("\nWelcome to the ec4d EV ABM Simulator v 0.3.5-beta.")
@@ -115,8 +123,17 @@ class EVModel(Model):
         for route in worker.select_route_as_key(self.cs_route_choices):
             self.csroutes.append(route)
         
-        # print(f"\nRoute choice space for ChargeStation agents: {self.csroutes}")
-        # print(f"\nRoute choice space for EV agents: {self.routes}")
+        # For each route, assign charge point count to CSs from model station_params dict.
+        for route in worker.select_route_as_key(self.cs_route_choices):
+            vals = worker.count_charge_points_by_station(self.station_params, route)
+            self.cpcounts.update(vals)
+        print(f"\nCharge point counts: {self.cpcounts}")
+        
+        # new Monday 22/05
+        # create cs_station_names list to assign names to Chargestations from.
+        
+        print(f"\nRoute choice space for ChargeStation agents: {self.csroutes}")
+        print(f"\nRoute choice space for EV agents: {self.routes}")
 
         print("\nCreating agents...")
     
@@ -149,8 +166,17 @@ class EVModel(Model):
         logger.info("\nUpdating agents with particulars - route (EV and CS), destination (EV), charge point count (CS), grid locations ...")
 
         # assign routes to chargestations using model chargestations and csroutes lists.
+        # assign names to chargestations using model chargestations and csnames lists.
         for  i, cs in enumerate(self.chargestations):
-            cs.route = self.csroutes[i]        
+            cs.route = self.csroutes[i]
+            cs.name = self.cs_names[i] 
+            cs.pos = list(station_location_param.values())[i]
+        
+        for cs in self.chargestations:
+            print(f"CS {cs.unique_id}, Route: {cs.route}, Name: {cs.name}")
+        
+        # # monday 22/05 - asign cs names to cs agents
+        # sorted data by worker.generate_cs_name_strings output
         
         # Set name, inital locations coordinates for Locations
         for i, loc in enumerate(self.locations):
@@ -158,9 +184,8 @@ class EVModel(Model):
             loc.pos = list(location_params.values())[i]
 
         # Set inital locations and coordinates for Charging Stations
-        for i, cs in enumerate(self.chargestations):
-            cs.name = list(station_location_param.keys())[i]
-            cs.pos = list(station_location_param.values())[i]
+        # for i, cs in enumerate(self.chargestations):
+        #     cs.pos = list(station_location_param.values())[i]
 
         print(f"\nChargeStation coordinates set.")
         logger.info(f"\nChargeStation coordinates set.")
@@ -168,21 +193,42 @@ class EVModel(Model):
 
         print("\nCharge stations, positions and associated routes:\n")
         logger.info("\nCharge stations, positions and associated routes:\n")
+        
+      
+        # self.cpcounts = worker.count_charge_points_by_station(self.station_params, self.csroutes)
+
         # Assign checkpoint_id, no_cps and cp_rates attributes to CSs from config file. Also, assign charge point count and create cps.
         for cs in self.chargestations:
             # cs.checkpoint_list = getattr(self, f"distances_{cs.route}")
-            cs.checkpoint_id = worker.remove_list_item_seq(getattr(self, f"distances_{cs.route}"))
-            cs.no_cps = worker.remove_list_item_seq(worker.get_dict_values(worker.count_charge_points_by_station(self.station_params, cs.route)))
+            # cs.checkpoint_id = worker.remove_list_item_seq(getattr(self, f"distances_{cs.route}"))
+            # cs.no_cps = worker.remove_list_item_seq(worker.get_dict_values(worker.count_charge_points_by_station(self.station_params, cs.route)))
+            cs.no_cps = self.cpcounts[cs.name]
             cs.cprates = worker.remove_list_item_seq(worker.get_dict_values(worker.get_power_values_for_route(self.station_params, cs.route)))
             # Display Charge stations and their routes  
-            print(f"CS {cs.unique_id}, Route: {cs.route}, Position: {cs.pos}. Number of charge points: {cs.no_cps}. CP rates: {cs.cprates} ")  #CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}
+            print(f"CS {cs.unique_id}, Name: {cs.name} , Route: {cs.route}, Position: {cs.pos}. Number of charge points: {cs.no_cps}. CP rates: {cs.cprates} ")  #CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}
             # dynamically create chargepoints per charge station lists vars. Not zero indexed. Each element is charge rate for each cp.
             for i in range(1,cs.no_cps+1):
                 # setattr(cs, f"cp_{i}", [])
                 setattr(cs, f"cp_{i}", None)
-                
             # place CS agent on grid
             self.grid.place_agent(cs, cs.pos)
+
+
+        # BACKUP
+        # # Assign checkpoint_id, no_cps and cp_rates attributes to CSs from config file. Also, assign charge point count and create cps.
+        # for cs in self.chargestations:
+        #     # cs.checkpoint_list = getattr(self, f"distances_{cs.route}")
+        #     cs.checkpoint_id = worker.remove_list_item_seq(getattr(self, f"distances_{cs.route}"))
+        #     cs.no_cps = worker.remove_list_item_seq(worker.get_dict_values(worker.count_charge_points_by_station(self.station_params, cs.route)))
+        #     cs.cprates = worker.remove_list_item_seq(worker.get_dict_values(worker.get_power_values_for_route(self.station_params, cs.route)))
+        #     # Display Charge stations and their routes  
+        #     print(f"CS {cs.unique_id}, Route: {cs.route}, Position: {cs.pos}. Number of charge points: {cs.no_cps}. CP rates: {cs.cprates} ")  #CheckpointID: {cs.checkpoint_id} kilometres on route {cs.route}
+        #     # dynamically create chargepoints per charge station lists vars. Not zero indexed. Each element is charge rate for each cp.
+        #     for i in range(1,cs.no_cps+1):
+        #         # setattr(cs, f"cp_{i}", [])
+        #         setattr(cs, f"cp_{i}", None)
+        #     # place CS agent on grid
+        #     self.grid.place_agent(cs, cs.pos)
         
         # loop to update distance goal, route_name, total_route_length
 
@@ -380,6 +426,7 @@ class EVModel(Model):
     def step(self) -> None:
         """Advance model one step in time"""
         print(f"\nCurrent timestep (tick): {self._current_tick}.")
+        logger.info(f"\nCurrent timestep (tick): {self._current_tick}.")
         self.schedule.step()
         self.datacollector.collect(self)
 

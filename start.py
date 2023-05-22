@@ -34,7 +34,7 @@ def run() -> object:
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s %(levelname)s %(message)s',
-        datefmt='%Y-%M-%d %I:%M:%S %p',
+        datefmt='%Y-%m-%d %I:%M:%S %p',
         filename='ec4dmodel.log',
         )
     stdout_handler = logging.StreamHandler(sys.stdout)

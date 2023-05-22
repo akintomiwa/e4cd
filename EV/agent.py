@@ -2,19 +2,21 @@
 import numpy as np
 import math
 import random
-# from random import choice
+
 import warnings
 warnings.simplefilter("ignore")
 import numpy as np
 from mesa import Agent
-# import cufflinks as cf
-# cf.go_offline()
+
 from transitions import Machine, MachineError
-# from functools import partial
 from EV.statemachines import EVSM, LSM, states, transitions, lstates, ltransitions
 import EV.worker as worker
 import logging
 import EV.model_config as cfg
+# import cufflinks as cf
+# cf.go_offline()
+# from functools import partial
+# from random import choice
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +118,7 @@ class ChargeStation(Agent):
             return False
         except IndexError:
             # print(f"The queue at ChargeStation {self.unique_id} is empty.")
-            logging.info(f"The queue at ChargeStation {self.unique_id} is empty.")
+            logging.info(f"The queue at ChargeStation {self.name} is empty.")
             return False
         except Exception as e:
             print(f"Error assigning EV to charge point: {e}")

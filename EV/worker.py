@@ -502,3 +502,14 @@ def get_cp_value(route_rates, cs_name, index):
         if cs_name in key:
             return route_rates[key][index - 1]
     return None
+
+def generate_cs_name_strings(dict):
+    """
+    Returns a list of strings in the form of "CS_1", "CS_2", etc.
+    Based on the number of charge stations in the given dictionary, grouped by route.
+    """
+    result = []
+    for key, value in dict.items():
+        for i in range(1, value + 1):
+            result.append(f"CS_{key}_{i}")
+    return result
