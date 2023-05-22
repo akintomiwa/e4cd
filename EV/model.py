@@ -100,10 +100,12 @@ class EVModel(Model):
         # Building environment 
         print("\nWelcome to the ec4d EV ABM Simulator v 0.3.5-beta.")
         print(f"\nToday's date is: {str(datetime.today())}.")
-        # print("\nBuilding model environment from input parameters...")
-        # print(f"\nAvailable routes: {self.routes}")
-        logger.info("\nBuilding model environment from input parameters...")
+        logger.info("\nWelcome to the ec4d EV ABM Simulator v 0.3.5-beta.")
+        logger.info(f"\nToday's date is: {str(datetime.today())}.")
+        print("\nBuilding model environment from input parameters...")
         print(f"\nAvailable routes: {self.routes}")
+        logger.info("\nBuilding model environment from input parameters...")
+        logger.info(f"\nAvailable routes: {self.routes}")
         
         # Dynamically create checkpoint_route list, distance list, and route checkpoint variables
         for route in self.routes:
@@ -128,6 +130,7 @@ class EVModel(Model):
             vals = worker.count_charge_points_by_station(self.station_params, route)
             self.cpcounts.update(vals)
         print(f"\nCharge point counts: {self.cpcounts}")
+        logger.info(f"\nCharge point counts: {self.cpcounts}")
         
         # new Monday 22/05
         # create cs_station_names list to assign names to Chargestations from.
@@ -145,6 +148,7 @@ class EVModel(Model):
             self.schedule.add(cs)
             self.chargestations.append(cs)
         print("\n")
+        logger.info("\n")
 
         # EVs
         for i in range(self.no_evs):
@@ -244,8 +248,11 @@ class EVModel(Model):
 
         print("\n")
         print("The location agents in this model are: \n")
+        logger.info("\n")
+        logger.info("The location agents in this model are: \n")
         for loc in self.locations:
             print(f"Location {loc.name}, Position: {loc.pos}")
+            logger.info(f"Location {loc.name}, Position: {loc.pos}")
             self.grid.place_agent(loc, loc.pos)
 
         # end of update section
@@ -266,8 +273,7 @@ class EVModel(Model):
             #                 }
                              )
         print(f"\nModel initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks or {self.max_days} day(s).\n")
-
-        # 'EVs Dead': mq.get_evs_dead, 'EVs Queued': mq.get_evs_queue, 'EVs Not Idle': mq.get_evs_not_idle, 'Length of Queue at Charging Stations': mq.get_queue_length,
+        logger.info(f"\nModel initialised. {self.no_evs} EVs and {self.no_css} Charging Points. Simulation will run for {self.ticks} ticks or {self.max_days} day(s).\n")
 
     def _set_up_routes(self) -> None:
         for route in self.routes:
@@ -426,7 +432,7 @@ class EVModel(Model):
     def step(self) -> None:
         """Advance model one step in time"""
         print(f"\nCurrent timestep (tick): {self._current_tick}.")
-        logger.info(f"\nCurrent timestep (tick): {self._current_tick}.")
+        logger.info(f"\nCurrent timestep (tick): {self._current_tick}.\n")
         self.schedule.step()
         self.datacollector.collect(self)
 

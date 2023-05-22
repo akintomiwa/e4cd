@@ -180,6 +180,10 @@ class ChargeStation(Agent):
 
     def stage_1(self):
         """Stage 1 of the charge station's step function."""
+        if len(self.queue) > 0:
+            for ev in self.queue:
+                print(f"EV {ev.unique_id} is in queue at CS {self.name}. EV state: {ev.machine.state}.")
+                logging.info(f"EV {ev.unique_id} is in queue at CS {self.name}. EV state: {ev.machine.state}.")
         self.dequeue(self.model)
 
     def stage_2(self):
