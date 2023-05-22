@@ -90,6 +90,7 @@ class ChargeStation(Agent):
             
             # go through all charge points and assign the first one that is free
             for attr_name in [a for a in dir(self) if a.startswith("cp_")]:
+            # for attr_name in [a for a in dir(self) if isinstance(getattr(self, a), ChargePoint)]:
                 attr_value = getattr(self, attr_name)
                 if attr_value is None:
                     setattr(self, attr_name, active)
@@ -115,7 +116,7 @@ class ChargeStation(Agent):
             return False
         except IndexError:
             # print(f"The queue at ChargeStation {self.unique_id} is empty.")
-            # logging.info(f"The queue at ChargeStation {self.unique_id} is empty.")
+            logging.info(f"The queue at ChargeStation {self.unique_id} is empty.")
             return False
         except Exception as e:
             print(f"Error assigning EV to charge point: {e}")
@@ -481,7 +482,6 @@ class EV(Agent):
         self.transport_ev_to_destination(model)
         # print(f"EV {self.unique_id} was forced to end its trip due to overrun. It is now in state: {self.machine.state}.")
         logging.info(f"EV {self.unique_id} was forced to end its trip due to overrun. It is now in state: {self.machine.state}.")
-
     
     def charge_intervention(self,model) -> None:
         """Intervention for when the EV is at a Charge Station. The EV is set to Idle and will be transported to its destination.
